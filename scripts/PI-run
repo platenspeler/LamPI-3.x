@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+DAEMONDIR="/home/pi/daemon"; export DAEMONDIR
+SCRIPTDIR="/home/pi/scripts"; export SCRIPTDIR
+LOGDIR="/home/pi/log"; export LOGDIR
+PARAMS=" "; export PARAMS
+#
+script_dir=$(dirname $0)
+if [ $script_dir = '.' ]
+then
+	LOGFILE="$LOGDIR/$0.log"; export LOGFILE
+else
+	LOGFILE="$script_dir/$0.log"; export LOGFILE
+fi
+# echo "`date`:: Using logfile $LOGFILE" >> $LOGFILE
+#
+PROGRAM="LamPI-daemon.php"; export PROGRAM
+PID=""; export PID
+#
+if [ "$1" = "-r" ]; then
+	echo "`date`:: Kill previous version of daemons" >> $LOGFILE
+	pkill -f "php ./$PROGRAM"
+fi
+#
+# If instead of -r (reset) -i (init) is specified, the database.cfg file is reread as well
+if [ "$1" = "-i" ]; then
+	echo "`date`:: Kill previous version of daemons" >> $LOGFILE
+	pkill php
+    sleep 2
+    echo "`date`:: Start init of database" >> $LOGFILE
+    PARAMS=" -i "
+fi
+#
+PID=`ps -eaf | grep "$PROGRAM" | grep -v grep | awk '{print $2}'`
+if [ -z "$PID" ]
+then
+	cd $DAEMONDIR
+	echo "`/bin/date`:: daemon does not run, Starting $PROGRAM" >> $LOGFILE
+	nohup php ./$PROGRAM $PARAMS >> $LOGFILE 2>&1 &
+else
+	echo "$PID"
+fi

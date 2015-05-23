@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Wired Sensors</title>
+</head>
+<body>
+<h1>Weather Sensor Message Format</h1>
+<p>Sensors are activated by the cron system or they run as part of a daemon process. Sensor values that are collected are sent to the LamPI-daemon process for further processing. In order for the daemon to correctly recognize all messages coming in, a standard message format is defined that all sensors should use in order to assure correct interpretation.</p>
+<p>Messages are sent to LamPI-daemon as a text buffer over UDP port 5001 (default).</p>
+<p>The message format is in jSon and is defined as follows: </p>
+<p>message: {&quot;tcnt&quot;:&quot;&lt;transaction_id&gt;&quot;,&quot;action&quot;:&quot;weather&quot;,&quot;brand&quot;:&quot;&lt;your_brand&gt;&quot;,&quot;type&quot;:&quot;json&quot;,&quot;address&quot;:&quot;&lt;address&gt;&quot;,&quot;channel&quot;:&quot;&lt;channel&gt;&quot;,[&quot;&lt;sensor_id&gt;&quot;:&quot;&lt;sensor_value&gt;&quot;],..}</p>
+<p>The first part of every message is standard and all fields should be present. Their definitions are as follows:</p>
+<ul>
+  <li>&quot;tcnt&quot;: &quot;&lt;transaction_id&gt;&quot;; Adds a transaction id for the daemon to recognize the individual message coming in. Transaction_id is a number, and in LamPI it should be incremented after every successful transmission<br>
+    <br>
+  </li>
+  <li>&quot;action&quot;:&quot;weather&quot;<br>
+    <br>
+  </li>
+  <li>&quot;brand&quot;:&quot;&lt;your_brand&gt;&quot;<br>
+    <br>
+  </li>
+  <li>&quot;type&quot;:&quot;json&quot;<br>
+    <br>
+  </li>
+  <li>&quot;address&quot;:&quot;&lt;address&gt;&quot;; <br>
+  Most sensors on the Dallas or I2C bus have an address. This address together with the channel uniquely identify the sensor. The sensor does not know the name that we gave it in the LamPI GUI. Therefore, the LamPI-daemon uses the address and channel to lookup the name, location and other attributes that we gave to the sensor in the configuration file (~/www/config/database.cfg).<br>
+  <br>
+  </li>
+  <li>&quot;channel&quot;:&quot;&lt;channel&gt;&quot;<br>
+    <br>
+  </li>
+  <li>[&quot;&lt;sensor_id&gt;&quot;:&quot;&lt;sensor_value&gt;&quot;]; A series of sensor id, that identify a type of sensor, and the  mesaured value. See below for the lost of recognized sensor_id's</li>
+</ul>
+<h3>Sensor_id </h3>
+<p>The following sensor types/commands are recognized by the system:</p>
+<ul>
+  <li>&quot;temperature&quot;</li>
+  <li>&quot;humidity&quot;</li>
+  <li>&quot;airpressure&quot;</li>
+  <li>&quot;altitude&quot;</li>
+  <li>&quot;windspeed&quot;</li>
+  <li>&quot;winddirection&quot;</li>
+  <li>&quot;rainfall&quot;</li>
+</ul>
+<h3>Example:</h3>
+<p>{&quot;tcnt&quot;:&quot;529&quot;,&quot;action&quot;:&quot;weather&quot;,&quot;brand&quot;:&quot;wt440h&quot;,&quot;type&quot;:&quot;json&quot;,&quot;address&quot;:&quot;1&quot;,&quot;channel&quot;:&quot;0&quot;,&quot;temperature&quot;:&quot;27.5&quot;,&quot;humidity&quot;:&quot;47&quot;,&quot;windspeed&quot;:&quot;&quot;,&quot;winddirection&quot;:&quot;&quot;,&quot;rainfall&quot;:&quot;&quot;}</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+</body>
+</html>

@@ -1,0 +1,42 @@
+/* SCSS Document for making generic LamPI .css files */
+/* Author: M. Westenberg (mw12554@hotmail.com) */
+
+/* ----------------------- SCCS variable definitions -----------------------------------*/
+$wrapper_bg_color: #002A00;
+$wrapper_bg_picture: "";
+
+$main_bg_color: #997309;
+$main_nth_color: #AD820C;
+$main_msg_color: #EDB211;
+
+$content_background: $main_bg_color;
+$message_background: $main_bg_color;
+$header_background: $main_bg_color;
+$menu_background: $main_bg_color;
+
+$row_bg_color: #c4c7fd;
+$row_nth_color: #abaffc;
+
+$button_bg_color: #705B22;
+$button_fg_color: #F7E3AB;
+$button_hover_bg_color: #0A0A0A;
+$button_hover_fg_color: #F7B707;
+$button_active_fg_color: yellow;	/* When a button is active it has this color */
+$button_active_bg_color: #111;
+
+$dlabel_fg_color: black;			/* Labels in rows */
+$dlabel_bg_color: #eee;
+$dbutton_fg_color: black;			/* Buttons ins gui_content rows */
+$dbutton_bg_color: #eee;
+
+$dimmer_background: #d2abfc;		/* Color of the dimmer slider */
+$dimmer_handle: #ef2929;			/* Color of the dimmer handler */
+
+$thermo_background: #fbaf89;		/* Color of the thermo slider */
+$thermo_handle: #ef2929;			/* Color of the thermo handler */
+
+$dialog_fg_color: #EDB211;			/* Also in body statements	*/
+$dialog_bg_color: #997309;
+/* ------------------------------------------------------------------------------------- */
+
+@import '_classic-template';

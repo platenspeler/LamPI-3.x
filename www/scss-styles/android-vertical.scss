@@ -1,0 +1,412 @@
+@charset "utf-8";
+
+/* SCSS Document for making generic LamPI .css files */
+/* Author: M. Westenberg (mw12554@hotmail.com) */
+
+/* ----------------------- SCCS variable definitions -----------------------------------*/
+$wrapper_bg_color: #002A00;
+
+$main_bg_color: #030;
+$main_nth_color: #040;
+$main_msg_color: #eee;
+
+$button_bg_color: #3AF;
+$button_fg_color: #0e0;
+$button_hover_bg_color: #9AF;
+$button_hover_fg_color: #111;
+
+$dialog_fg_color: #0e0;
+$dialog_bg_color: #030;
+/* ------------------------------------------------------------------------------------- */
+
+		
+/* CORE HTML CSS */
+		body {
+			font-family		: comic sans ms; 
+			color			: #0F0F0F; 
+			background		: $main_bg_color;
+ 		}
+		
+		table {
+			width: 100%;
+			height:auto;
+		}
+		
+		tr {
+/*			width: 380px; 		*/
+		}
+
+		td {
+/*			height: 38px; 		*/
+		}
+		
+		p {
+ 			font-family:"Times New Roman";
+ 			font-size:16px;
+ 		}
+		
+		input#lbl {
+			width: 20px;
+		}
+		
+		.button {
+		}
+		
+		/* Prevent the field to get wider when hovering */
+		.button:hover, input[type="submit"]:hover, .button:active, input[type="submit"]:active, input[type="input"]:hover
+		{
+			font-weight: normal;
+			text-decoration: underline;
+		}
+
+/* DIVS for just one element */
+
+	#wrapper {
+		position: relative;
+		top: 1px;
+		width: 98%;
+		height: 99%;
+		margin: auto;
+		/* padding: 10px; */
+		/* margin-top: 10px; */
+		border: 1px solid black;
+		background-color:$wrapper_bg_color;
+	}
+		
+/* The header header section defined */
+	#gui_menu {
+		position: absolute;
+		left: 1px;
+		top: 1px;
+		width: 98%;
+		padding:3px;
+		height: 70px;
+		border: 1px solid black;
+		background-color:#09F;
+	}
+		
+	#gui_header {
+		position: absolute;
+		top: 85px;
+		width: 98%;
+		height: 70px;
+/*		margin: auto;				*/
+		padding:3px;
+		left: 1px;
+		margin-top: 0px;
+		border: 1px solid black;
+		text-align: center;
+		background-color: #3CF;
+	}
+		
+	#gui_header_controls {
+		position: inherit;
+		top: 0px;
+		left: 80%;
+		width: auto;
+	}
+
+	#gui_header_content {
+		position: inherit;
+		top: 0px;
+		left: 0px;
+		width: 80%;
+	}
+
+		
+	/* This is the area where all the devices in the active room have their 
+		controls (switches and dimmers) defined
+	*/
+	#gui_content {
+		position: absolute;
+		top: 170px;
+		width: 98%;
+		height: 415px;
+		margin-left: 1px;
+		left: 1px;
+;		margin: auto;
+		padding: 3px;
+		margin-top: 5px;
+		border: 1px solid black;
+		text-align: center;
+		background-color:#70F;
+		overflow:auto;
+	}
+				
+
+	/* This is the area on the form where the user/program messages are displayed */
+	#gui_messages {
+			position: absolute;
+			top: 620px;
+			width: 98%;
+			height: 50px;
+			margin: auto;
+			padding: 3px;
+			margin-top: 10px;
+			border: 1px solid black;
+			text-align: center;
+			background-color:#3CF;
+	}
+
+	#addRoomForm {
+			background-color: #316091;
+    		color:#FFF;							/* ddeff1 */
+    		font-weight:bold;
+    		margin: 23px auto 0 auto;
+    		border-radius:10px;
+   			width: 400px;
+    		box-shadow:  0 0 2px 2px #d9d9d9;
+	}
+	#addRoomForm label {
+		    padding-left:26px;
+		    width:150px;
+		    text-transform: uppercase;
+		    display:inline-block;
+	}
+		
+	#addRoomForm input[type=text], 
+	#addRoomForm input[type=file],
+	#addRoomForm textarea {
+    	width: 300px;
+	}
+		
+		
+/* CLASSES are for multiple elements */
+
+	/* Header buttons. */
+	
+				
+		/* Header Menu area definitions */
+		.hm_button {
+/*			margin-left: 3px; */
+			width: 80px;
+			height: 30px;
+			align: center;
+		}
+		.hm_button:hover {
+			font-weight: bold;
+			background-color: #FF9;
+		}
+		
+		/* Room header */
+		.hr_button {
+			color: #00F;
+			width: 80px;
+			height: 30px;
+			border-radius: 3px;
+/*			margin-left: 5px; 			*/
+			margin-bottom: 3px;
+			background-color: #EEE;
+		}
+		
+		/* Indicating a mouse over for a room button */
+		.hr_button:hover {
+			font-weight: bold;
+			background-color: #FF9; 
+		}	
+		
+		/* XXX needs reviewing */
+		.rroom {
+			width: 200 px;
+			margin-bottom: 10px;
+		}	
+	
+		/* Header Scene definition */
+		.hs_button {
+			width: 80px;
+			height: 30px;
+			margin-top: 1px;
+			margin-bottom: 2px;
+			background-color:#EEE;
+		}
+		
+		.hs_button:hover {
+			font-weight: bold;
+			background-color: #FF9;
+		}
+		
+		/* Header Timer definitions */
+		.ht_button {
+			color: #90F;
+			margin-top: 5px;
+			width: 80px;
+			height: 35px;
+			background-color: #EEE;
+		}
+		
+		.ht_button:hover {
+			font-weight: bold;
+			background-color: #FF9;
+		}
+
+		/* Header Configuration definitions */
+		.hc_button {
+			margin-right: 1px;
+			width: 80px;
+			height: 35px;;
+			align: center;
+		}
+		.hc_button:hover {
+			font-weight: bold;
+			background-color: #FF9;
+		}
+
+		/* Command Room button */
+		.cr_button {
+			height:30px;
+			width: 35px;
+		}
+		/* Command Scene button */
+		.cs_button {
+			height:30px;
+			width: 35px;
+		}
+		/* Command Timers button */
+		.ct_button {
+			height:30px;
+			width: 35px;
+		}
+		/* Command Config button */
+		.cc_button {
+			height:30px;
+			width: 35px;
+		}
+		
+/* Devices definitions */
+	
+	/* This dlabels descripts the text label left of a switch/dimmer device */
+	.dlabels {
+			color: #00F;
+			width: 95px;
+			height: 30px;
+			border-radius:3px;
+			margin-left: 1px;
+			margin-top: 3px;
+			margin-bottom: 3px;
+			background-color:#EEE;
+	}
+
+	/* buttons used in a dimmer/slider element . dbuttons are shared with scenes too*/
+	.dbuttons {
+			padding-right: 1px;
+			color: #00F;
+			height: 30px;
+			width: auto;
+			border-radius: 15px;
+			margin-left: 2px;
+			margin-right: 2px;
+			margin-top: 2px;
+			margin-bottom: 2px;
+			background-color:$button_bg_color;
+	}
+		
+	.dbuttons:hover {
+			font-weight: bold;
+			background-color: #FF9;
+	}
+		
+	.dbuttons:active  {
+			color:yellow;
+	} 
+		
+	.devrow {									/* device row */
+				background-color: #86F;
+	}
+		
+	.devrow:nth-child(odd) {
+				background-color: #9AF;
+	}
+		
+	/* This is the dimmer object consisting of dlabel, dbutton */
+	.dimrow {
+		background-color:#3AF;
+	}
+	
+	/* A switch element, so just ON/OFF button */
+	.switch {
+		background-color:#3AF;
+	}		
+
+	
+/* Scene definitions */
+	
+	.slabels {
+		margin_left: 5px;
+	}
+	.sval {
+		width: 70px;
+	}
+	
+/* A row of scene */
+	.scene {
+		background-color:$button_bg_color;	
+	}
+		
+	.scene:nth-child(odd) {
+		background-color:#9AF;
+	}
+
+/* Buttons for adding, removing and help */
+	
+	.new_button {
+			background-color:#6F6;
+			min-height:30px;
+			width:30px;
+	}
+		
+	.del_button {
+			background-color:#F33;
+			min-height:30px;
+			width:30px
+	}
+	.help_button {
+			background-color:#09F;
+			min-height:30px;
+			width:30px;
+	}
+	.play_button {
+			background-color:#0FF;
+			min-height:30px;
+			width:30px;
+	}
+				
+/* General Defnitions */
+		
+	/* The element making up the slider. The jquery definition is even much more complex*/
+	.slider {
+			margin-left: 3px;
+			margin-right: 3px;
+			width: 65%px;
+	}
+		
+	/* The value of a slider in an input field */
+	.slidval {
+			width: 20px;
+			height: 30px;
+			margin-left: 5%;
+	}
+	
+	.ui-slider .ui-slider-handle {
+		width: 50px;
+		height: 50px;
+		background: url(slider3.png) no-repeat;
+		overflow: hidden;
+		position: absolute;
+		top: -10px;
+		border-style: none;
+	}
+
+	.filler {
+			width:65%;
+	}
+	
+	/* This element in the slider button is used to mark the selected button once pressed */
+	.hover {
+			background-color:#FF6;
+	}
+		
+	.dragger {
+		text-shadow: #C00;
+		background-color:#FF6;
+	}
+		

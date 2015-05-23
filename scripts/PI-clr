@@ -1,0 +1,28 @@
+#!/bin/sh
+
+cp /dev/null /home/pi/log/LamPI-daemon.log
+cp /dev/null /home/pi/log/PI-run.log
+cp /dev/null /home/pi/log/PI-rcv.log
+cp /dev/null /home/pi/log/PI-rht03.log
+cp /dev/null /home/pi/log/PI-i2c.log
+cp /dev/null /home/pi/log/PI-1w.log
+cp /dev/null /home/pi/log/rrdtool.log
+
+cd /home/pi/www
+chgrp www-data *
+chmod +r *
+chmod g+w *
+
+cd /home/pi/exe
+chgrp www-data *
+chmod 755 *
+chmod u+s *
+
+cd /home/pi/daemon
+chgrp www-data *
+chmod 755 *
+//chmod u+s *
+
+cd /home/pi/log
+chgrp www-data *
+chmod 664 *

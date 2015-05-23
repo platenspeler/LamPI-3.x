@@ -1,0 +1,366 @@
+@charset "utf-8";
+/* CSS Document */
+
+		
+/* CORE HTML CSS */
+		body {
+			font-family		: comic sans ms; 
+			color			: #0F0F0F; 
+			background		: #505050;
+ 		}
+		
+		table {
+			width: 100%;
+			height:auto;
+		}
+		
+		tr {
+;			width: 600px;
+		}
+
+		td {
+/*			height: 38px; */
+		}
+		
+		p {
+ 			font-family:"Times New Roman";
+ 			font-size:20px;
+ 		}
+		
+		input#lbl {
+			width: 20px;
+		}
+		
+		.button {
+		}
+		
+		/* Prevent the field to get wider when hovering */
+		.button:hover, input[type="submit"]:hover, .button:active, input[type="submit"]:active, input[type="input"]:hover
+		{
+			font-weight: normal;
+			text-decoration: underline;
+		}
+
+/* DIVS for just one element */
+		#wrapper {
+			position: relative;
+			top: 20px;
+			width: 880px;
+			height: 620px;
+			margin: auto;
+			padding: 10px;
+			margin-top: 10px;
+			border: 1px solid black;
+			background-color:#60F;
+		}
+		
+/* The header header section defined */
+ 
+		#gui_header {
+			position: absolute;
+			top: 10px;
+			width: 860px;
+			height: 65px;
+			margin: auto;
+			padding: 10px;
+			margin-top: 0px;
+			border: 1px solid black;
+			text-align: center;
+			background-color: #3CF;
+		}
+		
+		/* This is the area where all the devices in the active room have their 
+			controls (switches and dimmers) defined
+		*/
+		#gui_content {
+			position: absolute;
+			top: 100px;
+			width: 710px;
+			height: 415px;
+			margin-left: 1px;
+			left: 10px;
+;			margin: auto;
+			padding: 10px;
+			margin-top: 10px;
+			border: 1px solid black;
+			text-align: center;
+			background-color:#70F;
+			overflow:scroll;
+		}
+				
+		#gui_menu {
+			position: absolute;
+			left: 750px;
+;			top: 110px;
+			width: 140px;
+			height: 430px;
+			background-color:#09F;
+			vertical-align: top;
+		}
+		
+		/* This is the area on the form where the user/program messages are displayed */
+		#gui_messages {
+			position: absolute;
+			top: 540px;
+			width: 860px;
+			height: 50px;
+			margin: auto;
+			padding: 10px;
+			margin-top: 10px;
+			border: 1px solid black;
+			text-align: center;
+			background-color:#3CF;
+		}
+
+		#addRoomForm {
+			background-color: #EEEEEE;
+    		color:#444;							/* ddeff1 */
+    		font-weight:bold;
+    		margin: 23px auto 0 auto;
+    		border-radius:10px;
+   			/* width: 500px; */
+			width: auto;
+    		box-shadow:  0 0 2px 2px #d9d9d9;
+		}
+		#addRoomForm label {
+		    padding-left:20px;
+		    width:150px;
+		    /* text-transform: uppercase; */
+		    display:inline-block;
+		}
+		
+		#addRoomForm input[type=text], 
+		#addRoomForm input[type=file],
+		#addRoomForm textarea {
+    		width: auto;
+		}
+		
+		
+/* CLASSES are for multiple elements */
+
+	/* Header buttons. */
+	
+		/* Room header */
+		.hr_button {
+			color: #00F;
+			width: 100px;
+			height: 35px;
+			border-radius: 3px;
+			/* margin-left: 5px; */
+			margin-bottom: 5px;
+			background-color: #EEE;
+		}
+		
+		/* Indicating a mouse over for a room button */
+		.hr_button:hover {
+			font-weight: bold;
+			background-color: #FF9; 
+		}	
+		
+		/* XXX needs reviewing */
+		.rroom {
+			width: 300 px;
+			margin-bottom: 10px;
+		}	
+	
+		/* Header Scene definition */
+		.hs_button {
+			width: 100px;
+			height: 35px;
+			margin-top: 5px;
+			margin-bottom: 5px;
+			background-color:#EEE;
+		}
+		
+		.hs_button:hover {
+			font-weight: bold;
+			background-color: #FF9;
+		}
+		
+		/* Header Timer definitions */
+		.ht_button {
+			color: #90F;
+			margin-top: 5px;
+			width: 100px;
+			height: 35px;
+			background-color: #EEE;
+		}
+		
+		.ht_button:hover {
+			font-weight: bold;
+			background-color: #FF9;
+		}
+			
+		/* Header Menu area definitions */
+		.hm_button {
+			margin-left: 10px;
+			width: 100px;
+			height: 35px;
+			/* align: center; */
+			vertical-align: top;
+			
+		}
+		.hm_button:hover {
+			font-weight: bold;
+			background-color: #FF9;
+			
+		}
+		
+		/* Header Configuration definitions */
+		.hc_button {
+			margin-left: 15px;
+			width: 100px;
+			height: 35px;;
+			align: center;
+		}
+		.hc_button:hover {
+			font-weight: bold;
+			background-color: #FF9;
+		}
+
+		/* Command Room button */
+		.cr_button {
+			height:35px;
+			width: 35px;
+		}
+		/* Command Scene button */
+		.cs_button {
+			height:35px;
+			width: 35px;
+		}
+		/* Command Timers button */
+		.ct_button {
+			height:35px;
+			width: 35px;
+		}
+		/* Command Config button */
+		.cc_button {
+			height:35px;
+			width: 35px;
+		}
+		
+	/* Devices definitions */
+	
+		/* This dlabels descripts the text label left of a switch/dimmer device */
+		.dlabels {
+			color: #00F;
+			width: 120px;
+			height: 30px;
+			border-radius:3px;
+			margin-left: 5px;
+			margin-top: 5px;
+			margin-bottom: 5px;
+			background-color:#EEE;
+		}
+
+		/* buttons used in a dimmer/slider element . dbuttons are shared with scenes too*/
+		.dbuttons {
+			padding-right: 5px;
+			color: #00F;
+			height: 33px;
+			width: auto;
+			border-radius: 15px;
+			margin-left: 3px;
+			margin-right: 2px;
+			margin-top: 5px;
+			margin-bottom: 5px;
+			background-color:#EEE;
+		}
+		
+		.dbuttons:hover {
+			font-weight: bold;
+			background-color: #FF9;
+		}
+		
+		.dbuttons:active  {
+			color:yellow;
+		} 
+		
+		.devrow {									/* device row */
+				background-color: #86F;
+		}
+		
+		.devrow:nth-child(odd) {
+				background-color: #9AF;
+		}
+		
+		/* This is the dimmer object consisting of dlabel, dbutton */
+		.dimrow {
+				background-color:#3AF;
+
+		}	
+		/* A switch element, so just ON/OFF button */
+		.switch {
+			background-color:#3AF;
+		}		
+
+	
+	/* Scene definitions */
+	
+		.slabels {
+			margin_left: 10px;
+		}
+		.sval {
+			width: 85px;
+		}
+		/* A row of scene */
+		.scene {
+			background-color:#3AF;	
+		}
+		
+		.scene:nth-child(odd) {
+			background-color:#9AF;
+		}
+
+	/* Buttons for adding, removing and help */
+	
+		.new_button {
+			background-color:#6F6;
+			min-height:30px;
+			width:30px;
+		}
+		
+		.del_button {
+			background-color:#F33;
+			min-height:30px;
+			width:30px
+		}
+		.help_button {
+			background-color:#09F;
+			min-height:30px;
+			width:30px;
+		}
+		.play_button {
+			background-color:#0FF;
+			min-height:30px;
+			width:30px;
+		}
+				
+	/* General Defnitions */
+		
+		/* The element making up the slider. The jquery definition is even much more complex*/
+		.slider {
+			margin-left: 25px;
+			margin-right: 5px;
+			width: 280px;
+		}
+		/* The value of a slider in an input field */
+		.slidval {
+			width: 30px;
+			height: 30px;
+			margin-left: 20%;
+		}
+		
+		.filler {
+			width:300px;
+		}
+		/* This element in the slider button is used to mark the selected button once pressed */
+		.hover {
+			background-color:#FF6;
+		}
+		
+		.dragger {
+			text-shadow: #C00;
+			background-color:#FF6;
+		}
+		

@@ -1,0 +1,135 @@
+<html>
+<head>
+    <meta charset="utf-8">
+<!--			******** VERSION FOR PHONEGAP/ANDROID ***************
+//
+// Author: M. Westenberg (mw12554 @ hotmail.com)
+// (c). M. Westenberg
+//
+// Version 1.0, Aug 20, 2013. Working version for ICS-1000. Initial configuration hardcoded in backend_main.php
+// Version 1.1, Sep 10, 2013. Added initial support for scenes, and implemented basic timer functions.
+// Version 1.2, Sep 12, 2013. Added Backup/Restore and implemented timer daemon 
+// Version 1.3, Sep 16, 2013. Version for Android added
+// Version 1.5, Oct 24, 2013. Version with websockets
+// Version 1.6, Nov 10, 2013. Backend improvements and adding support for handsets
+// Version 1.7, Dec 10, 2013. Working on the mobile app and jQuery Mobile
+// Version 1.8, Jan 18, 2014. Weather station support
+// Version 1.9, Mar 10, 2014, Support for wired sensors and logging
+// Version 2.0, Jun 15, 2014, Support for ZWave devices
+// Version 3.0, Mar 01, 2015, websockets and node.js 
+//
+// This is the code to animate the front-end of the application. The main screen is divided in 3 regions:
+// #gui_header: Here are the buttons for selecting the active rooms 
+// #gui_content: The main screen where user can change the values of the active devices for the curently
+//		active room. For the moment, the devices can have 2 types: switches and dimmers (see below)
+// #gui_mssages: This is the area where the function message("text") will output its messages
+// #gui_menu: This is the right side of the screen where we have the main menu where user can select the 
+//		main activities: <home> <rooms> <scenes> <timers> <settings>
+//
+// There can be up to 16 devices made for the ICS-1000. AT the moment the application is working fo the
+// ICS-1000 device of COCO/Klikaanklikuit and a UK company only. 
+//
+// For Mobile Devices
+// Note that the viewport width in portrait of the Galaxy S device is 320*452, display resolution is 480*640.
+// Unknown why the viewport is made smaller that th e actual pixels for the display (480 * 640).
+//
+-->
+
+	<title>LamPI 3.0 beta</title>  
+      
+    <!---  Temporary replaced with jmobile refs
+	<link href="/jquery-ui-1.10.3.custom/css/ui-lightness/jquery-ui-1.10.3.custom.css" rel="stylesheet">
+    <script src="/jquery-ui-1.10.3.custom/js/jquery-1.9.1.js"></script>
+	<script src="/jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.js"></script>
+    -->
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+    <link rel="stylesheet" href="http://mobipick.sustainablepace.net/css/mobipick.css" />
+    <link rel="stylesheet" href="styles/phone.css">
+    
+	<script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+    <script src="steel/tween-min.js"></script>
+    
+	<script src="http://mobipick.sustainablepace.net/external/xdate.js"></script>    
+    <script src="http://mobipick.sustainablepace.net/external/xdate.i18n.js"></script>        
+    <script src="http://mobipick.sustainablepace.net/js/mobipick.js"></script>
+    
+    <script src="LamPI-3.0.js"></script> 
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.8, maximum-scale=1.6 user-scalable=yes ">
+    
+<style type="text/css">	
+	/* Moved to a dedicated .css file */
+</style>
+</head>
+
+<body>  
+    
+<script type="text/javascript">
+
+var wr = location.pathname;
+var ind = wr.lastIndexOf('/');
+if ((ind != -1) && (ind != 0)) {
+	murl = wr.substr(0,ind)+"/";
+}
+else {
+	murl = 'http://192.168.2.53/';
+}
+s_controller = murl + 'backend_rasp.php';
+
+jqmobile=1;												// We use the jquerymobile libs and css settings
+phonegap=1;												// phonegap, we simulate Android PhoneGap version in browser
+dynamicIP=0;											// No dynamic IP, use a ficed IP for the daemon
+fake=0;
+debug=1;
+
+if (debug>=2) alert("dynamicIP is: "+dynamicIP+", s_controller is: "+s_controller);
+//if (debug>0) alert("controller: "+s_controller+"\nhost: "+location.host+"\nmurl: "+murl);
+
+//if (window.File && window.FileReader && window.FileList && window.Blob ) {
+	// Success
+//}
+//else {
+//	alert("The w3 File APIs are not fully supported in this browser.");
+//}
+
+// -----------------------------------
+// START THE MAIN PROGRAM
+// -----------------------------------
+start_LAMP(); 
+
+// Page Markup Code below
+</script>	
+   
+<div id="wrapper">
+<div data-role="page" id="page1">
+	<div data-role="header">
+    </div>
+	<div data-role="content">
+<!-- This is the top area with the menu tabs --> 	
+      	<div id="gui_menu">
+        </div>
+        <div id="gui_header">
+        </div>
+<!-- This is where the buttons for the lamps/dimmers go -->
+		<div id="gui_content">
+        	<div data-role="page" id="page2">
+			<div id="popup">
+			</div>
+			</div>
+        </div>
+	</div>       
+<!-- This is the message/comment area -->                         
+	<div id="gui_messages">
+	</div>
+    
+	<div data-role="footer">
+    </div>
+</div> 
+<!-- wrapper --> 
+
+
+
+<!-- popup -->
+</body>
+</html>

@@ -1,0 +1,47 @@
+@charset "utf-8";
+
+/* ------------------------------------------------------------------------------------ */
+/* SCSS Document for making generic LamPI .css files 									*/
+/* Author: M. Westenberg (mw12554@hotmail.com) 											*/
+/* ----------------------- SCCS variable definitions -----------------------------------*/
+
+$wrapper_bg_color: #BBB;			/* Background color of the wrapper */
+$wrapper_bg_picture: "";
+
+$main_bg_color: #CCC;				/* The main background color used for this Look and Feel */
+$main_nth_color: #AAA;
+$main_msg_color: #222;
+
+$content_background: #BBB;
+$message_background: #AAA;
+$header_background: #AAA;
+$menu_background: #AAA;
+
+$row_bg_color: #AAA;
+$row_nth_color: #888;
+
+$button_fg_color: #111;				/* Almost Black */
+$button_bg_color: #EEE;				/* Background color for the buttons */
+$button_hover_bg_color: #FF6;		/* How does the color of a button change if it is hovered */
+$button_hover_fg_color: #111;		/* Foreground color for button when hovered */
+$button_active_fg_color: yellow;	/* When a button is active it has this color */
+$button_active_bg_color: #111;
+
+$dlabel_fg_color: black;
+$dlabel_bg_color: #eee;
+$dbutton_fg_color: black;
+$dbutton_bg_color: #eee;
+
+$dimmer_background: #F3F178;		/* Color of the dimmer slider */
+$dimmer_handle: #ef2929;			/* Color of the dimmer handler */
+
+$thermo_background: #F66;			/* Color of the thermo slider */
+$thermo_handle: #ef2929;			/* Color of the thermo handler */
+
+$dialog_fg_color: #222;				/* also text in the content area */
+$dialog_bg_color: #DDD;
+
+/* ------------------------------------------------------------------------------------ */
+/* Import the generic template															*/
+
+@import '_classic-template';

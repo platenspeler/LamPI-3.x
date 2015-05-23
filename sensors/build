@@ -1,0 +1,36 @@
+#!/bin/sh
+
+HOMEDIR=/home/pi/sensors; export HOMEDIR
+cd $HOMEDIR
+
+echo "Making bmp085"
+cd $HOMEDIR/bmp085
+make
+sudo make install
+
+echo "Making dht11"
+cd $HOMEDIR/dht11
+make
+sudo make install
+
+echo "Making ds18b20"
+cd $HOMEDIR/ds18b20
+make
+sudo make install
+
+echo "Making landisgyr-e350"
+cd $HOMEDIR/landisgyr-e350
+make
+sudo make install
+
+echo "Making rht03"
+cd $HOMEDIR/rht03
+make
+sudo make install
+
+echo "Making sht21"
+cd $HOMEDIR/sht21
+make
+sudo make install
+
+

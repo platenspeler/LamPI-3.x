@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dwsync>
+<file name="query.py" server="192.168.2.51//home/pi/" local="130362683590523553" remote="130455202780000000" />
+<file name="README" server="192.168.2.51//home/pi/" local="130362683589923518" remote="130455202780000000" />
+<file name="Makefile" server="192.168.2.51//home/pi/" local="130448086566303219" remote="130455202780000000" />
+<file name="Makefile" server="192.168.2.53//home/pi/" local="130448086566303219" remote="130452147460000000" />
+<file name="query.py" server="192.168.2.53//home/pi/" local="130362683590523553" remote="130452147460000000" />
+<file name="README" server="192.168.2.53//home/pi/" local="130362683589923518" remote="130452147460000000" />
+<file name="Makefile" server="192.168.2.52//home/pi/" local="130448086560000000" remote="130690041670000000" />
+<file name="query.py" server="192.168.2.52//home/pi/" local="130362683590000000" remote="130690041670000000" />
+<file name="README" server="192.168.2.52//home/pi/" local="130362683580000000" remote="130690041680000000" />
+<file name="sensor.h" server="192.168.2.53//home/pi/" local="130452519439975737" remote="130452519430000000" />
+<file name="cJSON.c" server="192.168.2.53//home/pi/" local="130364160809478823" remote="130452147460000000" />
+<file name="cJSON.h" server="192.168.2.53//home/pi/" local="130364160809848845" remote="130452147460000000" />
+<file name="cJSON.c" server="192.168.2.51//home/pi/" local="130364160809478823" remote="130455202780000000" />
+<file name="cJSON.h" server="192.168.2.51//home/pi/" local="130364160809848845" remote="130455202780000000" />
+<file name="sensor.h" server="192.168.2.51//home/pi/" local="130452519439975737" remote="130455202780000000" />
+<file name="dht11.c" server="192.168.2.53//home/pi/" local="130442754220735246" remote="130452147460000000" />
+<file name="dht11.c" server="192.168.2.51//home/pi/" local="130442754220735246" remote="130455202780000000" />
+<file name="cJSON.c" server="192.168.2.52//home/pi/" local="130364160800000000" remote="130690041670000000" />
+<file name="cJSON.h" server="192.168.2.52//home/pi/" local="130364160800000000" remote="130690041670000000" />
+<file name="dht11.c" server="192.168.2.52//home/pi/" local="130442754220000000" remote="130690041670000000" />
+<file name="sensor.h" server="192.168.2.52//home/pi/" local="130452519430000000" remote="130690041680000000" />
+<file name="cJSON.c" server="192.168.2.55//home/pi/" local="130364160800000000" remote="130509660280000000" />
+<file name="cJSON.h" server="192.168.2.55//home/pi/" local="130364160800000000" remote="130509660280000000" />
+<file name="dht11.c" server="192.168.2.55//home/pi/" local="130442754220000000" remote="130509660280000000" />
+<file name="Makefile" server="192.168.2.55//home/pi/" local="130448086560000000" remote="130509660280000000" />
+<file name="query.py" server="192.168.2.55//home/pi/" local="130362683590000000" remote="130509660280000000" />
+<file name="README" server="192.168.2.55//home/pi/" local="130362683580000000" remote="130509660280000000" />
+<file name="sensor.h" server="192.168.2.55//home/pi/" local="130452519430000000" remote="130509660280000000" />
+<file name="dht22.c" server="192.168.2.53//home/pi/" local="130506936395121165" remote="130506936420000000" />
+<file name="test.dht22" server="192.168.2.53//home/pi/" local="130443178666926526" remote="130452147460000000" />
+<file name="dht22.c" server="192.168.2.52//home/pi/" local="130690738683708035" remote="130690738880000000" />
+<file name="test.dht22" server="192.168.2.52//home/pi/" local="130443178660000000" remote="130690041680000000" />
+<file name="dht22.c" server="192.168.2.51//home/pi/" local="130455023273344436" remote="130455202780000000" />
+<file name="test.dht22" server="192.168.2.51//home/pi/" local="130443178666926526" remote="130455202780000000" />
+<file name="dht22.c" server="192.168.2.55//home/pi/" local="130506936395121165" remote="130509660280000000" />
+<file name="test.dht22" server="192.168.2.55//home/pi/" local="130443178660000000" remote="130509660280000000" />
+</dwsync>

@@ -1,0 +1,45 @@
+#!/bin/sh
+#
+# The PI-log program is run every day at 02.00 hrs and will move the logfiles.
+# As logfiles can become VERY large and then influence the system, we keep
+# only the last 4 logfiles and every day we move the log-file to an archive <logfile>.x.log
+# and we delete the last logfile nr. 5 every day.
+#
+WWWDIR="/home/pi/www"; export WWWDIR
+SCRIPTDIR="/home/pi/scripts"; export SCRIPTDIR
+#
+LOGDIR="/home/pi/log"; export LOGDIR
+#
+cd $LOGDIR
+for i in LamPI-daemon LamPI-gate PI-rcv PI-run PI-1w PI-rht03 PI-i2c PI-gate PI-node TemPI PI-energy
+do
+	mv $LOGDIR/$i.3.log $LOGDIR/$i.4.log
+	mv $LOGDIR/$i.2.log $LOGDIR/$i.3.log
+	mv $LOGDIR/$i.1.log $LOGDIR/$i.2.log
+	mv $LOGDIR/$i.log   $LOGDIR/$i.1.log
+    cp /dev/null $LOGDIR/$i.log
+done
+
+# Required, as also the www server is writing log files. LamPI-daemon is running as pi/pi
+# All group permissons are set for the www daemon as well. Running as www-data/www-data
+# when files are owned by pi or www-data ancd group is set to www-data all is fine.
+#
+chmod 664 $LOGDIR/*.log
+sudo chgrp www-data $LOGDIR/*.log
+
+# Kill PHP based daemons. crontab will restart them or we do manually below.
+pkill php
+# Kill the LamPI-receiver
+pkill LamPI-receiver
+#
+
+#
+# Restart the daemons
+#
+cd $SCRIPTDIR
+
+./PI-node -r
+#./PI-run -r
+#./PI-rcv -r
+
+# echo "PI-log:: All log files moved"

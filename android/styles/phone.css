@@ -1,0 +1,451 @@
+@charset "utf-8";
+/* CSS Document */
+
+		
+/* CORE HTML CSS */
+		
+		body {
+			/* font-family		: comic sans ms; */
+			color			: #0F0F0F; 
+			background		: #505050;
+ 		}
+		
+		table {
+			width: 100%;
+			height:auto;
+		}
+		
+		tr {
+			
+		}
+
+		td {
+			color:#000;
+		}
+		
+		p {
+ 			/* font-family:"Times New Roman"; */
+ 			/* font-size:16px; */
+ 		}
+		
+		input#lbl {
+			width: 16px;
+		}
+		
+		.button {
+		}
+		
+		/* Prevent the field to get wider when hovering */
+		.button:hover, input[type="submit"]:hover, .button:active, input[type="submit"]:active, input[type="input"]:hover
+		{
+			font-weight: normal;
+			text-decoration: underline;
+		}
+
+/* DIVS for just one element */
+		#wrapper {
+			position: fixed;
+			top: 0px;
+			width:auto;
+			min-width:360px;
+			max-width:900px;
+			height: auto;
+			min-height: 533px;
+			margin: auto;
+			padding: 1px;
+			margin-top: 1px;
+			border: 1px solid black;
+			background-color:#60F;
+		}
+		
+/* The header header section defined */
+		#gui_menu {
+			position: relative;
+			top: 1px;
+			width: 98%;
+			height: auto;
+			margin: auto;
+			padding-bottom:1px;
+			margin_bottom:1px;
+			border: 1px solid black;
+			background-color:#09F;
+		}
+		
+		#gui_header {
+			position: relative;
+			top: 1px;
+			width: 98%;
+			height: auto;
+			margin: auto;
+			margin-top: 0px;
+			border: 1px solid black;
+			text-align: center;
+			background-color: #3CF;
+		}
+		
+		/* This is the area where all the devices in the active screen have their 
+			controls (switches and dimmers) defined
+		*/
+		#gui_content {
+			position: relative;
+			top: 1px;
+			width: 98%;
+			height: 415px;
+			margin: auto;
+			padding: 1px;
+			margin-top: 1px;
+			border: 1px solid black;
+			text-align: center;
+			color:#FFF;
+			background-color:#39F;
+			overflow:auto;
+		}
+
+		/* This is the area on the form where the user/program messages are displayed */
+		#gui_messages {
+			position: relative;
+			top: 1px;
+			width: 98%;
+			height: 50px;
+			margin: auto;
+			padding: 1px;
+			margin-top: 1px;
+			border: 1px solid black;
+			text-align: center;
+			background-color:#3CF;
+		}
+
+		#addRoomForm {
+			background-color: #316091;
+    		color:#FFF;							/* ddeff1 */
+    		font-weight:bold;
+    		margin: 23px auto 0 auto;
+    		border-radius:10px;
+   			width: 394px;
+    		box-shadow:  0 0 2px 2px #d9d9d9;
+		}
+		#addRoomForm label {
+		    padding-left:26px;
+		    width:150px;
+		    text-transform:uppercase;
+		    display:inline-block;
+		}
+		
+		#addRoomForm input[type=text], 
+		#addRoomForm input[type=file],
+		#addRoomForm textarea {
+    		width: 300px;
+		}
+		
+		
+/* CLASSES are for multiple elements */
+
+	/* Header buttons. */
+	
+		/* Room header */
+		.hr_button {
+			color: #00F;
+			width: 80px;
+			height: 35px;
+			border-radius: 3px;
+			/* margin-left: 5px; */
+			margin-bottom: 5px;
+			background-color: #EEE;
+		}
+		
+		/* Indicating a mouse over for a room button */
+		.hr_button:hover {
+			font-weight: bold;
+			background-color: #FF9; 
+		}	
+		
+		/* XXX needs reviewing */
+		.rroom {
+			width: 200 px;
+			margin-bottom: 10px;
+		}	
+	
+		/* Header Scene definition */
+		.hs_button {
+			color: #00F;
+			width: 80px;
+			height: 35px;
+			margin-top: 5px;
+			margin-bottom: 5px;
+			background-color:#EEE;
+		}
+		
+		.hs_button:hover {
+			font-weight: bold;
+			background-color: #FF9;
+		}
+		
+		/* Header Timer definitions */
+		.ht_button {
+			color: #00F;
+			margin-bottom: 5px;
+			width: 80px;
+			height: 35px;
+			background-color: #EEE;
+		}
+		
+		.ht_button:hover {
+			font-weight: bold;
+			background-color: #FF9;
+		}
+			
+		/* Header Menu area definitions */
+		.hm_button {
+			color: #00F;
+			width: 80px;
+			height: 35px;
+			border-radius: 3px;	
+			/* margin-left: 1px; */
+			/* align: center; */
+		}
+		.hm_button:hover {
+			font-weight: bold;
+			background-color: #FF9;
+		}
+		
+		/* Header Configuration definitions */
+		.hc_button {
+			margin-left: 15px;
+			width: 80px;
+			height: 35px;;
+			align: center;
+		}
+		.hc_button:hover {
+			font-weight: bold;
+			background-color: #FF9;
+		}
+
+		/* Command Room button. Can be Add/Delete/Help*/
+		.cr_button {
+			height:30px;
+			width: 35px;
+		}
+		/* Command Scene button. Can be Add/Delete/Help */
+		.cs_button {
+			height:30px;
+			width: 35px;
+		}
+		/* Command Timers button. Add/Delete/Help */
+		.ct_button {
+			height:30px;
+			width: 35px;
+		}
+		/* Command Config button. Help buttons */
+		.cc_button {
+			height:30px;
+			width: 35px;
+		}
+		
+	/* Devices definitions */
+	
+		/* This dlabels descripts the text label left of a switch/dimmer device */
+		.dlabels {
+			color: #00F;
+			width: 110px;
+			height: 30px;
+			border-radius:3px;
+			margin-left: 1px;
+			margin-top: 3px;
+			margin-bottom: 3px;
+			background-color:#EEE;
+		}
+
+		/* buttons used in a dimmer/slider element . dbuttons are shared with scenes too*/
+		.dbuttons {
+			padding-right: 2px;
+			color: #00F;
+			height: 33px;
+			max-width: 80px;
+			border-radius: 15px;
+			margin-left: 3px;
+			margin-right: 2px;
+			margin-top: 3px;
+			margin-bottom: 3px;
+			background-color:#EEE;
+		}
+		
+		.dbuttons:hover {
+			font-weight: bold;
+			background-color: #FF9;
+		}
+		
+		.dbuttons:active  {
+			color:yellow;
+		} 
+		
+		.devrow {									/* device row */
+				background-color: #86F;
+		}
+		
+		.devrow:nth-child(odd) {
+				background-color: #9AF;
+				width: auto;
+		}
+		
+		/* This is the dimmer object consisting of dlabel, dbutton */
+		.dimrow {
+				background-color:#3AF;
+				height:auto;
+				width: auto;
+		}	
+		/* A switch element, so just ON/OFF button */
+		.switch {
+			background-color:#3AF;
+		}		
+
+	
+	/* Scene definitions */
+	
+		.slabels {
+			margin_left: 3px;
+		}
+		/*
+		.sval {
+			width: 75px;
+		}*/
+		/* A row of scene */
+		.scene {
+			background-color:#3AF;	
+		}
+		
+		.scene:nth-child(odd) {
+			background-color:#9AF;
+		}
+
+	/* Buttons for adding, removing and help */
+	
+		.new_button {
+			background-color:#6F6;
+			min-height:30px;
+			width:30px;
+		}
+		
+		.del_button {
+			background-color:#F33;
+			min-height:30px;
+			width:30px
+		}
+		.help_button {
+			background-color:#09F;
+			min-height:30px;
+			width:30px;
+		}
+		.play_button {
+			background-color:#0FF;
+			min-height:30px;
+			width:30px;
+		}
+				
+	/* General Defnitions */
+		
+		/* The element making up the slider. The jquery definition is even much more complex*/
+		/*
+		.slider {
+			margin-left: 3px;
+			margin-right: 3px;
+			width: 150px;
+		}
+		*/
+		/* The value of a slider in an input field */
+		/*
+		.slidval {
+			width: 25px;
+			height: 30px;
+			margin-left: 10%;
+		}
+		*/
+		.ui-slider-input {
+    		display:none 
+		}
+
+		.ui-slider {
+			margin-top: 1px;
+			margin-bottom:3px;
+			width:70%px;
+			height:40px;
+		}
+		.ui-slider-track {
+			
+			margin-top: -1px;
+			margin-bottom: 1px;
+		}
+		.filler {
+			max-width:80%;
+		}
+		
+		/* This element in the slider button is used to mark the selected button once pressed */
+		.hover {
+			background-color:#FF6;
+		}
+		
+		.dragger {
+			text-shadow: #C00;
+			background-color:#FF6;
+		}
+		
+		
+		/* MobyPick CSS changes */
+		/* Mobypick knows very little configuration possibilities, but */
+		/* some of these settings will adjust color as a minimum */
+		
+		.mobipick-main {
+			background-color:#39F;
+		}
+		.mobipick-date-formatted {
+			background-color:#39F;
+		}
+		.mobipick-main ul {
+			background-color:#39F;
+		}
+		.mobipick-main li {
+			background-color:#60F;
+		}
+		
+		.mobipick-main a {
+        	background-color:#DDD;
+		}
+		.mobipick-groups>li {
+			background-color:#DDD;
+		}
+		li.mobipick-inline-block {
+			background-color:#DDD;
+		}
+		li.mobipick-hide {
+        	background-color:#DDD;
+		}
+
+		.mobipick-groups a {
+			background-color:#60F;
+		}
+		.mobipick-groups input {
+			background-color:#60F;
+		}
+		/* Accept and cancel */
+		.mobipick-buttons {
+        	background-color:#60F;
+		}
+		.mobipick-buttons>li {
+			background-color:#60F;
+		}
+		
+		/* Initial login/IP popup */
+		/* Used by PhoneGAP */
+		
+		.popform {
+			width: auto;
+			min-width: 200px;
+			max-width: 500px;
+		}
+		.pops {
+			width: auto;
+			min-width: 120px;
+		}
+		.ui-content {
+			min-width: 150px;
+		}
+		

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dwsync>
+<file name="Makefile" server="192.168.2.51//home/pi/" local="130376503500000000" remote="130506979930000000" />
+<file name="README.TXT" server="192.168.2.51//home/pi/" local="130342090230000000" remote="130506979940000000" />
+<file name="sniffer.c" server="192.168.2.51//home/pi/" local="130506985448576336" remote="130506979950000000" />
+<file name="sniffer.c" server="192.168.2.53//home/pi/" local="130525812800500485" remote="130570874680000000" />
+<file name="LamPI.h" server="192.168.2.53//home/pi/" local="130507856947446592" remote="130507857280000000" />
+<file name="Makefile" server="192.168.2.53//home/pi/" local="130376503509128998" remote="130441969120000000" />
+<file name="cJSON.h" server="192.168.2.53//home/pi/" local="130342089952739121" remote="130441969080000000" />
+<file name="cJSON.c" server="192.168.2.53//home/pi/" local="130342089825892172" remote="130441969080000000" />
+<file name="cJSON.c" server="192.168.2.51//home/pi/" local="130342089820000000" remote="130506979880000000" />
+<file name="cJSON.h" server="192.168.2.51//home/pi/" local="130342089950000000" remote="130506979910000000" />
+<file name="LamPI.h" server="192.168.2.51//home/pi/" local="130507856947446592" remote="130506979920000000" />
+<file name="transmitter.c" server="192.168.2.51//home/pi/" local="130492473010000000" remote="130506979960000000" />
+<file name="cJSON.c" server="192.168.2.52//home/pi/" local="130342089825892172" remote="130399736300000000" />
+<file name="cJSON.h" server="192.168.2.52//home/pi/" local="130342089952739121" remote="130399736300000000" />
+<file name="LamPI.h" server="192.168.2.52//home/pi/" local="130403406618061361" remote="130403408070000000" />
+<file name="Makefile" server="192.168.2.52//home/pi/" local="130376503509128998" remote="130399736300000000" />
+<file name="README.TXT" server="192.168.2.52//home/pi/" local="130342090235425964" remote="130399736300000000" />
+<file name="sniffer.c" server="192.168.2.52//home/pi/" local="130405569407072142" remote="130439624930000000" />
+<file name="transmitter.c" server="192.168.2.52//home/pi/" local="130357670396969629" remote="130399736300000000" />
+<file name="README.TXT" server="192.168.2.53//home/pi/" local="130342090235425964" remote="130441969130000000" />
+<file name="transmitter.c" server="192.168.2.53//home/pi/" local="130525728987731743" remote="130570874680000000" />
+<file name="cJSON.c" server="192.168.2.55//home/pi/" local="130342089820000000" remote="130509660470000000" />
+<file name="cJSON.h" server="192.168.2.55//home/pi/" local="130342089950000000" remote="130509660470000000" />
+<file name="LamPI.h" server="192.168.2.55//home/pi/" local="130507856947446592" remote="130509660470000000" />
+<file name="Makefile" server="192.168.2.55//home/pi/" local="130376503500000000" remote="130509660470000000" />
+<file name="README.TXT" server="192.168.2.55//home/pi/" local="130342090230000000" remote="130509660470000000" />
+<file name="sniffer.c" server="192.168.2.55//home/pi/" local="130525812800500485" remote="130574554070000000" />
+<file name="transmitter.c" server="192.168.2.55//home/pi/" local="130764135478919350" remote="130768422740000000" />
+<file name="sniffer.c" server="westenberg.org//home/pi/" local="130506985448576336" remote="130525719110000000" />
+<file name="transmitter.c" server="westenberg.org//home/pi/" local="130525728987731743" remote="130525729850000000" />
+<file name="transmitter.c" server="192.168.2.54//home/pi/" local="130764135478919350" remote="130764135500000000" />
+</dwsync>

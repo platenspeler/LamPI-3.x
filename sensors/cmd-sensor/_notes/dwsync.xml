@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dwsync>
+<file name="Makefile" server="192.168.2.53//home/pi/" local="130689208950992096" remote="130689359100000000" />
+<file name="sensor.h" server="192.168.2.53//home/pi/" local="130689359700944454" remote="130689359720000000" />
+<file name="cJSON.c" server="192.168.2.53//home/pi/" local="130689206471401056" remote="130689359090000000" />
+<file name="cJSON.h" server="192.168.2.53//home/pi/" local="130689206471441063" remote="130689359090000000" />
+<file name="sensor.c" server="192.168.2.53//home/pi/" local="130689970414169929" remote="130689970450000000" />
+<file name="temperature.sh" server="192.168.2.53//home/pi/" local="130690038840000000" remote="130690038840000000" />
+<file name="ping.sh" server="192.168.2.53//home/pi/" local="130690026510000000" remote="130690026510000000" />
+<file name="cJSON.c" server="192.168.2.52//home/pi/" local="130689206471401056" remote="130690041630000000" />
+<file name="cJSON.h" server="192.168.2.52//home/pi/" local="130689206471441063" remote="130690041630000000" />
+<file name="Makefile" server="192.168.2.52//home/pi/" local="130689208950992096" remote="130690041630000000" />
+<file name="ping.sh" server="192.168.2.52//home/pi/" local="130690026510000000" remote="130690041630000000" />
+<file name="sensor.c" server="192.168.2.52//home/pi/" local="130695946714879875" remote="130695947010000000" />
+<file name="sensor.h" server="192.168.2.52//home/pi/" local="130689359700944454" remote="130690041630000000" />
+<file name="temperature.sh" server="192.168.2.52//home/pi/" local="130689971400000000" remote="130690041630000000" />
+<file name="sensor.c" server="192.168.2.54//home/pi/" local="130719652109539151" remote="130719653150000000" />
+<file name="cJSON.c" server="192.168.2.54//home/pi/" local="130689206471401056" remote="130719649800000000" />
+<file name="cJSON.h" server="192.168.2.54//home/pi/" local="130689206471441063" remote="130719649810000000" />
+<file name="Makefile" server="192.168.2.54//home/pi/" local="130689208950992096" remote="130719649810000000" />
+<file name="ping.sh" server="192.168.2.54//home/pi/" local="130690026510000000" remote="130719649810000000" />
+<file name="sensor.h" server="192.168.2.54//home/pi/" local="130689359700944454" remote="130719649810000000" />
+<file name="temperature.sh" server="192.168.2.54//home/pi/" local="130690038840000000" remote="130720385720000000" />
+</dwsync>

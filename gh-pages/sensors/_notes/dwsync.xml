@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dwsync>
+<file name="no_bus_sensors.html" server="192.168.2.53//home/pi/" local="130506832593274842" remote="130565807600000000" />
+<file name="wired_sensors.html" server="192.168.2.53//home/pi/" local="130506833980615511" remote="130565807600000000" />
+<file name="dallas_sensors.html" server="westenberg.org//home/pi/" local="130522383883805410" remote="130522384050000000" />
+<file name="dallas_sensors.html" server="192.168.2.53//home/pi/" local="130522385245867076" remote="130565807240000000" />
+<file name="energy_sensors.html" server="192.168.2.53//home/pi/" local="130506833043537866" remote="130565807240000000" />
+<file name="i2c_sensors.html" server="192.168.2.53//home/pi/" local="130506829519683768" remote="130565807580000000" />
+<file name="weather_sensors_msg_format.html" server="192.168.2.53//home/pi/" local="130506828161710693" remote="130565807600000000" />
+<file name="dallas_sensors.html" server="192.168.2.55//home/pi/" local="130522385245867076" remote="130606410790000000" />
+<file name="energy_sensors.html" server="192.168.2.55//home/pi/" local="130506833043537866" remote="130606410790000000" />
+<file name="i2c_sensors.html" server="192.168.2.55//home/pi/" local="130506829519683768" remote="130606410930000000" />
+<file name="no_bus_sensors.html" server="192.168.2.55//home/pi/" local="130506832593274842" remote="130606410960000000" />
+<file name="weather_sensors_msg_format.html" server="192.168.2.55//home/pi/" local="130506828161710693" remote="130606410960000000" />
+<file name="wired_sensors.html" server="192.168.2.55//home/pi/" local="130506833980615511" remote="130606410960000000" />
+</dwsync>

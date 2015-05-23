@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Razberry Z-Wave controller</title>
+</head>
+
+<body>
+
+<h1>Z-WAVE Gateway</h1>
+<p>As described before, the LamPI system was designed for- and initially worked only for 433MHz based devices. Over the last months, devices based on the Z-Wave system working on 868MHz (Europe) have dropped in price and are beginning to become an alternative to these cheaper 433MHz switches and dimmers. As the communication between Z-Wave components is 2 reliable, all Z-Wave devices have a transmitter on board and can report their current status back to the server, I decided to look for a way to integrate the 868 MHz system into my LamPI environment.</p>
+<p>Also, Z-Wave networks make a mesh network with means that every Z-Wave device acts as a bridge to other Z-Wave devices. This extends the network in a flexible way as devices that are located further away from your controller devices will use intermediate Z-Wave devices to receive and transmit messages through the network to the controller.</p>
+<p>If you start reading up on the Razberry documentation, than there are several terms used that are used in this context:</p>
+<ul>
+  <li>Razberry. This is the setup board for the Raspberry. It comes with software/firmware and you can download software. In the context of LamPI, when we speak of Razberry we mean the Raspberry + Razberry combo in one machine.</li>
+  <li>Z-Wave. This is protocol used by the series of devices that we can manage with the Razberry. Z-Wave is a &quot;standard&quot; used by many manufacturers of switches, dimmers, thermostats and sensors so that their equipment can be used by others.</li>
+  <li>Z-Way. This is the software library used by the Razberry hardware. It is developed and maintained by z-wave.me company.</li>
+</ul>
+<h2>Architecture</h2>
+<p>The architecture we are going to use for LamPI is as follows: A dedicated Raspberry PI with Razberry controller will be included in the LamPI system and this controller will only handle Z-Wave devices, sensors plugs etc. In principle it is quite good possible to use the Raspberry/Z-Wave combo for other work as well, even for controlling 433MHz devices, as the Razberry board uses only the first 6 or 8 pins on the Raspberry P1 connector. </p>
+<p>&nbsp;</p>
+<p><img src="razberry_arch.jpg" width="928" height="503"></p>
+<p>The way that we use the Razberry in our network is basically the same as we use the LamPI-receiver in a 433MHz configuration. We can have one or more Raspberry systems running a LamPI-receiver program that will receive device commands from the LamPI-daemon and send incoming sensor values (wireless or through connected sensors) to the LamPI-daemon.</p>
+<p><strong>Difference</strong>: The LamPI-receiver program communicates to the daemon over a socket connection and is at the moment of writing asynchronous. Meaning that sensors can send their value to the daemon over a socket and the daemon will deal with it and dispatch to connect userinterface(s). The new interface in Z-Way is not yet that far, but the new Home Automation interface of Z-Way offers possibilities to add your own modules.</p>
+<h2>Hardware Installation</h2>
+<p>The hardware installation is a piece of cake. Plug the Razberry Z-Wave board on the P1 connector of the Raspberry device. Make sure that the pins are aligned at the right side of both connectors. You're done.</p>
+<h2>Software Installation</h2>
+<p>Login on your Raspberry over a terminal interface and install the Razberry package with he following command.</p>
+<ol>
+  <li>sudo apt-get update</li>
+  <li>sudo apt-get upgrade</li>
+  <li>wget -q -O - http://razberry.z-wave.me/install | sudo bash</li>
+</ol>
+<p>Probably best to reboot the device now with 'sudo reboot'.</p>
+<h2>Run the basic (blue) User interface</h2>
+<p>The Z-way software uses two ports on the Razberry system, 8083 and 8084. The administration interface is at http://192.168.1.xx:8084 and can be used to update the system, restart the software or reboot the system. Port 8083 is used to run the GUI for controlling devices.</p>
+<p>Start the basic User interface in the browser. http://192.168.1.xx:8083 where 192.168.1.xx is the (=your) IP address of the raspberry on your network. If you do not know the IP address of your Razberry, run the following command from a command terminal:</p>
+<p><code>&gt; sudo ifconfig</code></p>
+<p> and look for the IP address under the eth0 or wlan0 section of the output. When the User interface is started, select the good old expert GUI and select then the &quot;network&quot; tab. Now start the interview for the newly connected Z-Wave device. As soon as the new device is recognized and initialized, remember the device number as we will need it in LamPI to identify the device by its number ID.</p>
+<h2>Use the OpenRemote URL Interface for LamPI</h2>
+<p>The OpenRemote interface would be the obvious choice for bulding a Z-Wave gateway application. but ....</p>
+<h3>NOTE: zautomation is far from perfect at the moment of writing (Nov 2014). Once every 6 minutes or so in my setup zautomation starts consuming all cpu time for 2.5 minutes. Effectively, everything freezes for 2.5 minutes. At the moment of writing I would advise to use an alternative interface such as ZwaveAPI (see next section).....</h3>
+<p>The Zwave webinterface hides a lot of implementation details from the user. However, this interface is still rather complex and therefore the solution would be to shield all the command-line -like details from the user. As of release 1.5 the Razberry software contains support for OpenRemote through a URL (JSon) interface.</p>
+<p>As you can see, there are in the interface description below no general management commands available for discovery of the network architecture, interviewing new devices etc. Only commands to get a certain value from a device and to set a certain values.</p>
+<p><code>http://192.168.2.102:8083/ZAutomation/OpenRemote/SwitchMultilevelSet/2/0/30</code></p>
+<p>The webserver will return &quot;30&quot; (including the quotes!). This will set my Fibaro dimmer with device number 2 (and service index 0)  to 30% luminance. As you can see this is hardly an interface for novice or even somewhat advanced users.</p>
+<p>On the z-wave.me website the following commands are specified (copy). OpenRemote API was introduced in version Z-Way 1.5.0 controller. The current version is version 1.7.2 and you are recommended to use that version. To control devices there are several HTTP commands:<br>
+  <br>
+  <a href="http://IP:8083/ZAutomation/OpenRemote/Command/N/I/param">http://IP:8083/ZAutomation/OpenRemote/Command/N/I/param</a><br>
+  IP - Address of the controller RaZberry<br>
+  Command - Control command<br>
+  N - device Number of Z-Wave<br>
+  I  - Inside a device can be physically multiple devices (channels), for  example 2 relay or temperature sensor, motion sensor, light sensor. The  Instance parameter is a channel number within the device. If a device  has only one physical device, this option is 0.<br>
+  param - Parameter, which is used with some teams, for example to set the dimmer 50%<br>
+  <br>
+  Teams (commands):<br>
+  1) SwitchBinaryOn/N/I - Enables device<br>
+  2) SwitchBinaryOff/N/I - Off device<br>
+  3) SwitchBinaryStatus/N/I - Show on or off the device (on/off)<br>
+  4) SwitchMultilevelSet/N/I/param - Open the blinds or dimming light level, param - dimming level, for example 50<br>
+  5) SwitchMultilevelLevel/N/I - Show the percentage of open blinds or  light<br>
+  6) SwitchMultilevelStatus/N/I - Show dimmer on/off, blinds open/closed<br>
+  7) AlarmStatus/N - Show whether the alarm ,"on" alarm means<br>
+  8)  SensorBinaryStatus/N/I/Type - Show for determining whether a binary  sensor (opening movement, leakage), "on" means work. <br>
+  Type - the Type of  sensor is usually equal to 1<br>
+  9) ThermostatLevel/N - Show temperature which must support thermostat<br>
+  10) ThermostatSet/N/param - Set temperature, which must support a thermostat, param - temperature<br>
+  11)  ThermostatSetMode/N/Mode - Set the thermostat mode Off, Heat, Cool,  Auto, Auxiliary, Resume, Fan Only, Furnace, Dry Air, Moist Air, Auto  Change Over, Heat Energy Save, Save Energy Save Cool, Heat Away, Away,  Cool, Full Power, Manufacturer Specific, Low Auto, On Low, Auto, High,  On High, Auto Medium, On Medium<br>
+  12) ThermostatModeName/N - Show the name of the regime, which is now set<br>
+  13) BatteryLevel/N - Show charge batteries<br>
+  14) MeterLevel/N/I/S - Show electricity consumption. S=0 for kWh; S=2 Watts<br>
+  15) MeterReset/N/I - read Zero power consumption<br>
+  16) TemperatureLevel/N/I - Show temperature<br>
+  17) HumidityLevel/N/I - Show humidity<br>
+  18) SensorMultilevel/N/I/S Is indication of the sensor S - conditional number of the sensor in the Z-Way<br>
+  19) DoorLock/N - Close castle<br>
+20) DoorUnlock/N - Open the lock</p>
+<p>This interface lacks proper documentation and examples... Therefore we like to explore another option: The standard Z-Way programming interface (JavaScript based).</p>
+<h2>The ZwaveAPI interface</h2>
+<p>This interface is the traditional &quot;blue&quot; interface for controlling both devices as well the Z-Wave network. The interface is not used for Javascript home automation but it is much more reliable than the zautomation interface at the moment of writing this page (Dec 2015).</p>
+<p>The LamPI-gate.php daemon which is used to manage the gateway function in LamPI between the master node and the Z-Wave gateway machine (Raspberry) is written in PHP and uses the ZwaveAPI interface in combination with get() and set() commands to get near-real-time behaviour for the Z-Wave devices in the network.</p>
+<p>PHP might not be the best choice, as it does not have the same networking integration for websockets and node.js, but it is the main server language for LamPI at the moment </p>
+<h2>The default Json Interface</h2>
+<p>The predecessor of the OpenRemote interface was this interface. Although the interface looks a lot like the OpenRemote interface it is less elegant ans uses a mix of URL-type words separated by &quot;/&quot; and other fiels separators (like { ). However, not all functions have been made available in the OpenRemote interface yet so unless we make our own commands we probably have to use parts of the Json interface for the moment.</p>
+<p>&nbsp;</p>
+<h2>Notifications/Callbacks</h2>
+<p>The UI web interface described above comes in very handy if we want to get or set the status of a particular device. However, it does not allow us to receive a status update of one of the connected devices. For example, if the user would use a wall switch to switch a lamp, the LamPI software would not know this. Of course we can check the status of a LamPI every now and then but this requires more compute power as we normally want.</p>
+<p>There are several interfaces available to manage the Z-Way software, but the Z-Way software itself also uses polling (with the get() command) in order to update the internal datastructure of the Z-Way engine with the latest values of the devices. </p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<h1>LamPI-gate</h1>
+<p>The first interface built for the Razberry gateway machine (a RaspberryPI) was written in php code. The LamPI-gate.php daemon was running on the same machine where the Razberry board was installed. BTW this is not a functional requirement, LamPI does not care where the LamPI-gate.php process is running, but merely a performance requirement.</p>
+<p>&nbsp;</p>
+<h2>Installation steps</h2>
+<li>Make sure to empty the /opt/z-way-server/automation directory, and make an empty main.js file in that directory. This is because the OpenRemote automation files will consume too much cpu time (they bleck the cpu every 3 minutes or so for at least 2 minutes long)
+<li>Make sure, expecially for sensors to refer the alarms to the Raspberry device</li>
+</li></p>
+<h2>How it works</h2>
+<p>The LamPI-gate.php file does 2 major tasks:</p>
+<li>For every device in the z-wave tree it will look for its major capabilities and if it is a sensor it will report some major values.</li>
+<li>For every device which is also in our LamPI devices structure it will first read the latest/current vlue from the Z-wave device and compare it to the value used in the LamPI gui. After that it tries to bring the  values of both worlds in line.</li>
+<h2>How to read device and sensor values</h2>
+<p>Most Z-wave devices need to be polled for a changed value. Changes might be pushed by the devices every now and then, but apart from alarm events most devices wait to be polled. A this moment we use the curl_exec interface from php to call the z-way interface on the Razberry.</p>
+<p>We use the following curl call to obtain the complete datastructure of the z-way controller as an array (json). The datastructure is read into the program only once at the start of the progra,. From that moment on, we'll use the get() function to obtain teh latest values/updates for the devices. The $razberry variable contains the IP address of the Razberry machine (can be localhost as well).</p>
+<p> <code>curl_setopt_array (<br>
+$ch, array (<br>
+CURLOPT_URL =&gt; 'http://'.$razberry.':8083/ZWaveAPI/Data/'.$tim,<br>
+CURLOPT_TIMEOUT =&gt; 30,<br>
+CURLOPT_CONNECTTIMEOUT =&gt; 10,<br>
+CURLOPT_RETURNTRANSFER =&gt; true<br>
+));<br>
+</code><br>
+<code>$output = curl_exec($ch);</code></p>
+<p>You can use other commands using curl as well. In that case, just change the CURLOPT_URL line with your own command. Some examples of how to get the values of the individual devices:</p>
+<h3>Dimmer</h3>
+<p>The following command gets the values for dimmer (class 38) device number 4. It interviews devices that are not battery powered:</p>
+<p><code>http://192.168.2.52:8083/ZWaveAPI/Run/devices[4].instances[0].commandClasses[38].Get()</code></p>
+<p>The following command sets the dim level of device number 4 to the value 15:</p>
+<p><code>http://192.168.2.52:8083/ZWaveAPI/Run/devices[4].instances[0].commandClasses[38].Set(15)</code></p>
+<h3>Thermostat</h3>
+<p>The following command sets the value of a thermostat to a certain temperature (setpoint=20)</p>
+<p><code>http://192.168.2.52:8083/ZWaveAPI/Run/devices[14].instances[0].ThermostatSetPoint.Set(1,20)</code></p>
+<p>&nbsp;</p>
+<h2>How to read &quot;alarm&quot; values</h2>
+<p>Especially fro battery powered devices polling on a longer interval might mean we wait too long for alarms to be recognized and polling too often will mean your battery gets drained too much. Therefore, these battery operated sensors offer the possibility to make an association between the sensor and the controller in group 3. This means that the sensor when triggered then send its value to the controller without it having to poll every minute for changed values.</p>
+<p>&nbsp;</p>
+<h1>Links and Documentation</h1>
+<p>I copied some documents from the Z-Wave.me website for no other reason than mae them easy to find and keep versions used for LamPI available even if on-line documentation would change.</p>
+<ul>
+  <li>http://www.openremote.org/display/docs/OpenRemote+2.0+How+To+-+Z-Wave+with+Razberry</li>
+  <li><a href="Documentation/quick-start-guide-v2.pdf">Razberry quick-start-guide v2</a></li>
+  <li><a href="Documentation/RaZberryOnePager.pdf">Razberry One pager</a></li>
+  <li><a href="Documentation/zwayUse.pdf">Razberry User Manual</a></li>
+  <li><a href="Documentation/zwayDev.pdf">Razberry Developer Manual</a></li>
+</ul>
+<p>&nbsp;</p>
+</body>
+</html>

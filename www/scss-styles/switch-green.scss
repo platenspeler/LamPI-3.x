@@ -1,0 +1,45 @@
+@charset "utf-8";
+
+/* ------------------------------------------------------------------------------------ */
+/* SCSS Document for making generic LamPI .css files 									*/
+/* Author: M. Westenberg (mw12554@hotmail.com) 											*/
+
+/* ----------------------- SCCS variable definitions -----------------------------------*/
+$wrapper_bg_color: #002A00;
+$wrapper_bg_picture: "";
+
+$main_bg_color: #030;
+$main_nth_color: #040;
+$main_msg_color: #eee;
+
+$content_background: $main_msg_color;
+$message_background: $main_msg_color;
+$header_background: $main_msg_color;
+$menu_background: $main_msg_color;
+
+$row_bg_color: #030;
+$row_nth_color: #040;
+
+$button_bg_color: #060;
+$button_fg_color: #0e0;
+$button_hover_bg_color: #0e0;
+$button_hover_fg_color: #111;
+$button_active_fg_color: #0e0;		/* When a button is active it has this color */
+$button_active_bg_color: #030;
+
+$dlabel_fg_color: #0e0;
+$dlabel_bg_color: #030;
+$dbutton_fg_color: #030;
+$dbutton_bg_color: #030;
+
+$dimmer_background: #F3F178;		/* Color of the dimmer slider */
+$dimmer_handle: #ef2929;			/* Color of the dimmer handler */
+
+$thermo_background: #F66;			/* Color of the thermo slider */
+$thermo_handle: #ef2929;			/* Color of the thermo handler */
+
+$dialog_fg_color: #0e0;
+$dialog_bg_color: #030;
+/* ------------------------------------------------------------------------------------- */
+
+@import '_menu-left-template';

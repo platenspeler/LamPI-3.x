@@ -1,0 +1,595 @@
+#!/bin/bash
+# This is the simple installer script for LamPI
+# SHOULD THIS FILE NOT WORK, please make sure to convert from DOS to Unix
+# (c) M. Westenberg, 2013, 2014
+#
+# Basically there are 3 types of installation:
+#
+# 1. The LamPI-master containing the LamPI-daemon, and possibly some sensors incl LamPI-receiver
+# 2. A LamPI slave, this is a Raspberry with only sensors or receiver/transmitter but is a slave 
+#    of the Master. It does not contain a LamPI-daemon nor a database
+# 3. A LamPI-z-way device. This is a Raspberry + Razberry combo acting as a gateway/slave
+#    for controlling Z-Wave devices
+#
+LINUX="y"; export LINUX
+WIRING="y"; export WIRING
+RRDTOOL="n"; export RRDTOOL
+RAZBERRY="n"; export RAZBERRY
+CRONTAB="y"; export CRONTAB
+
+# This will be THE directory where LamPI is installed. It is possible to change the install directory.
+# But please update the ~/daemon/backend_cfg.php and the ~/www/frontend_cfg.php file to update the new
+# location. Also watch the log files as there might be other places where I have hardcoded /home/pi as
+# the installation directory.
+
+HOMEDIR="/home/pi"; export HOMEDIR
+
+# -----------------------------------------------------------------------------------------------------
+# NOTE: Since WIFI does not work out of the box, this initial setup must be
+# done over a network connection. As soon as WIFI works further access
+# can be done over WIFI
+
+
+
+# -----------------------------------------------------------------------------------------------------
+# General Linux bookkeeping and installatation of the latest packages
+#
+install_linux()
+{
+	sudo apt-get -q update
+	sudo apt-get -q upgrade
+
+	sudo apt-get -qy install php5
+	sudo apt-get -qy install mysql-server
+	sudo apt-get -y install mysql-client
+	sudo apt-get -y install php5-mysql
+	sudo apt-get -qy install php5-dev
+	sudo apt-get -qy install php5-pear
+	sudo apt-get -qy install php5-curl
+	sudo apt-get -qy install apache2
+    sudo apt-get -qy install lm-sensors
+	sudo apt-get -y install rrdtool				# We might want the latest version, this is not but it works!
+	sudo apt-get -qy install i2c-tools
+	sudo apt-get -qy install libpango1.0-dev libxml2-dev
+	sudo apt-get -y install phpmyadmin
+
+	echo "All LamPI required packages have been installed"
+	echo ""
+}
+
+
+# -----------------------------------------------------------------------------------------------------
+# Download, Install and build the RazBerry software.
+# Only do this if you have a Razberry installed 
+#
+install_zway()
+{
+	echo "Starting installation of Z-Way Razberry"
+	wget -q -O - http://razberry.zwave.me/install/v2.0.1-rc25 | sudo bash 
+}
+
+# -----------------------------------------------------------------------------------------------------
+# Download, Install and build the ZigBee RaspBee software.
+# Only do this if you have a Raspbee installed 
+#
+install_raspbee()
+{
+	cd $HOMEDIR
+	sudo apt-get -y install libqt4-core 
+    wget http://www.dresden-elektronik.de/rpi/gcfflasher/gcfflasher-latest.deb
+    sudo dpkg -i gcfflasher-latest.deb
+    
+    wget http://www.dresden-elektronik.de/rpi/deconz/deconz-latest.deb
+	wget http://www.dresden-elektronik.de/rpi/deconz-dev/deconz-dev-latest.deb
+    sudo dpkg -i deconz-latest.deb
+    sudo dpkg -i deconz-dev-latest.deb
+	sudo apt-get -y install qt4-dev-tools
+    git clone https://github.com/dresden-elektronik/deconz-rest-plugin.git
+
+    cd deconz-rest-plugin
+    qmake-qt4 && make
+    
+	# Install the vncserver package 
+    sudo apt-get -y install tightvncserver
+    
+    # Install the Node package
+    install_node
+    
+    # You have to install and run the vncserver in order to be able to access the raspbee
+    # console package deCONZ
+}
+
+# -----------------------------------------------------------------------------------------------------
+# Install the LamPI software from the download server
+#
+install_lampi()
+{
+	cd $HOMEDIR
+
+	# The command below might FAIL if the PI-install script is put in $HOMEDIR/scripts and
+	# if the $HOMEDIR directory is not empty. For safety we therefore copy to /tmp first.
+	#
+	rm -rf /tmp/effe
+	mkdir /tmp/effe
+	git clone git://github.com/platenspeler/LamPI-2.0 /tmp/effe
+	printf "Copying LamPI to its destination directory\n"
+	( cd /tmp/effe; tar cf - . ) | tar xpf - 
+	rm -rf /tmp/effe
+
+	sudo chown -R pi .
+	sudo chgrp -R pi .
+    
+	# ----------------------------------------------------------------
+	# Set the apache base directory, replace the standard /var/www directory
+	# with the new directory as in $HOMEDIR/www
+	#
+	echo "editing sites-available"
+	sudo sed "s|/var/www|${HOMEDIR}/www|g" /etc/apache2/sites-available/default > /tmp/effe
+	sudo mv /etc/apache2/sites-available/default /etc/apache2/sites-available/default.org
+	sudo mv /tmp/effe /etc/apache2/sites-available/default
+	sudo /etc/init.d/apache2 restart
+
+	# -------------------------------------------------------------
+	# Finally, set some LamPI- related directories and permissions
+	#
+	sudo chown -R pi $HOMEDIR
+	sudo chgrp -R pi $HOMEDIR
+    
+	mkdir $HOMEDIR/daemon
+	mkdir -m 775 $HOMEDIR/log; sudo chgrp www-data $HOMEDIR/log
+    mkdir -m 775 $HOMEDIR/graphs; sudo chgrp www-data $HOMEDIR/graphs
+	mkdir -m 755 $HOMEDIR/exe; sudo chown -R root $HOMEDIR/exe; sudo chmod u+s $HOMEDIR/exe/*
+
+	sudo chmod 755 $HOMEDIR/scripts/PI*
+    
+    # If we do not do this the rrdtool cannot create a database
+    sudo chmod 775 $HOMEDIR/rrd/db; sudo chgrp www-data $HOMEDIR/rrd/db
+
+	# --------------------------------------------------------------
+	# Fix the .exe directory And build the executables from source directories
+    #
+
+	cd $HOMEDIR/receivers/sniffer; make; sudo make install
+    
+	cd $HOMEDIR/transmitters/livolo; make ; sudo make install
+	cd $HOMEDIR/transmitters/kaku; make; sudo make install
+	cd $HOMEDIR/transmitters/lights; make; sudo make install
+	cd $HOMEDIR/transmitters/kopou; make; sudo make install    
+}
+
+
+
+# -----------------------------------------------------------------------------------------------------
+# Download, Install and build the wiringPI library of Gordon
+#
+install_wiringpi()
+{
+	echo ""
+	echo "Starting installation of Wiring Libraries"
+	sudo apt-get install git-core
+	if [ -d wiringPi ]; then
+		cd wiringPi
+		git pull origin
+        ./build
+	else
+		git clone git://git.drogon.net/wiringPi
+		cd wiringPi
+		./build
+	fi
+	echo ""
+}
+
+
+# -----------------------------------------------------------------------------------------------------
+# Configure MODULES
+# Make the w1 bus modules load at system startup
+# by adding module in the /etc/modules files
+#
+setup_modules()
+{
+	sudo echo 'w1-gpio' >> /etc/modules
+	sudo echo 'w1-therm' >> /etc/modules
+	sudo echo 'i2c-bcm2708' >> /etc/modules
+	sudo echo 'i2c-dev' >> /etc/modules
+
+	# Standard, there are two modules blacklisted in the raspi-blacklist.conf
+	# file as found the modprobe.d directory. Just comment these blaklisted
+	# modules out.
+	#
+	sudo sed 's|blacklist|#blacklist|g' /etc/modprobe.d/raspi-blacklist.conf > /tmp/effe
+	sudo mv /etc/modprobe.d/raspi-blacklist.conf /etc/modprobe.d/raspi-blacklist.conf.org
+	sudo mv /tmp/effe /etc/modprobe.d/raspi-blacklist.conf
+    #
+    # Patch to make sure that the wifi adapter does not go to sleep
+    #
+    echo "options 8192cu rtw_power_mgnt=0 rtw_enusbss=0" > /etc/modprobe.d/8192cu.conf
+    
+    sudo echo 'dtoverlay=w1-gpio'  >> /boot/config.txt
+    sudo echo 'dtparam=i2c1=on'    >> /boot/config.txt
+	sudo echo 'dtparam=i2c_arm=on' >> /boot/config.txt
+}
+
+
+# -----------------------------------------------------------------------------------------------------
+# Setup the crontab so that daemon and receiver are enabled.
+# NOTE: STandard we enable all types of devices EXCEPT the dht22/rht-03.
+# Thsi is because this device requires extensive polling or interrupt handling which
+# makes it not suitable for larger installations. Use the sht-021 device (i2c bus) instead!
+#
+setup_cron()
+{
+	echo "Setting up crontab"
+	crontab -u pi -l | grep "PI-run" > /dev/null
+	if [ $? = 0 ]; then
+		echo "-- Crontab already contains LamPI PI-run commands"
+	else
+		echo "-- Crontab adding LamPI commands"
+		crontab -u pi -l > /tmp/effe
+		
+        // MASTER
+        
+        if [ "$1" == "-m" ]; then
+			echo "Setting up contab with PI-run for manager"
+            echo "*   * * * * cd $HOMEDIR/scripts && sh ./PI-node	> /dev/null 2>&1"	>> /tmp/effe
+			echo "*   * * * * cd $HOMEDIR/scripts && sh ./PI-rcv	> /dev/null 2>&1"	>> /tmp/effe
+			echo "0   2 * * * cd $HOMEDIR/scripts && sh ./PI-log	> /dev/null 2>&1"	>> /tmp/effe
+			echo "*/2 * * * * cd $HOMEDIR/scripts && sh ./PI-1w		> /dev/null 2>&1"	>> /tmp/effe
+            #Leave out support for DHT11 and DHT22 by default. Cpu intensive!
+			#echo "*/5 * * * * cd $HOMEDIR/scripts && sh ./PI-rht03	> /dev/null 2>&1"	>> /tmp/effe
+			echo "*/3 * * * * cd $HOMEDIR/scripts && sh ./PI-i2c	> /dev/null 2>&1"	>> /tmp/effe
+			echo "*   * * * * cd $HOMEDIR/scripts && sh ./PI-energy > /dev/null 2>&1"	>> /tmp/effe
+        
+        // ZWAVE 
+        
+        elif [ "$1" == "-z" ]; then
+			echo "Setting up contab for Zway Gateway"
+            #echo "*   * * * * cd $HOMEDIR/scripts && sh ./PI-node	> /dev/null 2>&1"	>> /tmp/effe
+			echo "0   2 * * * cd $HOMEDIR/scripts && sh ./PI-log	> /dev/null 2>&1"	>> /tmp/effe
+        
+        // SLAVE
+        
+		else
+			echo "Setting up contab for slave"
+            #echo "*  * * * * cd $HOMEDIR/scripts && sh ./PI-run	> /dev/null 2>&1"	>> /tmp/effe
+			echo "*   * * * * cd $HOMEDIR/scripts && sh ./PI-rcv	> /dev/null 2>&1"	>> /tmp/effe
+			echo "0   2 * * * cd $HOMEDIR/scripts && sh ./PI-log	> /dev/null 2>&1"	>> /tmp/effe
+			echo "*/2 * * * * cd $HOMEDIR/scripts && sh ./PI-1w		> /dev/null 2>&1"	>> /tmp/effe
+            #Leave out support for DHT11 and DHT22 by default. Cpu intensive!
+			#echo "*/5 * * * * cd $HOMEDIR/scripts && sh ./PI-rht03	> /dev/null 2>&1"	>> /tmp/effe
+			echo "*/3 * * * * cd $HOMEDIR/scripts && sh ./PI-i2c	> /dev/null 2>&1"	>> /tmp/effe
+			echo "*   * * * * cd $HOMEDIR/scripts && sh ./PI-energy > /dev/null 2>&1"	>> /tmp/effe
+            echo "*/2 * * * * cd $HOMEDIR/exe && sh ./kaku -g 99 -n 1 1 > /dev/null 2>&1"	>> /tmp/effe
+        fi
+        
+		crontab -u pi /tmp/effe
+	fi
+  
+	if [ -f /etc/cron.allow ]; then
+		cat /etc/cron.allow | grep pi > /dev/null
+		if [ $? != 0 ]; then
+			sudo echo "pi" >> /etc/at.allow
+		fi
+	fi
+	echo ""
+}
+
+
+# -----------------------------------------------------------------------------------------------------
+# Some Wlan Network configuration settings
+#
+setup_wlan()
+{
+	sudo grep "network" /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null
+	if [ $? = 0 ]; then
+		echo "-- wpa_supplicant.conf already contains network clause"
+	else
+		sudo printf "\nnetwork={\n" >> /etc/wpa_supplicant/wpa_supplicant.conf
+		sudo printf "\tssid=\"platenspeler\"\n" >> /etc/wpa_supplicant/wpa_supplicant.conf
+		sudo printf "\tscan_ssid=0\n" >> /etc/wpa_supplicant/wpa_supplicant.conf
+		sudo printf "\tpsk=\"password\"\n" >> /etc/wpa_supplicant/wpa_supplicant.conf
+		sudo printf "\tproto=RSN\n" >> /etc/wpa_supplicant/wpa_supplicant.conf
+		sudo printf "\tkey_mgmt=WPA-PSK\n" >> /etc/wpa_supplicant/wpa_supplicant.conf
+		sudo printf "\tpairwise=CCMP\n" >> /etc/wpa_supplicant/wpa_supplicant.conf
+		sudo printf "\tauth_alg=OPEN\n" >> /etc/wpa_supplicant/wpa_supplicant.conf
+		sudo printf "}\n" >> /etc/wpa_supplicant/wpa_supplicant.conf
+	fi
+    
+	clear
+	echo "Do not forget to setup Wifi controllers if you have these"
+	echo "You HAVE to edit the wpa_supplicant.conf file and supply your Wifi credentials (SSID and Password)"
+	echo "sudo vi /etc/wpa_supplicant/wpa_supplicant.conf, press <ENTER> to continue"
+	read a
+	sudo vi /etc/wpa_supplicant/wpa_supplicant.conf
+}
+
+# -----------------------------------------------------------------------------------------------------
+#
+#
+install_jasper()
+{
+	JHOME=$HOMEDIR/jasper.src
+    mkdir $JHOME
+	sudo apt-get install vim git-core espeak python-dev python-pip bison libasound2-dev libportaudio-dev python-pyaudio --yes
+    
+    cd $JHOME
+    wget http://downloads.sourceforge.net/project/cmusphinx/sphinxbase/0.8/sphinxbase-0.8.tar.gz
+	wget http://downloads.sourceforge.net/project/cmusphinx/pocketsphinx/0.8/pocketsphinx-0.8.tar.gz
+	tar -zxvf sphinxbase-0.8.tar.gz
+	tar -zxvf pocketsphinx-0.8.tar.gz
+    
+    echo -n "Configuring sphinxbase, press <ENTER> to start" ; read a
+    cd $JHOME/sphinxbase-0.8/
+	./configure --enable-fixed
+	make
+	sudo make install
+
+	echo -n "Configuring pocketsphinx, press <ENTER> to start" ; read a
+	cd $JHOME/pocketsphinx-0.8/
+	./configure
+	make
+	sudo make install
+    
+    sudo apt-get install subversion autoconf libtool automake gfortran g++ --yes
+    
+    echo -n "Configuring CMUCLMTK, press <ENTER> to start" ; read a
+    echo "Installing CMUCLMTK"
+    cd $JHOME
+    svn co https://svn.code.sf.net/p/cmusphinx/code/trunk/cmuclmtk/
+	cd cmuclmtk/
+	sudo ./autogen.sh && sudo make && sudo make install
+	cd ..
+    
+    cd $JHOME
+    wget http://distfiles.macports.org/openfst/openfst-1.3.3.tar.gz
+	wget https://mitlm.googlecode.com/files/mitlm-0.4.1.tar.gz
+	wget https://m2m-aligner.googlecode.com/files/m2m-aligner-1.2.tar.gz
+	wget https://phonetisaurus.googlecode.com/files/phonetisaurus-0.7.8.tgz
+	wget http://phonetisaurus.googlecode.com/files/g014b2b.tgz
+    
+    echo -n "Configuring openfst, press <ENTER> to start" ; read a
+    cd $JHOME
+    cd openfst-1.3.3/
+	sudo ./configure --enable-compact-fsts --enable-const-fsts --enable-far --enable-lookahead-fsts --enable-pdt
+	sudo make install # come back after a really long time
+
+	echo -n "Configuring mm2-aligner, press <ENTER> to start" ; read a
+    cd $JHOME
+    cd m2m-aligner-1.2/
+	sudo make
+    
+    echo -n "Configuring ,itlm, press <ENTER> to start" ; read a
+    cd $JHOME
+    cd mitlm-0.4.1/
+	sudo ./configure
+	sudo make install
+    
+    echo -n "Configuring phonetisaurus, press <ENTER> to start" ; read a
+    cd $JHOME
+    cd phonetisaurus-0.7.8/
+	cd src
+	sudo make
+    
+    sudo cp $JHOME/m2m-aligner-1.2/m2m-aligner /usr/local/bin/m2m-aligner
+	sudo cp $JHOME/phonetisaurus-0.7.8/phonetisaurus-g2p /usr/local/bin/phonetisaurus-g2p
+    
+    cd $JHOME
+	cd g014b2b/
+	./compile-fst.sh
+    cd $JHOME
+    mv $JHOME/g014b2b $JHOME/phonetisaurus
+
+	# ----------------------------------------------------------------------------------
+	# Jasper Client
+    #
+    JCLIENT=/home/pi/jasper
+    cd ~
+    echo -n "Configuring jasper client, press <ENTER> to start" ; read a
+    
+    git clone https://github.com/jasperproject/jasper-client.git jasper
+    sudo pip install --upgrade setuptools
+	sudo pip install -r jasper/client/requirements.txt
+    
+
+	echo "Do not forget to edit /etc/modprobe.d/alsa-base.conf and change <options snd-usb-audio index=0>"
+    echo "and run sudo alsa force-reload"
+}
+
+# -----------------------------------------------------------------------------------------------------
+# Install the node.js package. SInce summer of 2014 there are no distri versions found on nodejs.org
+# therefore we switch to node-arm for the latest versions.
+#
+install_node()
+{
+	cd $HOMEDIR
+#	sudo apt-get upgrade; 
+#	sudo apt-get update
+    
+#	wget http://nodejs.org/dist/v0.10.30/node-v0.10.30-linux-arm-pi.tar.gz
+#	tar -xvzf node-v0.10.30-linux-arm-pi.tar.gz
+#	node-v0.10.2-linux-arm-pi/bin/node --version
+#	NODE_JS_HOME=/home/pi/node-v0.10.2-linux-arm-pi ; export NODE_JS_HOME
+#	PATH=$PATH:$NODE_JS_HOME/bin
+    
+    wget http://node-arm.herokuapp.com/node_latest_armhf.deb
+    sudo dpkg -i node_latest_armhf.deb
+# Check installation
+	node -v
+# Install add-on packages (Node Package Manager)
+    npm install --save express
+    # socket.io may not be used but ws instead
+	npm install --save ws
+    npm install --save socket.io
+    npm install --save string
+    npm install --save net
+    npm install --save http
+    npm install --save connect
+    npm install --save serve-static
+    #npm install --save node-mysql
+    npm install --save mysql
+    npm install --save async
+    npm install --save child_process
+    npm install --save suncalc
+    npm install --save strip-json-comments
+}
+
+# -----------------------------------------------------------------------------------------------------
+# Install RRDTOOL bindings. This function will ONLY be
+# executed if user chooses "R" in the main program 
+#
+install_rrdtool()
+{
+	# Cleanup first all old sources
+    echo "Cleaning up installation directories for rrdtool"
+	sudo rm -rf /tmp/rrdbuild
+    sudo rm -rf /usr/local/src/rrdtool-1.4.7
+    sudo rm -rf /opt/rrdtool-1.4.7
+    sudo rm -rf /usr/local/src/php-5.3.5/ext
+    
+    echo "Downloading dependent software"
+    sudo apt-get -y install python-smbus
+    sudo apt-get -y install python-dev
+    
+    # Download and Install the sources
+	echo -n "Downloading rrdtool, press <ENTER> to start" ; read a
+	sudo mkdir -p /usr/local/src/rrdtool-1.4.7
+	cd /usr/local/src/rrdtool-1.4.7
+	sudo wget http://oss.oetiker.ch/rrdtool/pub/rrdtool-1.4.7.tar.gz
+	sudo tar -zxvf rrdtool-1.4.7.tar.gz
+	cd rrdtool-1.4.7
+	mkdir /tmp/rrdbuild
+	export BUILD_DIR=/tmp/rrdbuild
+	# sudo mkdir /opt/rrdtool-1.4.7
+	# export INSTALL_DIR=/opt/rrdtool-1.4.7
+    export INSTALL_DIR=/usr
+    
+    echo -n "Configuring rrdtool, press <ENTER> to start" ; read a
+	./configure --prefix=$INSTALL_DIR 
+    
+    echo -n "Making rrdtool, press <ENTER> to start" ; read a
+	make
+	sudo make install
+
+	sudo mkdir -p /usr/local/src/php-5.3.5/ext
+	cd /usr/local/src/php-5.3.5/ext
+    
+    echo -n "Installing php_rrdtool, press <ENTER> to start "; read a
+	wget http://oss.oetiker.ch/rrdtool/pub/contrib/php_rrdtool.tar.gz
+	tar -zxvf php_rrdtool.tar.gz
+	cd rrdtool
+
+	echo -n "Configuring php_rrdtool, press <ENTER> to start "; read a
+	sudo phpize
+	sudo ./configure --with-rrdtool=$INSTALL_DIR --with-php-config=/usr/bin/php-config
+    
+    echo -n "Making php_rrdtool, press <ENTER> to start "; read a
+    # Now we need to do some substitutions for PHP 5.4
+    # function_entry needs to be replaced with zend_function_entry, and pval with zval
+    #
+    sudo sed "s|function_entry|zend_function_entry|g" rrdtool.c > /tmp/effe
+    sudo mv rrdtool.c rrdtool.org
+    sudo sed "s|pval|zval|g" /tmp/effe > rrdtool.c
+
+	sudo make
+	sudo make install
+    
+    echo "Do not forget to add crontab for adding graphs"
+    echo "Especially for automated rrdtool graph options in ~/www/graphs/temperature.html"
+}
+
+
+# -----------------------------------------------------------------------
+# MAIN PROGRAM
+#
+#
+cd $HOMEDIR
+
+echo "This script will upgrade your Raspberry to its latest revision of software."
+echo "It will instal MYSQL, PHP and Apache webserver packages which will take"
+echo "some time to install. "
+echo "The installer will continue to ask for installation choices until"
+echo "the user enters Q (for quit)\n\n"
+echo "Please press enter to continue or CTRL-C to abort."
+echo "\n"
+echo -n "<Press ENTER to start>  "; read a
+
+a=""
+isdone="N"
+
+while [ "$isdone" != "Y"  ]
+do
+	clear
+	printf "\nWhat do you like to install\n"
+    printf "M: LamPI master node\n"
+    printf "S: LamPI Slave node\n"
+    printf "Z: Z-Wave gateway\n"
+    printf "R: Rrdtool graphics support (obsolete, do not use)\n"
+    printf "N: Install Node.js support\n"
+    printf "V: Voice support, meet Jasper\n"
+    printf "E: Energy Smart Metering Support\n\n"
+    printf "Q: Quit the installer\n\n"
+    printf "Please enter your answer + <ENTER> to continue: "
+	read a
+    
+	if [ "$a" == "M" ]; then
+		echo "Installing a Master Node"
+   	 	install_linux
+		install_wiringpi
+        install_node
+		install_lampi
+		setup_modules
+		setup_cron -m
+        setup_wlan
+		isdone="Y"
+        
+ 	elif [ "$a" == "E" ]; then
+		echo "Installing Smart Meter (Energy) support"
+   	 	# install_node
+       
+	elif [ "$a" == "N" ]; then
+		echo "Installing Node.js"
+   	 	install_node
+
+	elif [ "$a" == "R" ]; then
+    	echo "Installing rrdtool support"
+		install_rrdtool
+
+	elif [ "$a" == "S" ]; then
+		echo "Installing a LamPI Slave Node"
+		install_linux
+		install_wiringpi
+		install_lampi
+		setup_modules
+		setup_cron
+        setup_wlan
+		isdone="Y"
+
+	elif [ "$a" == "V" ]; then
+		echo "Configuring LamPI Voice Support"
+		install_jasper
+
+	elif [ "$a" == "Z" ]; then
+		echo "Installing a Z-Way Gateway Node"
+		install_zway
+        
+    elif [ "$a" == "B" ]; then
+		echo "Installing a Raspbee Gateway Node"
+		install_raspbee
+    
+    elif [ "$a" == "Q" ]; then
+		echo "Thnank you for installing LamPI"
+		isdone="Y"
+        
+	else
+		echo "Incorrect Input, <$a> Please try again.."
+		sleep 2
+	fi
+done
+
+# -------------------------------------------------------------
+# Some more administration to be done for modules
+# Make sure that the database is in place
+# Make sure that /etc/modprobe.d/raspi.conf contains # in front of i2c lines
+
+echo ""
+echo "If you plan to run one database server and have clients connect"
+echo "make sure you update bind in /etc/mysql/my.cnf"

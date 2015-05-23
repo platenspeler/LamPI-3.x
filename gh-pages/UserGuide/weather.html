@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>LamPI 433Mhz controller for RaspberryPI</title>
+</head>
+
+<body>
+
+<h1>Weather Dials/Meters </h1>
+<p>This part of the documentation describes the weather screen and what you can (and sometimes cannot) do with weather sensors. Since version 1.8 LamPI does support weather station sensors. At first only the UPM WT440H (outdoor) sensor is supported and it works fine. Other sensors can be added to the LamPI-receiver/sniffer program later, but it is good to know that the LamPI-daemon offers support for receiving Json messages from weather sensors.</p>
+<p>If you like to know more about te various sensors, check out their &quot;hardware&quot; pages. </p>
+<ul>
+  <li><a href="../Hardware/wt440h/wt440h.html">WT-440H</a> for information about the WT-440H temperature and humidity sensor (433MHz unit)</li>
+</ul>
+<p>Of course temperature sensors can be meaningful in weather context, but also be used in energy applications. In the application I make that distinction (for the moment) as I expect most temperature, humidity and pressure sensors to be used most in context of weather. However, users are free to choose differently. As soon as I have my smart-meter up and running I will have a look at the energy sensors and their application as well.</p>
+<p>Below you see a screenshot of the weather screen...</p>
+<p><img src="screenshots/weather_screen_1.JPG" width="966" height="637" /></p>
+<p>&nbsp;</p>
+<h1>Weather Charts</h1>
+<p>When clicking in the weather screen on one of the dials, a separate screen will open that shows historical data for the weather sensors. This function is described separately in the section for rrd graphs.</p>
+<p><img src="screenshots/rrd_screen_01.JPG" width="963" height="636"></p>
+<h1>Json message format for sensors</h1>
+<p>The Json message that is sent to the LamPI-daemon is as follows:</p>
+<p><code>message = {<br>
+tcnt : integer,<br>
+type : 'json',<br>
+action : 'weather',<br>
+brand: wt440h 	# or other supported brand<br>
+address: integer, # (house code)<br>
+channel: integer,<br>
+temperature: integer.integer<br>
+humidity: integer,<br>
+windspeed: integer,<br>
+winddirection: integer, # in degrees<br>
+rainfall : char(8) # (mm per hour)</code></p>
+<p><code>}; </code><br>
+</p>
+<h1>Adding a new wireless Weather sensor</h1>
+<p>Weather sensors that are wireless 433MHz  can be added to the LamPI-receiver by making a sensor function in C and including it in the receiver.c file and in the Makefile. The LamPI-receiver program in the ~/exe directory is the ONLY receiver for 433HMz messages and will handle all forwarding of successful receptions to the LamPI-daemon.</p>
+<p>Next to the program itself, the sensor needs to be declared in the database.cfg file so that the LamPI-deamon knows that the incoming message for this address/channel is a source that we trust and allow access to our application.</p>
+<p>&nbsp;</p>
+<h1>Adding new wired sensors</h1>
+<p>Adding wired sensors can be one of the following:</p>
+<ol>
+  <li>A wired sensor without a bus</li>
+  <li>The 1-wire Dallas bus</li>
+  <li>A sensor with I2C support</li>
+</ol>
+<p>For more info on wired weather sensors, read the <a href="../sensors/weather_sensors_msg_format.html">sensors.html</a> page </p>
+<h1>Logging our Sensor data</h1>
+<p>The LamPI-daemon will listen to all incoming json messages on its port 5000. Incoing messages from sensors will be matched against the configuration items in the database.cfg file for missing data such as names, location etc that are not sensor defined but defined by the user.</p>
+<p>But in order to watch trends in data and analyze the collected data we need to add logging capabilities to the LamPI environment. There are several options:</p>
+<ol>
+  <li>Make LamPI-daemon store all collected data in a logfile and use Excel to analyze the data</li>
+  <li>Make a logging process tat listens to port 5000 and be informed ot every json message that is processed by the daemon.</li>
+  <li>Use an external PAAS service provider, forward all messages received to the service provider and use its analyzing functions to make sense of your data.</li>
+</ol>
+<p>The third option is attractive, as it will use external storage, services etc. to look at our data and the trend graphs are accessible from anywhere on the internet. The PAAS provider carriots.com provides this service for free for small users with up to 10 data streams.</p>
+<h3>re. Store in local logfile</h3>
+<p>The easiest method for analysing sensor data is to store all data collected to a local logfile on the PI, and import this file into excel on regular intervals. This is simple solution, and this also how I started.</p>
+<h3>re 2. Logging to rrdtool</h3>
+<p>There is a tools based on a round robin database tool that can be used to store sensors data and display graphs. </p>
+<h3>re 3. PAAS. Use a tool like Carriots</h3>
+<p>The PAAS (Platform As A Service) provider carriots.com provides a free membership for data analysis of a limited set of sensors.</p>
+<p>&nbsp;</p>
+</body>
+</html>

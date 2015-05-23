@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>LamPI 433Mhz controller for RaspberryPI</title>
+</head>
+
+<body>
+
+<h1>Hardware Guide</h1>
+<p>This page deals with the hardware that we need to connect to the Raspberry PI in order to communicatie with 433MHz receivers or Handsets and turn your RPI into a full functioning control center. LamPI can support receiver devices (making transmitter modules for various brands is often easy). Also, several brand share almost the same protocol or work or can be made to work with minor modifications, Therefore, the list below is probably just a snapshot of a much larger list...</p>
+<h3>Receivers, Switches, Dimmers (433MHz)</h3>
+<ul>
+  <li>Klikaanklikuit switches, the new type</li>
+  <li>Action or Impuls switches</li>
+  <li>Livolo switches</li>
+  <li>Kopou switches</li>
+  <li>Elro, Blokker, Old Kliaanklikuit (not tested, software is installed)</li>
+</ul>
+<h3>Handsets and Remote Controls (433 MHz)</h3>
+<ul>
+  <li>Klikaanklikuit remotes</li>
+  <li>Livolo 4-button keychain</li>
+  <li>Kopou 4-button keychain</li>
+  <li>Pulse (=Action) Remotes</li>
+</ul>
+<h3>433MHz Temperature Sensors</h3>
+<ul>
+  <li><a href="wt440h/wt440h.html">WT-440H</a>, made by UPM/Esic (The weather menu button will only show if a weather sensor is defined in the database.cfg file)</li>
+</ul>
+<h3>Wired Sensors</h3>
+<ul>
+  <li>Wired sensors: DHT11, DHT22 Temperature/Humidity Sensor</li>
+  <li>1-Wire bus sensors: DS18B20 Temperature Sensor</li>
+  <li>2-wire I2C bus sensors: such as BMP085 Temperature and Airpressure sensor</li>
+</ul>
+<h3>Zwave 868MHz devices</h3>
+<ul>
+  <li>Fibaro FGD-211 Dimmer</li>
+</ul>
+<h1>Hardware needed on Raspberry</h1>
+<p>So the list of equiipment that we can interface to is long, but what hardware do we need to install in order to control all these devices?  And how to connect your Weather and Energy Sensors? </p>
+<ul>
+  <li><a href="#connector">The Raspberry Connector</a></li>
+  <li><a href="#433transceivers">How to connect 433 transmitters and receivers</a></li>
+  <li><a href="#zwave">Razberry, plug on board with Z-Wave firmware</a></li>
+  <li><a href="#wsensors">Wired weather Sensors</a></li>
+  <li><a href="#esensors">Energy Sensors</a></li>
+  <li></li>
+</ul>
+<p>&nbsp;</p>
+<h1><a name="connector"></a>Raspberry P1 Connector</h1>
+<p><img src="GPIOs.png" width="254" height="581" hspace="20" vspace="5" align="left">The Raspberry-PI has a 26-pins connector (called P1) to which all devices are connected, whether these are 434MHz transmitters/receivers, 1-wire sensors, I2C-bus sensors or the P1-connector of the Smart Meter in your house.</p>
+<p>The figure on the left shows the lay-out of the RaspberryPI GPIO connector. For the 512MB version Raspberry (which is the most common version sold and in use today) use the rev 2.</p>
+<p>If you look at the table more closely you'll notice that some sensors, transmitters or receivers use the same pins. This is for historical reasons, when I first started the LamPI project. At the moent I would make choices that ensure that we can use as many transmitters, receivers and sensors next to each other. </p>
+<p>Note: Therefore I expect to make some changes to the default pin for the trrasnmitter (header pin 8) as I cannot change the pin layout of the Razberry. So in a next release of LamPI it could very well be that the default pin for the LamPI transmitter will be GPIO17 or so.</p>
+<table width="704" border="1" cellpadding="3">
+  <tr>
+    <th width="311" scope="col">Device</th>
+    <th width="133" scope="col">Data (pin)</th>
+    <th width="119" scope="col">Vcc</th>
+    <th width="113" scope="col">Gnd</th>
+  </tr>
+  <tr>
+    <td>433 MHZ Transmitter</td>
+    <td>TxD (8)</td>
+    <td>5Vdc (2,4)</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>433 MHz Receiver</td>
+    <td>GPIO18 (12)</td>
+    <td>5Vdc (2,4)</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>Razberry (868MHz Z-Wave)</td>
+    <td>GPIO14 (8), GPIO15 (10)</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>Dallas 1-wire bus sensors</td>
+    <td>GPIO4 (7)</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>I2C Bus sensors</td>
+    <td>SDA (3), SCL (5)</td>
+    <td>3.3Vdc (1,17)</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>P1 Smart Meter</td>
+    <td>?? </td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p><br>
+  <br>
+As I use the wiringPI library of Gordon, I also copied his pin-definitions which include the WiringPi numbering (being different from the GPIO pin id's). Please note that some GPIO id''s used in the name colun do not correspond to the general naming convention found on the internet. For example, hardware pin 12, is called either PCM_CLK or GPIO18 on most pages, but Gordon called it GPIO01.</p>
+<h4><br>
+  <br>
+  <br>
+  <br>
+  <br>
+  <br>
+  <br>
+  Note: Please forget the &quot;Name&quot; columns in the figure below! Use teh description as found above.<br>
+  <br>
+  <img src="gpio1.png" width="600" height="295"><br>
+  <br>
+  <br>
+</h4>
+<h1><a name="433transceivers"></a>433MHz Transmitters and Receivers</h1>
+<p>How to make the RaspberryPI a transmitter/receiver device for 433MHz? It is probably simpler than you thinkt. Apart from the PI itself you need two really cheap small pieces of hardware, some solder and wires and a little time to put it together. So what you need are a small transmitter board and a receiver board. These boards are sold on eBay, Aliexpress and some internet shops for prices ranging from 2 $ a pair to 20$ for a receiver. In my experience, both cheap and more expensive boards work OK, if have both.</p>
+<p>I found that most ASK/OOK based transmitters and receivers work with the 433MHz devices that are used for home automation.</p>
+<h3>Cheap eBay</h3>
+<p>In the picture you see a receiver (L) and transmitter (R) pair that can be bought for around 3$ a pair wih free shipping. It is Chinese made, and although specifications might differ from unit to unit, they work quite OK.</p>
+<p> <img src="pi transmitter receiver.jpg" width="400" height="300"></p>
+<p>Frankly, I love these sets as for just 10$ I can make at least 5 prototype boards and see which one fits my PI better. </p>
+<p><img src="vmstat_cheapebay_noload.JPG" width="893" height="529"></p>
+<h3>Superheterodyne kit (eBay)</h3>
+<p>Ok, these look better than the cheap kit, and the good news is that they are better. </p>
+<p><img src="super-heterodyne-pair.JPG" width="674" height="555"></p>
+<p>And the load of these superheterodyne kits so low enough that futher work with low pass filters etc may not be necessary anymore.</p>
+<p><img src="vmstat_superheterodyne_noload.JPG" width="893" height="549"></p>
+<p>As you can see from the screendump of a terminal to one of my PIs, the load of the transmitter/receiver combo on the system (no GUI actions, only LamPI-daemon running, syste receiving weather station messages only) is very low. If you compare the load of this set with the cheap one above you see that it uses less than half of the cpu power that the cheap kit uses.</p>
+<p>For your final version, where you need to rely on in your house, this may be a safe choice of transmitter/receiver.</p>
+<h3>iPrototype</h3>
+<p>The Dutch internetshop iPrototype also sells transmitters and receivers  and their quality is very good, and comparable to the Superheterodyne set described above..</p>
+<p><img src="iPrototype/665_big.png" width="298" height="250"><img src="iPrototype/640_big.png" width="298" height="250"></p>
+<p>Link: <a href="https://iprototype.nl/products/components/communications/rf-transmitter-434mhz#">https://iprototype.nl/products/components/communications/rf-transmitter-434mhz#</a></p>
+<h2>FSK (Won't Work)</h2>
+<p>I bought a set of FSK transmitter/receivers as well. These work OK in a FSK environment only and are <strong>NOT</strong> usable for Klikaankliuit communication. <br>
+Link: <a href="http://www.hoperf.com/rf/data_link_module/HM-T.htm">http://www.hoperf.com/rf/data_link_module/HM-T.htm</a></p>
+<p>&nbsp;</p>
+<h2>Filter</h2>
+<p>Especially the receivers can pick up quite some noise, expecially in an urban area. I have been experimenting with external filters that would keep the higher-frequency crap from my receiver, and some people like those in pilight for example make an art of building a filter around those components. During my experiments I found out that with good software design the system time that these receivers use for interrupt handling can be kept close to 10-30% max, which leaves about 75% idle time that can be used for LamPI-daemon processing and GUI handling.</p>
+<p>Fortunately, the more expensive units work slightly better and consume less computer resources too.</p>
+<h1><a name="zwave"></a>Z-Wave hardware</h1>
+<p>The Razberry is a small stck-up device that connect to the P1 connector of the Raspberry. It cnotains the firmware neede to interface with the 868MHz Z-Wave software (which the company calls ZWay)</p>
+<p><a href="Razberry/razberry1.jpg"><img src="Razberry/razberry1.jpg" alt="Razberry/razberry2.jpg" width="400" height="267"></a></p>
+<p>If you like to read more on the software for the Razberry and how LamPI interfaces with the hardware, please read further &lt;<a href="../Zwave/RazBerry/zwave_gateway.html">HERE</a>&gt;</p>
+<h1><a name="wsensors"></a>Connecting Weather Sensors</h1>
+<p>Connecting weather sensors (hardware installation) is not difficult.</p>
+<p>&nbsp;</p>
+<h1><a name="esensors" id="esensors"></a>Connecting Energy Sensors</h1>
+<p>tbd<br>
+</p>
+</body>
+</html>

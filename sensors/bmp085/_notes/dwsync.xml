@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dwsync>
+<file name="Makefile" server="192.168.2.53//home/pi/" local="130508813204256924" remote="130508817010000000" />
+<file name="smbus.c" server="192.168.2.53//home/pi/" local="130442310190000000" remote="130442310190000000" />
+<file name="smbus.h" server="192.168.2.53//home/pi/" local="130442275300000000" remote="130442275300000000" />
+<file name="Makefile" server="192.168.2.55//home/pi/" local="130508813204256924" remote="130509660270000000" />
+<file name="smbus.c" server="192.168.2.55//home/pi/" local="130442310190000000" remote="130509660270000000" />
+<file name="smbus.h" server="192.168.2.55//home/pi/" local="130442275300000000" remote="130509660270000000" />
+<file name="Makefile" server="192.168.2.51//home/pi/" local="130442275185709046" remote="130455202770000000" />
+<file name="smbus.c" server="192.168.2.51//home/pi/" local="130442248125441288" remote="130455202770000000" />
+<file name="smbus.h" server="192.168.2.51//home/pi/" local="130442248165393573" remote="130455202770000000" />
+<file name="sensor" server="192.168.2.53//home/pi/" local="130504337170000000" remote="130504337170000000" />
+<file name="sensor.h" server="192.168.2.53//home/pi/" local="130508774371908962" remote="130570874680000000" />
+<file name="BMP085.c" server="192.168.2.53//home/pi/" local="130508826459377359" remote="130508826480000000" />
+<file name="cJSON.h" server="192.168.2.53//home/pi/" local="130507969913715314" remote="130508683570000000" />
+<file name="cJSON.c" server="192.168.2.53//home/pi/" local="130507969913585215" remote="130508683590000000" />
+<file name="BMP085.c" server="192.168.2.55//home/pi/" local="130508826459377359" remote="130509660270000000" />
+<file name="cJSON.c" server="192.168.2.55//home/pi/" local="130507969913585215" remote="130509660270000000" />
+<file name="cJSON.h" server="192.168.2.55//home/pi/" local="130507969913715314" remote="130509660270000000" />
+<file name="sensor" server="192.168.2.55//home/pi/" local="130504337170000000" remote="130509660270000000" />
+<file name="sensor.h" server="192.168.2.55//home/pi/" local="130508774371908962" remote="130509660270000000" />
+<file name="sensor.h" server="westenberg.org//home/pi/" local="130508774371908962" remote="130529168510000000" />
+<file name="BMP085.c" server="192.168.2.52//home/pi/" local="130508826459377359" remote="130690041580000000" />
+<file name="cJSON.c" server="192.168.2.52//home/pi/" local="130507969913585215" remote="130690041600000000" />
+<file name="cJSON.h" server="192.168.2.52//home/pi/" local="130507969913715314" remote="130690041600000000" />
+<file name="Makefile" server="192.168.2.52//home/pi/" local="130508813204256924" remote="130690041610000000" />
+<file name="sensor" server="192.168.2.52//home/pi/" local="130504337170000000" remote="130690041620000000" />
+<file name="sensor.h" server="192.168.2.52//home/pi/" local="130508774371908962" remote="130690041620000000" />
+<file name="smbus.c" server="192.168.2.52//home/pi/" local="130442310190000000" remote="130690041630000000" />
+<file name="smbus.h" server="192.168.2.52//home/pi/" local="130442275300000000" remote="130690041630000000" />
+</dwsync>

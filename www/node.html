@@ -1,0 +1,76 @@
+<html>
+<head>
+    <meta charset='utf-8'>
+    
+<!--   *************** THE WEBGUI VERSION *******************
+// Author: M. Westenberg (mw12554 @ hotmail.com)
+// (c). M. Westenberg
+//
+// Version 1.0, Aug 20, 2013. Working version for ICS-1000. Initial configuration hardcoded in backend_main.php
+// ... 
+// Version 2.7, Jan 31, 2015 Added localStorage for skins
+// Version 3.0, Mar 01, 2015 Use JS and Websockets, remove "old" ajax where possible
+//
+-->
+
+	<title>LamPI 3.0 beta</title>
+	<link href="jquery-ui-1.11.2/jquery-ui.css" rel="stylesheet">
+    <link href="styles/classic-grey.css" rel="stylesheet" type="text/css">
+    <link rel="icon" type="image/png" href="favicon.png">
+	<script src="jquery-1.11.2.js"></script>
+	<script src="jquery-ui-1.11.2/jquery-ui.js"></script>
+    <script src="steel/tween-min.js"></script>
+    <script src="LamPI-3.0.js"></script> 
+
+<style type="text/css">	
+	/* All style settings moved to a dedicated .css file */
+</style>
+</head>
+
+<body>       
+<script type="text/javascript">
+
+// ------------------------------------------------------------------------------------
+// Put below ANY parameters or functions that are already initialized in the LamPI.js
+// file but where you want to change its value before calling start_Lampi().
+
+// If we leave out explicit host, all URL for weathr and energy will be directed to
+// local host and in case of LamPI-node with port 8080 as well.
+
+//w_url = '192.168.2.54';									// Websocket URL of the daemon
+w_port = 5004;
+
+// ------------------------------------------------------------------------------------
+// Now we call the program and we're off
+//
+console.log("Starting LamPI 3.0 beta");
+start_LAMP();											// START THE MAIN PROGRAM 
+
+</script>	
+
+<!--
+// This is the code to animate the front-end of the application. The main screen is divided in 3 regions:
+// #gui_header: Here are the buttons for selecting the active rooms 
+// #gui_content: The main screen where user can change the values of the active devices for the curently
+//		active room. For the moment, the devices can have 2 types: switches and dimmers (see below)
+// #gui_mssages: This is the area where the function message("text") will output its messages
+// #gui_menu: This is the right side of the screen where we have the main menu where user can select the 
+//		main activities: <home> <rooms> <scenes> <timers> <settings>
+-->
+
+<div id="wrapper">
+<!-- This is the top area with the room tabs --> 
+         <div id="gui_header">
+         </div>
+<!-- This is the menu area with the menu buttons -->
+         <div id="gui_menu"></div>    
+<!-- This is where the buttons for the lamps/dimmers go -->
+		<div id="gui_content">
+        </div>        
+<!-- This is the message/comment area -->                         
+        <div id="gui_messages"></div>
+        
+
+</div> <!-- wrapper -->    
+</body>
+</html>

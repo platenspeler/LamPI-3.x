@@ -1,0 +1,19 @@
+This example features:
+======================
+- DHT11 sensor reader: http://www.rpiblog.com/2012/11/interfacing-temperature-and-humidity.html
+- WiringPi git repo: git://git.drogon.net/wiringPi
+- Lighttpd with python cgi outputingsensor data in json format
+
+Architecture:
+=============
+  +----------+   +--------------+   +--------+
+->|          |-->|              |-->|        |<--(gcc)<--(read-sensor.c)
+  | lighttpd |   | Python (cgi) |   | sensor |
+<-|          |<--|              |<--|        |
+  +----------+   +--------------+   +--------+
+
+
+
+Enhancements:
+=============
+- Use/adapt the DHT11 library for arduino: http://playground.arduino.cc/Main/DHT11Lib

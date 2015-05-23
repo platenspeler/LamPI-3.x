@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dwsync>
+<file name="e350.xml" server="192.168.2.54//home/pi/" local="130761105320000000" remote="130761110780000000" />
+<file name="aeon-1.rrd" server="192.168.2.54//home/pi/" local="130741729990000000" remote="130761110750000000" />
+<file name="bmp085-1.rrd" server="192.168.2.54//home/pi/" local="130761106320000000" remote="130761110750000000" />
+<file name="dht22.rrd" server="192.168.2.54//home/pi/" local="130729937340000000" remote="130761110750000000" />
+<file name="e350.rrd" server="192.168.2.54//home/pi/" local="130761107720000000" remote="130761110760000000" />
+<file name="Extension.rrd" server="192.168.2.54//home/pi/" local="130761106710000000" remote="130761110780000000" />
+<file name="fib-1.rrd" server="192.168.2.54//home/pi/" local="130741730200000000" remote="130761110780000000" />
+<file name="Living.rrd" server="192.168.2.54//home/pi/" local="130761107340000000" remote="130761110790000000" />
+<file name="Outside.rrd" server="192.168.2.54//home/pi/" local="130761107180000000" remote="130761110790000000" />
+<file name="pi53-1.rrd" server="192.168.2.54//home/pi/" local="130748302840000000" remote="130761110800000000" />
+<file name="pi53-2.rrd" server="192.168.2.54//home/pi/" local="130761106830000000" remote="130761110800000000" />
+<file name="pi53-3.rrd" server="192.168.2.54//home/pi/" local="130748301650000000" remote="130761110800000000" />
+<file name="pi55-1.rrd" server="192.168.2.54//home/pi/" local="130751420440000000" remote="130761110810000000" />
+<file name="pi55-2.rrd" server="192.168.2.54//home/pi/" local="130751420450000000" remote="130761110810000000" />
+<file name="sht21-1.rrd" server="192.168.2.54//home/pi/" local="130761106420000000" remote="130761110810000000" />
+</dwsync>

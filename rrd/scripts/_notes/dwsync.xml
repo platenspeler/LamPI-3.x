@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dwsync>
+<file name="bmp085_extract.py" server="192.168.2.53//home/pi/" local="130504911144152840" remote="130505199840000000" />
+<file name="bmp085_print.py" server="192.168.2.53//home/pi/" local="130504403746336948" remote="130505199840000000" />
+<file name="ds18b20_extract.sh" server="192.168.2.53//home/pi/" local="130505200969211875" remote="130505211150000000" />
+<file name="generate_week.sh" server="192.168.2.53//home/pi/" local="130511233990000000" remote="130570904890000000" />
+<file name="generate_day.sh" server="192.168.2.53//home/pi/" local="130511235122744716" remote="130511235210000000" />
+<file name="bmp085_extract.py" server="192.168.2.55//home/pi/" local="130504911144152840" remote="130509660040000000" />
+<file name="bmp085_print.py" server="192.168.2.55//home/pi/" local="130504403746336948" remote="130509660040000000" />
+<file name="ds18b20_extract.sh" server="192.168.2.55//home/pi/" local="130505200969211875" remote="130509660040000000" />
+<file name="generate_day.sh" server="192.168.2.55//home/pi/" local="130511235122744716" remote="130574554070000000" />
+<file name="generate_week.sh" server="192.168.2.55//home/pi/" local="130511233991518922" remote="130574554070000000" />
+<file name="generate_day.sh" server="192.168.2.51//home/pi/" local="130511235122744716" remote="130511247520000000" />
+<file name="generate_week.sh" server="192.168.2.51//home/pi/" local="130511233991518922" remote="130511247490000000" />
+<file name="generate_graphs.sh" server="192.168.2.51//home/pi/" local="130512335272418216" remote="130529429470000000" />
+<file name="generate_graphs.sh" server="192.168.2.53//home/pi/" local="130512335272418216" remote="130512737460000000" />
+<file name="generate_graphs.sh" server="192.168.2.55//home/pi/" local="130512335272418216" remote="130574554070000000" />
+<file name="bmp085_extract.py" server="192.168.2.51//home/pi/" local="130504911144152840" remote="130529429470000000" />
+<file name="bmp085_print.py" server="192.168.2.51//home/pi/" local="130504403746336948" remote="130529429470000000" />
+<file name="ds18b20_extract.sh" server="192.168.2.51//home/pi/" local="130505200969211875" remote="130529429470000000" />
+</dwsync>

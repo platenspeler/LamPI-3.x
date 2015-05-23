@@ -1,0 +1,703 @@
+/* ------------------------------------------------------------------------------------ */
+/* SCSS Document for making generic LamPI .css files 									*/
+/* Author: M. Westenberg (mw12554@hotmail.com) 											*/
+/* This SCSS file is for charcoal classic-blue											*/
+/* ----------------------- SCCS variable definitions -----------------------------------*/
+/* Background color of the wrapper */
+/* The main background color used for this Look and Feel */
+/* Almost Black */
+/* Background color for the buttons */
+/* How does the color of a button change if it is hovered */
+/* Foreground color for button when hovered */
+/* When a button is active it has this color */
+/* Color of the dimmer slider */
+/* Color of the dimmer handler */
+/* Color of the thermo slider */
+/* Color of the thermo handler */
+/* also text in the content area */
+/* ------------------------------------------------------------------------------------ */
+/* Import the generic template															*/
+/* SCSS Document for making generic LamPI .css files 									*/
+/* Author: M. Westenberg (mw12554@hotmail.com) 											*/
+/* This file contains a template for (most) if not all "classic_xxxxx.css" files		*/
+/* ------------------------------------------------------------------------------------ */
+/* CORE HTML CSS */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\000037}}
+body {
+  font-family: comic sans ms;
+  background: #ced0fd;
+  color: #222;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\0000313}}
+table {
+  width: 100%;
+  height: auto;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\0000318}}
+tr {
+  width: 600px;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\0000322}}
+td {
+  /*		height: 38px; */
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\0000326}}
+p {
+  font-family: "Times New Roman";
+  font-size: 20px;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\0000331}}
+input#lbl {
+  width: 20px;
+}
+
+/* Prevent the field to get wider when hovering */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\0000339}}
+.button:hover, input[type="submit"]:hover, .button:active, input[type="submit"]:active, input[type="input"]:hover {
+  font-weight: normal;
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------------------	*/
+/* The DIV define the main sections of the LamPI application.				*/
+/* location and colors of the header, context, menu parts 					*/
+/* DIVS are defined once in the document									*/
+/* ------------------------------------------------------------------------	*/
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\0000351}}
+#wrapper {
+  position: relative;
+  top: 5px;
+  width: 952px;
+  height: 602px;
+  margin: auto;
+  padding: 5px;
+  margin-top: 5px;
+  border: 1px solid black;
+  background-color: #bfc2fd;
+  background-image: "";
+}
+
+/* The header header section defined */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\0000366}}
+#gui_header {
+  position: absolute;
+  top: 5px;
+  width: 940px;
+  height: 80px;
+  margin: auto;
+  padding: 5px;
+  margin-top: 0px;
+  border: 1px solid black;
+  text-align: center;
+  background-color: #c4c7fd;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\0000379}}
+#gui_header_controls {
+  position: inherit;
+  top: 0px;
+  left: 830px;
+  width: 105px;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\0000386}}
+#gui_header_content {
+  position: inherit;
+  top: 0px;
+  left: 0px;
+  width: 820px;
+}
+
+/* This is the area where all the devices in the active room have their 
+	controls (switches and dimmers) defined
+*/
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\0000396}}
+#gui_content {
+  position: absolute;
+  top: 95px;
+  width: 815px;
+  height: 445px;
+  margin-left: 1px;
+  left: 3px;
+  margin: auto;
+  padding: 5px;
+  margin-top: 5px;
+  border: 1px solid black;
+  text-align: center;
+  background-color: #d8dafe;
+  color: #222;
+  overflow: hidden;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003113}}
+#gui_menu {
+  position: absolute;
+  left: 835px;
+  top: 95px;
+  width: 110px;
+  padding: 5px;
+  margin-top: 5px;
+  height: 445px;
+  border: 1px solid black;
+  text-align: center;
+  background-color: #c4c7fd;
+  color: #222;
+  vertical-align: top;
+}
+
+/* This is the area on the bottom where the user/program messages are displayed */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003129}}
+#gui_messages {
+  position: absolute;
+  top: 550px;
+  width: 930px;
+  height: 25px;
+  margin: auto;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid black;
+  text-align: center;
+  font-size: 14px;
+  background-color: #c4c7fd;
+  color: #222;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003144}}
+#addRoomForm {
+  background-color: #ced0fd;
+  color: #222;
+  /* ddeff1 */
+  font-weight: bold;
+  margin: 23px auto 0 auto;
+  border-radius: 10px;
+  /* width: 500px; */
+  width: auto;
+  box-shadow: 0 0 2px 2px #d9d9d9;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003154}}
+#addRoomForm label {
+  padding-left: 20px;
+  width: 150px;
+  /* text-transform: uppercase; */
+  display: inline-block;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003161}}
+#addRoomForm input[type=text],
+#addRoomForm input[type=file],
+#addRoomForm textarea {
+  width: auto;
+}
+
+/* ------------------------------------------------------------------------	*/
+/* The CLASSES define the behaviour of buttons, fields, sliders in the 		*/
+/* LamPI application.														*/
+/* For elements one can define colors, margins, widt and height for example	*/
+/* ------------------------------------------------------------------------	*/
+/* CLASSES are for multiple elements */
+/* Header buttons. */
+/* Room header */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003178}}
+.hr_button {
+  width: 100px;
+  height: 35px;
+  border-radius: 6px;
+  margin-top: 3px;
+  margin-bottom: 2px;
+  background-color: #EEE;
+  color: #111;
+}
+
+/* Indicating a mouse over for a room button */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003189}}
+.hr_button:hover {
+  font-weight: bold;
+  background-color: #FF6;
+  color: #111;
+}
+
+/* XXX needs reviewing */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003196}}
+.rroom {
+  width: 300 px;
+  margin-bottom: 10px;
+}
+
+/* Header Scene definition */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003202}}
+.hs_button {
+  width: 100px;
+  height: 35px;
+  border-radius: 5px;
+  margin-top: 3px;
+  margin-bottom: 2px;
+  background-color: #EEE;
+  color: #111;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003211}}
+.hs_button:hover {
+  font-weight: bold;
+  background-color: #FF6;
+  color: #111;
+}
+
+/* Header Timer definitions */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003218}}
+.ht_button {
+  width: 100px;
+  height: 35px;
+  border-radius: 5px;
+  margin-top: 3px;
+  margin-bottom: 2px;
+  background-color: #EEE;
+  color: #111;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003227}}
+.ht_button:hover {
+  font-weight: bold;
+  background-color: #FF6;
+  color: #111;
+}
+
+/* Header Handset definitions */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003234}}
+.hh_button {
+  width: 100px;
+  height: 35px;
+  border-radius: 5px;
+  margin-top: 3px;
+  margin-bottom: 2px;
+  background-color: #EEE;
+  color: #111;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003243}}
+.hh_button:hover {
+  font-weight: bold;
+  background-color: #FF6;
+  color: #111;
+}
+
+/* Header Weather definitions */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003250}}
+.hw_button {
+  width: 100px;
+  height: 35px;
+  border-radius: 5px;
+  margin-top: 3px;
+  margin-bottom: 2px;
+  background-color: #EEE;
+  color: #111;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003259}}
+.hw_button:hover {
+  font-weight: bold;
+  background-color: #FF6;
+  color: #111;
+}
+
+/* Header Menu area definitions */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003266}}
+.hm_button {
+  margin-left: auto;
+  width: 100px;
+  height: 35px;
+  border-radius: 6px;
+  background-color: #EEE;
+  color: #111;
+  vertical-align: top;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003275}}
+.hm_button:hover {
+  font-weight: bold;
+  background-color: #FF6;
+  color: #111;
+}
+
+/* Header Configuration definitions */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003282}}
+.hc_button {
+  width: 100px;
+  height: 35px;
+  border-radius: 5px;
+  margin-top: 3px;
+  margin-bottom: 2px;
+  background-color: #EEE;
+  color: #111;
+  align: center;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003292}}
+.hc_button:hover {
+  font-weight: bold;
+  background-color: #FF6;
+}
+
+/* Command Room button */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003298}}
+.cr_button {
+  height: 35px;
+  width: 35px;
+  margin: 1px;
+}
+
+/* Command Scene button */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003304}}
+.cs_button {
+  height: 35px;
+  width: 35px;
+  margin: 1px;
+}
+
+/* Command Timers button */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003310}}
+.ct_button {
+  height: 35px;
+  width: 35px;
+  margin: 1px;
+}
+
+/* Command Handset button */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003317}}
+.ch_button {
+  height: 35px;
+  width: 35px;
+  margin: 1px;
+}
+
+/* Command Help button */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003323}}
+.ch_button:help_button {
+  align: right;
+  margin: 1px;
+}
+
+/* Command Weather button */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003329}}
+.cw_button {
+  height: 35px;
+  width: 35px;
+  margin: 1px;
+}
+
+/* Command Config button */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003336}}
+.cc_button {
+  height: 35px;
+  width: 35px;
+  margin: 1px;
+}
+
+/* Devices definitions */
+/* This dlabels descripts the text label left of a switch/dimmer device */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003345}}
+.dlabels {
+  width: 120px;
+  height: 30px;
+  border-radius: 3px;
+  margin-left: 5px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  color: black;
+  background-color: #eee;
+}
+
+/* buttons used in a dimmer/slider element . dbuttons are shared with scenes too*/
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003357}}
+.dbuttons {
+  padding-right: 5px;
+  min-height: 30px;
+  width: auto;
+  border-radius: 15px;
+  margin-left: 3px;
+  margin-right: 2px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  color: black;
+  background-color: #eee;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003370}}
+.dbuttons:hover {
+  font-weight: bold;
+  background-color: #FF6;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003375}}
+.dbuttons:active {
+  color: yellow;
+  background-color: #111;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003380}}
+.devrow {
+  /* device row */
+  background-color: #c4c7fd;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003383}}
+.devrow:nth-child(odd) {
+  background-color: #abaffc;
+}
+
+/* This is the dimmer object consisting of dlabel, dbutton */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003388}}
+.dimrow {
+  background-color: #c4c7fd;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003391}}
+.dimrow:nth-child(odd) {
+  background-color: #abaffc;
+}
+
+/* A switch element, so just ON/OFF button */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003396}}
+.switch {
+  background-color: #c4c7fd;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003399}}
+.switch:nth-child(odd) {
+  background-color: #abaffc;
+}
+
+/* Scene definitions */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003406}}
+.slabels {
+  margin_left: 10px;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003409}}
+.sval {
+  width: 90px;
+}
+
+/* A row of scene */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003414}}
+.scene {
+  background-color: #ced0fd;
+  color: #111;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003418}}
+.scene:nth-child(odd) {
+  background-color: #bfc2fd;
+}
+
+/* Handset Definitions */
+/* A row of handset */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003425}}
+.handset {
+  background-color: #ced0fd;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003428}}
+.handset:nth-child(odd) {
+  background-color: #bfc2fd;
+}
+
+/* Buttons for adding, removing and help */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003436}}
+.new_button {
+  background-color: #6F6;
+  /* Green */
+  min-height: 30px;
+  width: 30px;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003441}}
+.del_button {
+  background-color: #F66;
+  /* Red */
+  min-height: 30px;
+  width: 30px;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003446}}
+.help_button {
+  background-color: #09F;
+  /* Dark Blue */
+  min-height: 30px;
+  width: 30px;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003451}}
+.play_button {
+  background-color: #0FF;
+  /* Blue */
+  min-height: 30px;
+  min-width: 60px;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003456}}
+.stop_button {
+  background-color: #F66;
+  /* Red */
+  min-height: 30px;
+  min-width: 60px;
+}
+
+/* General Definitions */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003464}}
+.filler {
+  width: 300px;
+  /* Align this value with the slider widt below, must be larger */
+}
+
+/* This element in the slider button is used to mark the selected button once pressed */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003469}}
+.hover {
+  background-color: #FF6;
+  color: #111;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003474}}
+.dragger {
+  text-shadow: #C00;
+  background-color: #FF6;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003479}}
+.ui_dialog {
+  background-color: #DDD;
+  color: #222;
+}
+
+/* The element making up the slider. The jQuery definition is even much more complex*/
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003486}}
+.slider {
+  margin-left: 20px;
+  margin-right: 20px;
+  border-radius: 5px;
+  width: 300px;
+}
+
+/* The value of a slider in an input field */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003493}}
+.slidval {
+  width: 30px;
+  height: 30px;
+  margin-left: 10%;
+}
+
+/* Dimmer specific definitions */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003501}}
+.slider-dimmer .ui-slider {
+  width: 50px;
+  height: 50px;
+  background: url(./slider3.png) no-repeat;
+  overflow: hidden;
+  position: absolute;
+  top: -10px;
+  border-style: none;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003510}}
+.slider-dimmer .ui-slider-range {
+  background: #d2abfc;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003513}}
+.slider-dimmer .ui-slider-handle {
+  width: 50px;
+  height: 50px;
+  background: url(./slider3.png) no-repeat;
+  overflow: hidden;
+  position: absolute;
+  top: -10px;
+  border-style: none;
+  border-color: #ef2929;
+}
+
+/* Slider Thermo: Specific thermo definitions */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003526}}
+.slider-thermo {
+  /* float:left; */
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003529}}
+.slider-thermo .ui-slider {
+  width: 50px;
+  height: 50px;
+  /* background:url(./slider3.png) no-repeat; */
+  overflow: hidden;
+  position: absolute;
+  top: -10px;
+  border-style: none;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003538}}
+.slider-thermo .ui-slider-range {
+  background: #fbaf89;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003541}}
+.slider-thermo .ui-slider-handle {
+  width: 50px;
+  height: 50px;
+  background: url(./slider3.png) no-repeat;
+  overflow: hidden;
+  position: absolute;
+  top: -10px;
+  border-style: none;
+  border-color: #ef2929;
+}
+
+/* Slider Health: The Health counter indicator */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003554}}
+.slider-health {
+  margin-top: 25px;
+  background: #6F6;
+  /* left side of the bar */
+  width: 90px;
+  height: 10px;
+  margin-left: 2px;
+  padding-top: 5px;
+  margin-right: 2px;
+  border-radius: 3px;
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003566}}
+.slider-health .ui-slider-range {
+  background: #F66;
+  /* This is the right part from handle to max */
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003569}}
+.slider-health .ui-slider-handle {
+  background: none;
+  overflow: hidden;
+  position: absolute;
+  border-style: none;
+  /* border-color: $dimmer_background;  */
+}
+
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003576}}
+.slider-health .ui-widget-content {
+  /*      */
+}
+
+/* Settings, various sich as files definitions etc. */
+@media -sass-debug-info{filename{font-family:file\:\/\/C\:\/Users\/Maarten\/Google\%20Drive\/Projects\/LamPI\/LamPI-2\.0\/www\/scss-styles\/_classic-template\.scss}line{font-family:\00003584}}
+.select-file {
+  width: 300px;
+  /* this field should be longer than the longest filename */
+  height: 30px;
+  border-radius: 3px;
+  margin-left: 5px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  color: black;
+  background-color: #eee;
+}

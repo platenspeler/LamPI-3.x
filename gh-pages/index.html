@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>LamPI 433Mhz controller for RaspberryPI</title>
+</head>
+
+<body>
+
+<h1>LamPI Introduction</h1>
+<p>The full table of contents for ALL LamPI documentation is &lt;<a href="LamPI_ToC.html"><strong>HERE</strong></a>&gt;. 
+Please start reading on that page when you finished reading this page.</p>
+<p><a href="UserGuide/screenshots/room_screen_black.JPG"><img src="UserGuide/screenshots/room_screen_black_xs.jpg" alt="Black skin scalable" width="228" height="156" hspace="2" vspace="2"></a><a href="UserGuide/screenshots/room_screen_wood.JPG"><img src="UserGuide/screenshots/room_screen_wood_xs.jpg" alt="" width="228" height="156" hspace="2" vspace="2"></a><a href="UserGuide/screenshots/room_screen_sea.JPG"><img src="UserGuide/screenshots/room_screen_sea_xs.jpg" width="228" height="155" hspace="2" vspace="2"></a><a href="UserGuide/screenshots/room_screen_linen.JPG"><img src="UserGuide/screenshots/room_screen_linen_xs.jpg" width="228" height="155" hspace="2" vspace="2"></a></p>
+<p>Click on any of the images here to see a large version of the screenshot. LamPI Gui layout scales with your screen, and there are many ways to configure the LamPI screens to your taste.<br>
+</p>
+<p>You can find its GIT repository on <a href="https://github.com/platenspeler">https://github.com/platenspeler</a>, and the documentation on <a href="http://platenspeler.github.io">http://platenspeler.github.io</a></p>
+<p>LamPI is a Home Automation project for switching equipment in your house over 434 MHz transmitters/receivers on a RaspberryPI. As of release 2.0 LamPI offers (initial) support for Z-Wave devices. Support for Z-Wave 868MHz devices is implemented with a separate Raspberry bridge computer using the Razberry board. Please read more on Z-Wave support &lt;<a href="Zwave/RazBerry/zwave_gateway.html"><strong>Here</strong></a>&gt;</p>
+<h2>Control your lights and switches</h2>
+<p>This is where I initially developed LamPI for. It will control your light switches and your dimmers and your other switches as well (if you want LamPI can switch your stereo or microwave too). </p>
+<p><img src="UserGuide/screenshots/room_screen_grey.JPG" width="899" height="582" /></p>
+<p>The screen above is one of the main screens of LamPI, and should give you a taste of what LamPI is about. As you see, the GUI interface is designed to operate (and manage) all tasks for the connected devices and minimize the need for manual changing of configuration files etc. let alone making configuration changes at compile time.</p>
+<h2>Weather Sensors</h2>
+<p>Recently, support for weather sensors was added to LamPI. In principle the LamPI-receiver process can be taught to detect a wide variety of temperature, humidity, rain and wind sensors. For the weather gauge widgets I used existing libraries such as the &quot;steel&quot; library of Gerrit Grunwald and Mark Crossley. If the configuration file contains definitions for supported weather sensors, then the menu will automatically display an option to view/select weather info.</p>
+<p>Actually, what you see below is just a small example of what &quot;steel&quot; can do for your project. The library is highly customizable so you can make your own background, color an other settings if you like.</p>
+<p>What you see below is the first version  for LamPI 1.9 with weather support. It does support weather sensors of UPM that transmit temperature and humidity values back to the LamPI-deamon.php process which are then broadcast to all connected clients. And as you see, the client will display the temperature (top row) for outside, the extension of our home and the living room. On the second row it will display the humidity for these three rooms. The definitions of sensors are found in the  configuration file.</p>
+<p><img src="UserGuide/screenshots/weather_screen_1.JPG" width="966" height="636"></p>
+<p>Apart from the latest sensor info, or even near-real-time information received, I like to add support for historical charts etc. At the moment, all sensor readings are stored in a log file, and also in the MySQL database. </p>
+<p>In case I missed something, please send me an email or make a note on this page. For the moment I'm the only author of LamPI so it can take a few days before I answer.</p>
+<h1>LamPI History</h1>
+<p>The goal of my project was to provide an easy interface to the family to control the lights in our house. We had klikaanklikuit.nl switches and we have an iPad (and some Android phones and Laptops) and want to control our light switches with an easy-to-use GUI interface. This meant that I needed at least 2 components: A component that would control transmitter and receiver and handle low-level device commands, and a GUI in JavaScript/jQuery that would handle the human interaction. In order to store configuration information and for timing commands and unattended use, we would also need a daemon process serving in the background as well as a database (written in MySQL) to store configuration information.</p>
+<p>Although I would expect that you like to use the complete package, it is quite good possible to only use the RaspberryPI transmitter and receiver shell executables (see below)</p>
+<p>&lt;<a href="DeveloperGuide/ArchitectureGuide/architecture.html">More information is available HERE</a>&gt;</p>
+<h1>LamPI User Manual</h1>
+<p>LamPI contains 7 main screens: Rooms, Scenes, Timers, Handsets, Weather, Energy and Config. For every screen I have written a few pages that contain instructions on common tasks you will perform. </p>
+<p>The documentation for the LamPI functions can be found on this site on the following pages.</p>
+<ul>
+  <li><a href="Installation_Manual/setup.html">Initial LamPI Setup</a></li>
+  <li><a href="UserGuide/getting_started.html">Getting Started with the GUI</a></li>
+  <li><a href="UserGuide/rooms.html">The Rooms Screen</a></li>
+  <li><a href="UserGuide/scenes.html">The Scenes Screen</a></li>
+  <li><a href="UserGuide/timers.html">The Timers Screen</a></li>
+  <li><a href="UserGuide/handsets.html">The Handsets Screen</a></li>
+  <li><a href="UserGuide/weather.html">The Weather screen (optional, depends whether you have weather sensors)</a></li>
+  <li><a href="UserGuide/energy.html">Energy Sensors Screen</a></li>
+  <li><a href="UserGuide/config.html">The Config Screen</a></li>
+</ul>
+<p>&nbsp;</p>
+<h1>LamPI Receiver Functions</h1>
+<p>Apart from the GUI interface, on the backend there are some other programs active: The main LamPI_daemon, some receivers (wireless and wired)<br>
+</p>
+<ul>
+  <li>Transceiver interface; If you only want to use the <a href="Hardware/transceiver.html">LamPI-receiver  command-line</a> to send and receive 433MHz messages </li>
+  <li><a href="Hardware/hardware_guide.html">Background information  433MHz hardware for RaspberryPI</a></li>
+  <li><a href="sensors/weather_sensors_msg_format.html">Background information on Wired Sensors for PI (temperature, humidity etc).</a><br>
+    <br>
+  </li>
+  <li>Background information on the <a href="DeveloperGuide/ArchitectureGuide/architecture.html">LamPI Architecture</a></li>
+</ul>
+<h1>What Switches, Dimmers and other devices are supported?</h1>
+<p>LamPI can support receiver devices (making transmitter modules for various brands is often easy). Also, several brand share almost the same protocol or work or can be made to work with minor modifications, Therefore, the list below is probably just a snapshot of a much larger list...</p>
+<h3>Receivers, Switches, Dimmers (433MHz)</h3>
+<ul>
+  <li>Klikaanklikuit switches, the new type</li>
+  <li>Klikaanklikuit Dimmers, the new type</li>
+  <li>Action or Impuls switches</li>
+  <li>Livolo switches</li>
+  <li>Kopou switches</li>
+  <li>Elro (not tested, software is installed)</li>
+  <li>Blokker (not tested, software is installed)</li>
+  <li>Klikaanklikuit (old model with two wheels at the back, not tested)</li>
+</ul>
+<h3>Handsets and Remote Controls (433MHz)</h3>
+<ul>
+  <li>Klikaanklikuit remotes</li>
+  <li>Livolo 4-button keychain</li>
+  <li>Kopou 4-button keychain</li>
+  <li>Pulse (Action) Remotes</li>
+</ul>
+<h3>Temperature Sensors (433MHz)</h3>
+<ul>
+  <li>WT-440H, made by UPM/Esic (The weather menu button will only show if a weather sensor is defined in the database.cfg file)</li>
+  <li>WT-440, made by UPM/Esic (No humidity sensor)</li>
+</ul>
+<h3>Wired Sensors</h3>
+<ul>
+  <li>Wired sensors: DHT11, DHT22 Temperature/Humidity Sensor</li>
+  <li>1-Wire bus sensors: DS18B20 Temperature Sensor</li>
+  <li>2-wire I2C bus sensors: BPM085 (Temperature, Airpressure), SHT21 (Temperature, Humidity)</li>
+</ul>
+<h3>Zwave devices (868MHz)</h3>
+<p>Note: Gateway, You need to install a separate RaspberryPI system with Razberry board for this</p>
+<ul>
+  <li>Fibaro FGD-211 Dimmer </li>
+  <li>Fibaro </li>
+  <li>Fibaro Motion Sensor FGMS-001 v2.4</li>
+  <li>Popp dimmer, type 123580</li>
+  <li>Everspring AN157 Switch</li>
+  <li>TKB Home TZ66D dual paddle On/Off Module Switch</li>
+  <li>Aeotec Multisensor</li>
+  <li>Danfoss Living Connect radiator thermostats v2</li>
+</ul>
+<p>&nbsp;</p>
+<h1>What Platform(s) does LamPI run on?</h1>
+<ul>
+  <li>The web GUI of LamPI runs on every webserver in your network as it is implemented in Javascript/jQuery. That means that if you install it on a webserver in your network you can access the GUI User Interface from every browser in your network (and soon also from the internet). By default, the webserver runs fine on the RaspberryPI (you need the Raspberry anyway).<br>
+    <br>
+  <strong>The current web front-end works VERY well on iPad, and Android phones and tablets and it can be installed as an app...</strong><br>
+  <br>
+  </li>
+  <li>If you want, you can setup the MySQL database on another server (that is what I did), but this is optional. Setting of the database server is in backend_config.php<br>
+    <br>
+  </li>
+  <li>The low-level device functions for transmitter and receiver, will at the moment only run on the RaspberryPI, although making an Arduino version is probably not much work. The executables are all found in the ~/exe directory. The source code for these functions can be found in the ~/receivers directory.<br>
+    <br>
+  </li>
+  <li>In order to control Z-Wave devices in the LamPI system, you need a separate Raspberry with Razberry Z-Wave board. Please read the special pages on Z-Wave. For the moment I do not support both Razberry (Z-Wave) and 433MHz transceivers on the same machine.</li>
+</ul>
+<h1>Architectural Considerations</h1>
+<p>I did make an architecture document for LamPI which can be found &lt;<a href="DeveloperGuide/ArchitectureGuide/architecture.html">HERE</a>&gt;.</p>
+<h1>Change Log</h1>
+<p>Click <a href="changelog.html">&lt;HERE&gt;</a> for a list of changes made in a certain release.</p>
+<h1><a name="planned_functions"></a>Planned Functions</h1>
+<p>Click <a href="planned.html">&lt;HERE&gt;</a> for a list of user stories and planned functions in next releases</p>
+<h1><a name="known_issues"></a>Known Issues, Bugs etc.</h1>
+<p>Click <a href="planned.html">&lt;HERE&gt;</a> for a list of known issues, possible being resolved in future releases</p>
+<p>February 25, 2015</p>
+</body>
+</html>

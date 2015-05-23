@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>LamPI 433Mhz controller for RaspberryPI</title>
+</head>
+
+<body>
+
+<h1>LamPI Introduction</h1>
+<h5>LamPI is a Home Automation project for switching equipment in the house over 444 MHz transmitters/receivers on a RaspberryPI. It started as an alternative to the klikaanklikuit interface that I used to control the lights in out house. But LamPI now supports other brands of receivers as well, and as of release 1.8 it does support weather sensors as well. STarting release 2.1, LamPI supports Smart Meter devices and wih the buttons energy produces nice Gauges and charts.</h5>
+<p>You can find its GIT repository on <a href="https://github.com/platenspeler">https://github.com/platenspeler</a>, documentation on <a href="http://platenspeler.github.io">http://platenspeler.github.io</a></p>
+<h3>Control your lights and switches</h3>
+<p>This is where I developed LamPI for initially. It will control your light switches and your dimmers and your other switches as well (so your stereo too). </p>
+<p><img src="gh-pages/UserGuide/screenshots/room_screen_grey.JPG" width="962" height="632" /></p>
+<p>The screen above is one of the main screens of LamPI, and should give you a taste of what LamPI is about. As you see, the GUI interface is designed to operate (and manage) all tasks for the connected devices and minimize the need for manual changing of configuration files etc. let alone making configuration changes at compile time.</p>
+<h3>Weather</h3>
+<p>Recently, support for weather sensors was added to LamPI. In principle the LamPI-receiver process can be taught to detect a wide variety of temperature, humidity, rain and wind sensors. For the weather gauge widgets I used existing libraries such as the &quot;steel&quot; library of Gerrit Grunwald and Mark Crossley. If the configuration file contains definitions for supported weather sensors, then the menu will automatically display an option to view/select weather info.</p>
+<p>Actually, what you see below is just a small example of what &quot;steel&quot; can do for your project. The library is highly customizable so you can make your own background, color an other settings if you like.</p>
+<p>What you see below is the first version  for LamPI 1.8 with weather support. It does support weather sensors of UPM that transmit temperature and humidity values back to the LamPI-deamon.php process which are then broadcast to all connected clients. And as you see, the client will display the temperature (top row) for outside, the extension of our home and the living room. On the second row it will display the humidity for these three rooms.</p>
+<p>The definitions of sensors are stored in the configuration file database.cfg.</p>
+<p><img src="gh-pages/UserGuide/screenshots/weather_screen_1.JPG" width="966" height="637"></p>
+<p>Apart from the latest sensor info, or even near-real-time information received, I like to add support for historical charts etc. At the moment, all sensor readings are stored in a log file, and also in the MySQL database. </p>
+<p>In case I missed something, please send me an email or make a note on this page. For the moment I'm the only author of LamPI so it can take a few days before I answer..</p>
+<p>&nbsp;</p>
+<h1>LamPI Introduction</h1>
+<p>The goal of my project was to provide an easy interface to the family to control the lights in our house. We had klikaanklikuit.nl switches and we have an iPad (and some Android phones and Laptops) and want to control our light switches with an easy-to-use GUI interface. This meant that I needed at least 2 components: A component that would control transmitter and receiver and handle low-level device commands, and a GUI in JavaScript/jQuery that would handle the human interaction. In order to store configuration information and for timing commands and unattended use, we would also need a daemon process serving in the background as well as a database (written in MySQL) to store configuration information.</p>
+<p>Although I would expect that you like to use the complete package, it is quite good possible to only use the RaspberryPI transmitter and receiver shell executables (see below)</p>
+<p>&lt;More information is available HERE&gt;</p>
+<p>&nbsp;</p>
+<h1>Main LamPI Functions</h1>
+<p>LamPI contains 5 main screens: Rooms, Scenes, Timers, Handsets and Config. For every screen I have assembled a few pages that contain instructions on common tasks you will perform. </p>
+<p>The documentation for the LamPI functions can be found on this site on the following pages.</p>
+<ul>
+  <li><a href="gh-pages/Installation_Manual/setup.html">Initial Setup</a></li>
+  <li><a href="gh-pages/UserGuide/rooms.html">The Rooms Screen</a></li>
+  <li><a href="gh-pages/UserGuide/scenes.html">The Scenes Screen</a></li>
+  <li><a href="gh-pages/UserGuide/timers.html">The Timers Screen</a></li>
+  <li><a href="gh-pages/UserGuide/handsets.html">The Handsets Screen</a></li>
+  <li><a href="gh-pages/UserGuide/weather.html">The Weather screen (optional)</a></li>
+  <li><a href="gh-pages/UserGuide/config.html">The Config Screen</a><br>
+    <br>
+  </li>
+  <li>Transceiver interface; If you only want to use the <a href="gh-pages/Hardware/transceiver.html">LamPI-receiver  command-line</a> to send/receive 433MHz messages </li>
+  <li><a href="gh-pages/Hardware/hardware_guide.html">Background information  433MHz hardware for RaspberryPI</a></li>
+  <li><a href="gh-pages/sensors/weather_sensors_msg_format.html">Background information on Wired Sensors for PI (temperature, humidity etc).</a><br>
+    <br>
+  </li>
+  <li>Background information on the <a href="gh-pages/DeveloperGuide/ArchitectureGuide/architecture.html">Architecture</a></li>
+</ul>
+<h1>What Switches, Dimmers and other devices are supported?</h1>
+<p>LamPI can support receiver devices (making transmitter modules for various brands is often easy). Also, several brand share almost the same protocol or work or can be made to work with minor modifications, Therefore, the list below is probably just a snapshot of a much larger list...</p>
+<h4>Receivers, Switches, Dimmers</h4>
+<ul>
+  <li>Klikaanklikuit switches, the new type</li>
+  <li>Action or Impuls switches</li>
+  <li>Livolo switches</li>
+  <li>Kopou switches</li>
+  <li>Elro (not tested, software is installed)</li>
+  <li>Blokker (not tested, software is installed)</li>
+  <li>Klikaanklikuit (old model with two wheels at he back, not tested)</li>
+</ul>
+<h4>Handsets and Remote Controls</h4>
+<ul>
+  <li>Klikaanklikuit remotes</li>
+  <li>Livolo 4-button keychain</li>
+  <li>Kopou 4-button keychain</li>
+</ul>
+<h4>433MHz Temperature Sensors</h4>
+<ul>
+  <li>WT-440H, made by UPM/Esic (The weather menu button will only show if a weather sensor is defined in the database.cfg file)</li>
+</ul>
+<h3>Wired Sensors</h3>
+<ul>
+  <li>DHT11 Temperature/Humidity Sensor</li>
+  <li>DS18B20 Temperature Sensor (work in progress)</li>
+</ul>
+<p>&nbsp;</p>
+<h1>What Platform(s) does LamPI run on?</h1>
+<ul>
+  <li>The web GUI of LamPI runs on every webserver in your network as it is implemented in Javascript/jQuery. That means that if you install it on a webserver in your network you can access the GUI User Interface from every browser in your network (and soon also from the internet). By default, the webserver runs fine on the RaspberryPI (you need the Raspberry anyway).<br>
+    <br>
+  <strong>The current web front-end works VERY well on iPad, and can be installed as an app...</strong><br>
+  <br>
+  </li>
+  <li>If you want, you can setup the MySQL database on another server (that is what I did), but this is optional.<br>
+    <br>
+  </li>
+  <li>The low-level device functions for transmitter and receiver, will at the moment only run on the RaspberryPI, although making an Arduino version is probably not much work. The executables are all found in the ~/exe directory. The source code for these functions can be found in the ~/receivers directory.</li>
+</ul>
+<p>&nbsp;</p>
+<h1>Architectural Considerations</h1>
+<p>I did make an architecture document which can be found &lt;<a href="gh-pages/DeveloperGuide/ArchitectureGuide/architecture.html">HERE</a>&gt;.</p>
+<p>&nbsp;</p>
+<h1>Planned Functions</h1>
+<p>Of course I'm always thinking about new functions, as long as I do not have to put the current system up-side-down too much. After all, I do have other day-time work to do and it has to make sense for me to spend additional time. Therefore, you are welcome to ask for new functions, but if it will cost me days to implement them and I will not benefit from them in any way I will probably give priority to other changes.</p>
+<ul>
+  <li>Add support for Android phones. This is in beta at the moment and I use PhoneGap technology of Adobe to make such version. All Javascript/jQueryMobile code is already in the LamPI-x.y.js file, the index.html file will determine what libraries to load. I will probably publish a separate branch for Android with the same version number as its web equivalent.</li>
+  <li>Adding new handsets at this moment still requires manual editing of the database.cfg file. I like to add more options to the OPTIONS screen for setup of new switch types and handset types, so that adding such switches and handsets at runtime is a lot easier.</li>
+  <li>Add support for Z-Wave or Zigbee. I have not decided what is next, but as the LamPI-daemon is quite universal in its setup adding transmitter/receivers for these technologies is relatively easy.</li>
+  <li>I like (at some time) be integrating my front-end with the new standards for Home Automation as soon as stacks become available for the Raspberry.</li>
+  <li>And I'm always looking for cheap new designed wall switches to add to the set..</li>
+  <li>Internationalization; Probably not worth spending too much time on this, as most people that will use this projects do not mind English versions anyway. So probably just making an alternative startup file for ''database.cfg&quot; would be enough for international customers to get a good feel for the software.</li>
+</ul>
+</body>
+</html>

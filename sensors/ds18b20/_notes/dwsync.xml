@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dwsync>
+<file name="Makefile" server="192.168.2.53//home/pi/" local="130435363429940842" remote="130452147460000000" />
+<file name="sensor.c" server="192.168.2.53//home/pi/" local="130536445715313997" remote="130570874680000000" />
+<file name="sensor.h" server="192.168.2.53//home/pi/" local="130519748827123911" remote="130570874680000000" />
+<file name="cJSON.c" server="192.168.2.53//home/pi/" local="130387499815971370" remote="130387638750000000" />
+<file name="cJSON.h" server="192.168.2.53//home/pi/" local="130387499816071370" remote="130387638750000000" />
+<file name="cJSON.c" server="192.168.2.51//home/pi/" local="130387499815971370" remote="130387638200000000" />
+<file name="cJSON.h" server="192.168.2.51//home/pi/" local="130387499816071370" remote="130387638200000000" />
+<file name="Makefile" server="192.168.2.51//home/pi/" local="130387505605080606" remote="130387638200000000" />
+<file name="sensor.c" server="192.168.2.51//home/pi/" local="130536445715313997" remote="130536445690000000" />
+<file name="sensor.h" server="192.168.2.51//home/pi/" local="130453620909211493" remote="130455202790000000" />
+<file name="cJSON.c" server="192.168.2.55//home/pi/" local="130387499810000000" remote="130509660270000000" />
+<file name="cJSON.h" server="192.168.2.55//home/pi/" local="130387499810000000" remote="130509660270000000" />
+<file name="Makefile" server="192.168.2.55//home/pi/" local="130435363420000000" remote="130509660280000000" />
+<file name="sensor.c" server="192.168.2.55//home/pi/" local="130536445715313997" remote="130574554130000000" />
+<file name="sensor.h" server="192.168.2.55//home/pi/" local="130519748827123911" remote="130574554130000000" />
+<file name="bus_read.sh" server="192.168.2.55//home/pi/" local="130378379350000000" remote="130509660270000000" />
+<file name="sensor.h" server="westenberg.org//home/pi/" local="130519748827123911" remote="130519748840000000" />
+<file name="sensor.c" server="westenberg.org//home/pi/" local="130519763481786979" remote="130519764170000000" />
+<file name="bus_read.sh" server="westenberg.org//home/pi/" local="130378379350000000" remote="130529168520000000" />
+<file name="bus_read.sh" server="192.168.2.52//home/pi/" local="130378379350000000" remote="130690041640000000" />
+<file name="cJSON.c" server="192.168.2.52//home/pi/" local="130387499810000000" remote="130690041650000000" />
+<file name="cJSON.h" server="192.168.2.52//home/pi/" local="130387499810000000" remote="130690041660000000" />
+<file name="Makefile" server="192.168.2.52//home/pi/" local="130435363420000000" remote="130690041660000000" />
+<file name="sensor.c" server="192.168.2.52//home/pi/" local="130536445715313997" remote="130690041670000000" />
+<file name="sensor.h" server="192.168.2.52//home/pi/" local="130519748827123911" remote="130690041670000000" />
+<file name="sensor.c" server="192.168.2.54//home/pi/" local="130745193987000178" remote="130745194130000000" />
+</dwsync>

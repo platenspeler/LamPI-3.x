@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Energy Sensors on RaspberryPI</title>
+</head>
+
+<body>
+
+<h1>Smart Meter Setup</h1>
+<p>This chapter describes how to make a connection between your Smart Meter (P1 connector) and your RaspberryPI and how to retrieve data from teh Smart Meter over its P1 port. When you're already using your Raspberry PI with other sensors such as temperature, humidity etc. setting up the Smart Meter probably is a piece of cake.</p>
+<p>The most important thing that makes this sensor different and diffcult is the hardware setup.</p>
+<p>The Smart Meter outputs a serial line protocol, which in itself is not something to worry about. However, there are at least 2 potential issues that could spoil your fun:</p>
+<ol>
+  <li>The serial line speed is not just 9600 baud but varies (and is higher) for later Smart Meters. In our case, the baudrate is 115200 baud.</li>
+  <li>The data line protocol values need to be inverted 0-&gt;1 and 1-&gt;0</li>
+</ol>
+<h2>Connect to P1 port</h2>
+<p>This is done through a standard telephony connector (RJ45). In my house I  have installed UTP to almost every room, so therefore I made a &quot;patch&quot; connection with a standard piece of telephony cable between the P1 port and my patch panel.</p>
+<h2>Connect to Raspberry</h2>
+<p>There is (at least) 2 ways of connecting to the RaspberryPI. The most used is by means of an USB dongle and use &quot;/dev/ttyUSB0&quot; to interface with the cable connection to your P1 port. The second method is by using the RaspberryPI gpio system and connect to the pins of the Raspi header connector.</p>
+<h3>Option 1</h3>
+<p><img src="PL2303HX_converter.JPG" width="400" height="400" hspace="20" vspace="20" align="left">Fist way to connect a serial interface to the RaspberryPI is by using an USB-serial converter.I bought this <a href="P1130508.JPG"><img src="74ls04-c.jpg" width="225" height="225" hspace="10" vspace="10" align="right"></a>module on eBay for 1.02 US $ (free shipping). However, as the data signal is inverted coming from the P1 meter, we need an inverter IC (or transistor) in order to make the connection work. This is not a big deal, the IC can be powered by the USB converter itself. Best is to by the 74ls04 IC, cost is only 50 cts. This 14-pin IC contains 6 inverters (input/output pairs) and GND/Vdc pins/</p>
+<p>Also, be aware that since the latest version of the smart meter use an enhanced communication protocol on 115200 baud, the communication line between the P1 port on the meter and the Raspberry need to be as short as possible in order to work reliably. An old telephone extension cable of 10 meter does not work reliable, maybe UTP cable does a better job but I have not tested. </p>
+<p>NOTE: Another thing to remember about the hookup cable between the meter and the Raspberry: Make sure to use a connection cable that has 4 wires connected between the RJ11 plugs. Most modern telephone connections only use 2 wires and therefore most extension cords only use 2-wires connect (even though the connector uses 4 or 6 wires). Therefore make sure all 4 wires are connected on both ends.</p>
+<p><br>
+As you probably can see on the picture of my setup below, I use the 5Vdc connector on the USB converter to power the inverter IC. </p>
+<p><a href="74ls04-b.jpg"><img src="74ls04-b.jpg" width="393" height="317"></a></p>
+<p>The following connections need to be made between the various components (we take the IC as the central point):</p>
+<ul>
+  <li>pin 14: Connect to the 5.0V pin of the USB device</li>
+  <li>pin 7: Connect to GND of the USB device and to Raspberry round pin</li>
+  <li>pin 1: Connect to Raspberry</li>
+  <li>pin 2: Connect to TXD</li>
+</ul>
+<p>&nbsp;</p>
+<p><a href="P1130508.JPG"><img src="P1130508.JPG" width="400" height="300"></a></p>
+<p>&nbsp;</p>
+<p>The next step is to get the breadboard away and put everything inside a nice small box.</p>
+<h3>Option 2</h3>
+<p>I like to explore the second option also, since if we make use of one of the un-used GPIO ports on the Raspberry, we need only one transistor (for data line inverting) to make the connection. Ressistor values are 10k Ohms. Actually, for the GPIO pins of the raspberry, it is better/needed to use the 3.3V line instead of 5Vdc.</p>
+<p><img src="transistor_inverter1.gif" width="435" height="219"></p>
+<p>Since we would like the output to be high when no signal is there, schema 2 would be the best for the moment: Have the Emitter connected to ground, Basis with a resistor connected to input and Collector to the GPIO pin and also conected with a resistor to 3.3Vdc. The serial protocol needs to acces the following port on the Raspberry:  "/dev/ttyAMA0".</p>
+<p>Of course it is also possible to use an invertor IC but the transisor solution is even more elegant I think.</p>
+</body>
+</html>

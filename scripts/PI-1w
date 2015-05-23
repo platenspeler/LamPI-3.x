@@ -1,0 +1,36 @@
+#!/bin/bash
+# 150428; XXX Since the new Raspberry kernel containd device trees we have to adapt our code.
+#
+PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/pi:/home/pi/scripts:/home/pi/exe"; export PATH
+export DISPLAY=:0
+#
+EXEDIR="/home/pi/exe"; export EXEDIR
+SCRIPTDIR="/home/pi/scripts"; export SCRIPTDIR
+SENSOR="1w-sensor"; export SENSOR
+HOSTNAME="255.255.255.255"; export HOSTNAME
+PORTNUMBER="5001"; export PORTNUMBER
+#
+LOGDIR="/home/pi/log"; export LOGDIR
+LOGFILE="$LOGDIR/$0.log"; export LOGFILE
+PID=""; export PID
+
+
+# we first kill the running program and then start again   
+pkill $SENSOR
+
+# Load the required module for the 1-wire sensor program
+#
+cat /proc/modules | fgrep w1_therm > /dev/null
+if [ $? = 0 ]; then
+	echo "Module loaded" >> $LOGFILE 2>&1 &
+else
+	sudo modprobe w1-therm
+    sudo modprobe w1-gpio
+fi
+
+# Execute the program
+#
+echo "---------------------------------------------------" >> $LOGFILE 2>&1
+echo "`date`:: Starting $SENSOR" >> $LOGFILE 2>&1
+# 
+cd $EXEDIR ; nohup ./$SENSOR -d -h $HOSTNAME -p $PORTNUMBER >> $LOGFILE 2>&1 &

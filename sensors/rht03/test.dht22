@@ -1,0 +1,13 @@
+#!/bin/bash
+
+echo "Testing program for DHT22"
+echo ""
+
+#while true; do
+	echo "Original  10x, `date`" ; time ./dht22    -r 10; sleep 2
+	echo ""
+	echo "Interrupt 10x, `date`" ; time ./dht22 -i -r 10; sleep 2
+	echo ""
+#	echo "WiringPI  10x, `date`" ; time ./dht22 -w -r 10; sleep 2
+#done
+echo ""

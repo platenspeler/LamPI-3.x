@@ -1,0 +1,3 @@
+#!/bin/sh
+
+iwlist wlan0 scan | /home/pi/scripts/iw_parse

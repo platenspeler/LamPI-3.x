@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dwsync>
+<file name="buildrun.sh" server="192.168.2.53//home/pi/" local="130507073695674294" remote="130508795810000000" />
+<file name="i2c.c" server="192.168.2.53//home/pi/" local="130507073695762168" remote="130508795810000000" />
+<file name="i2c.h" server="192.168.2.53//home/pi/" local="130507073695842276" remote="130508795810000000" />
+<file name="main.c" server="192.168.2.53//home/pi/" local="130508777365929538" remote="130508795810000000" />
+<file name="makefile" server="192.168.2.53//home/pi/" local="130507073696006015" remote="130508877280000000" />
+<file name="raspi.c" server="192.168.2.53//home/pi/" local="130507073696094587" remote="130508795810000000" />
+<file name="raspi.h" server="192.168.2.53//home/pi/" local="130507073696189305" remote="130508795810000000" />
+<file name="sht21" server="192.168.2.53//home/pi/" local="130507073696267156" remote="130508795840000000" />
+<file name="sht21.c" server="192.168.2.53//home/pi/" local="130507073696357216" remote="130508795840000000" />
+<file name="sht21.h" server="192.168.2.53//home/pi/" local="130507073696447280" remote="130508795840000000" />
+<file name="std_c.h" server="192.168.2.53//home/pi/" local="130507073695604236" remote="130508795840000000" />
+<file name="buildrun.sh" server="192.168.2.55//home/pi/" local="130507073695674294" remote="130509660280000000" />
+<file name="i2c.c" server="192.168.2.55//home/pi/" local="130507073695762168" remote="130509660280000000" />
+<file name="i2c.h" server="192.168.2.55//home/pi/" local="130507073695842276" remote="130509660280000000" />
+<file name="main.c" server="192.168.2.55//home/pi/" local="130508777365929538" remote="130509660280000000" />
+<file name="makefile" server="192.168.2.55//home/pi/" local="130507073696006015" remote="130509660280000000" />
+<file name="raspi.c" server="192.168.2.55//home/pi/" local="130507073696094587" remote="130509660280000000" />
+<file name="raspi.h" server="192.168.2.55//home/pi/" local="130507073696189305" remote="130509660280000000" />
+<file name="sht21" server="192.168.2.55//home/pi/" local="130507073696267156" remote="130509660280000000" />
+<file name="sht21.c" server="192.168.2.55//home/pi/" local="130507073696357216" remote="130509660280000000" />
+<file name="sht21.h" server="192.168.2.55//home/pi/" local="130507073696447280" remote="130509660280000000" />
+<file name="std_c.h" server="192.168.2.55//home/pi/" local="130507073695604236" remote="130509660280000000" />
+<file name="buildrun.sh" server="192.168.2.52//home/pi/" local="130507073695674294" remote="130690041680000000" />
+<file name="i2c.c" server="192.168.2.52//home/pi/" local="130507073695762168" remote="130690041680000000" />
+<file name="i2c.h" server="192.168.2.52//home/pi/" local="130507073695842276" remote="130690041680000000" />
+<file name="main.c" server="192.168.2.52//home/pi/" local="130508777365929538" remote="130690041680000000" />
+<file name="makefile" server="192.168.2.52//home/pi/" local="130507073696006015" remote="130690041680000000" />
+<file name="raspi.c" server="192.168.2.52//home/pi/" local="130507073696094587" remote="130690041680000000" />
+<file name="raspi.h" server="192.168.2.52//home/pi/" local="130507073696189305" remote="130690041680000000" />
+<file name="sht21" server="192.168.2.52//home/pi/" local="130507073696267156" remote="130690041680000000" />
+<file name="sht21.c" server="192.168.2.52//home/pi/" local="130507073696357216" remote="130690041680000000" />
+<file name="sht21.h" server="192.168.2.52//home/pi/" local="130507073696447280" remote="130690041680000000" />
+<file name="std_c.h" server="192.168.2.52//home/pi/" local="130507073695604236" remote="130690041680000000" />
+<file name="buildrun.sh" server="192.168.2.54//home/pi/" local="130507073695674294" remote="130767163550000000" />
+<file name="i2c.c" server="192.168.2.54//home/pi/" local="130507073695762168" remote="130767163550000000" />
+<file name="i2c.h" server="192.168.2.54//home/pi/" local="130507073695842276" remote="130767163550000000" />
+<file name="main.c" server="192.168.2.54//home/pi/" local="130508777365929538" remote="130767163560000000" />
+<file name="makefile" server="192.168.2.54//home/pi/" local="130507073696006015" remote="130767163560000000" />
+<file name="raspi.c" server="192.168.2.54//home/pi/" local="130507073696094587" remote="130767163560000000" />
+<file name="raspi.h" server="192.168.2.54//home/pi/" local="130507073696189305" remote="130767163560000000" />
+<file name="sht21" server="192.168.2.54//home/pi/" local="130507073696267156" remote="130767163560000000" />
+<file name="sht21.c" server="192.168.2.54//home/pi/" local="130507073696357216" remote="130767163560000000" />
+<file name="sht21.h" server="192.168.2.54//home/pi/" local="130507073696447280" remote="130767163560000000" />
+<file name="std_c.h" server="192.168.2.54//home/pi/" local="130507073695604236" remote="130767163560000000" />
+</dwsync>

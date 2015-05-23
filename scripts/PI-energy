@@ -1,0 +1,49 @@
+#!/bin/bash
+# Progam for starting P1 bus energy daemon process to manage smart metering sensors.
+# July 2014
+# ---------------------------------------------------------------------------
+
+PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/pi:/home/pi/scripts:/home/pi/exe"; export PATH
+export DISPLAY=:0
+#
+EXEDIR="/home/pi/exe"; export EXEDIR
+SCRIPTDIR="/home/pi/scripts"; export SCRIPTDIR
+LOGDIR="/home/pi/log"; export LOGDIR
+LOGFILE="$LOGDIR/$0.log"; export LOGFILE
+
+HOSTNAME="255.255.255.255"; export HOSTNAME
+PORTNUMBER="5001"; export PORTNUMBER
+#
+PID=""; export PID
+# Identify the program (name) for later use
+SENSOR="p1-sensor"; export SENSOR
+
+# Load the required modules for the P1 port sensor program
+#
+cat /proc/modules | fgrep i2c > /dev/null
+#if [ $? = 0 ]; then
+#	echo "Module loaded"
+#else
+#	sudo modprobe i2c_dev
+#    sudo modprobe i2c_bcm2708
+#fi
+
+# Wait a few moments, as more of these daemons may be starting at the same time
+#
+sleep 7
+
+#
+# p1-energy is a temperature + Humidity Sensor
+#
+PID=`ps -eaf | grep "$SENSOR" | grep -v grep | awk '{print $2}'`
+if [ -z $PID ]
+then
+
+	echo "---------------------------------------------------" >> $LOGFILE 2>&1
+	echo "`date`:: Starting $SENSOR" >> $LOGFILE 2>&1
+	cd $EXEDIR
+    # Run for a day and then probably restart. Crontab will make sure that the daemon is restarted
+	nohup ./$SENSOR -d -r 8640 -h $HOSTNAME -p $PORTNUMBER >> $LOGFILE 2>&1 &
+else
+	echo "$PID"
+fi

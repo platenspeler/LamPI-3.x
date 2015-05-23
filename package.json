@@ -1,0 +1,9 @@
+{
+  "name": "zway_gateway",
+  "version": "0.0.1",
+  "description": "my first socket.io app",
+  "dependencies": {
+    "express": "^4.12.0",
+    "string": "^3.0.0"
+  }
+}
