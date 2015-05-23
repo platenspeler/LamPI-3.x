@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>LamPI Architecture</title>
+</head>
+
+<body>
+
+<h1>SCCS programming</h1>
+<h2>Introduction</h2>
+<p>This chapter describes how the user can &quot;program&quot; the css files and thus customize the look and feel of the application.</p>
+<p>All style files usd by LamPI gui are put in the ~/www/styles directory or they will not be read by the program. In principle the naming of these files is free for the user, as long as the filetype is set to .css type. Almost all references to screen areas, buttons, sliders etc are .css coded in LamPI, which means that their location on the screen as well as layout, color and size is customizable. However, programming in .css is not simple and the various .css files will be more than 80% the same in most cases. Therefore I have been looking for a way to work with templates in the .css files. Unfortunately the css standard as it is today does not allow dynaming &quot;include&quot; files so it is not that easy to use template files in the run-time.</p>
+<p>Therefore we will switch to .sccs files which allow inclusion of template-type files with variables and so on. After a &quot;compile&quot; the result is a perfect .css file which can be used by LamPI without problems.</p>
+<h2>.scss files</h2>
+<p>A sample .scss file used by LamPI would look like this (scale-black.scss):</p>
+<p><em><code>@charset &quot;utf-8&quot;;</code></em></p>
+<p><code><em>/* ------------------------------------------------------------------------------------ */<br>
+  /* SCSS Document for making generic LamPI .css files 									*/<br>
+  /* Author: M. Westenberg (mw12554@hotmail.com) 											*/<br>
+  /* This SCSS file is for charcoal scale-black											*/<br>
+  /* ------------------------------------------------------------------------------------ */</em></code></p>
+<p><code><em>/* ----------------------- SCCS variable definitions -----------------------------------*/<br>
+  /* Most important parameters can be set in this area									*/<br>
+  /* some, like setting picture buttons etc, and changing color of the add, help buttons	*/<br>
+  /* can be set by overriding the default skin _templates									*/<br>
+  /* ------------------------------------------------------------------------------------ */</em></code></p>
+<p><code><em>$wrapper_bg_color: #222;			/* Background color of the wrapper */<br>
+  $wrapper_bg_picture: &quot;&quot;;</em></code></p>
+<p><code><em>$main_bg_color: #333;				/* The main background color used for this Look and Feel */<br>
+  $main_nth_color: #444;<br>
+  $main_msg_color: #eee;</em></code></p>
+<p><code><em>$content_background: $main_bg_color;<br>
+  $message_background: $main_bg_color;<br>
+  $header_background: $main_bg_color;<br>
+  $menu_background: $main_bg_color;</em></code></p>
+<p><code><em>$row_bg_color: $main_bg_color;<br>
+  $row_nth_color: $main_nth_color;</em></code></p>
+<p><code><em>$button_fg_color: #fff;<br>
+  $button_bg_color: #222;				/* Background color for the buttons */<br>
+  $button_hover_bg_color: #FF9;		/* How does the color of a button change if it is hovered */<br>
+  $button_hover_fg_color: #111;		/* Foreground color for button when hovered */<br>
+  $button_active_fg_color: yellow;	/* When a button is active it has this color */<br>
+  $button_active_bg_color: #000;</em></code></p>
+<p><code><em>$dlabel_fg_color: black;<br>
+  $dlabel_bg_color: #eee;<br>
+  $dbutton_fg_color: black;<br>
+  $dbutton_bg_color: #eee;</em></code></p>
+<p><code><em>$dimmer_background: #ff9;			/* Color of the dimmer slider */<br>
+  $dimmer_handle: #ef2929;			/* Color of the dimmer handler */</em></code></p>
+<p><code><em>$thermo_background: #F66;			/* Color of the thermo slider */<br>
+  $thermo_handle: #ef2929;			/* Color of the thermo handler */</em></code></p>
+<p><code><em>$dialog_fg_color: #eee;<br>
+  $dialog_bg_color: #222;<br>
+  <br>
+  /* ------------------------------------------------------------------------------------ */<br>
+  /* Import the generic template															*/<br>
+  /* ------------------------------------------------------------------------------------ */</em></code></p>
+<p><code><em>@import '_scale-menu-right-template';</em></code></p>
+<p><code><em>/* ------------------------------------------------------------------------------------	*/<br>
+  /* OVERRIDE AREA 																		*/<br>
+  /* If you want to change template settings for this specific skin you can do this here	*/<br>
+  /* ------------------------------------------------------------------------------------	*/</em></code></p>
+<p><code><em>.slider-health {<br>
+  height:8px;<br>
+  background:#AFA;						/* left side of the bar */<br>
+  };<br>
+  .slider-health .ui-slider-range {<br>
+  background:#FAA;						/* This is the right part from handle to max */<br>
+  }</em></code><em></em></p>
+<p>Let's analyze the file. The first section contains variable settings that will be used later in the imported <code><em>_scale-menu-right-template</em></code> files. Please note that variables start with a &quot;$&quot; sign and every line needs to be terminated with a semicolon. </p>
+<p>The second section contains one or more files which will be imported at teh time of compilation at the exact location where the @import directive is. So if you want you could replace the @import line with all lines of the <code><em>_scale-menu-right-template</em></code>.css file and you would get the same result at compile time. Please note that in the imported file we will use the variables set above instead of real values. This way we can have one template file being used by several .scss skins.</p>
+<p>The third and last section is optional and will allow to overwrite (some) settings already made in the template, specific to this skin. In this case we would change the height of the health from 4px which is standard in the template to 8px, and we would change the color of the slider/meter</p>
+<h2>Koala, scss file processing</h2>
+<p>The free tool 'koala' is what I use to compile the .scss files in the scss-styles directory into .css files in the styles directory. Koala is intuitive and can be used in minutes. It's settings (especially configuring the standard output directory) and a little more difficult to master.</p>
+<p><img src="koala_screen_1_min.jpg" width="595" height="368"></p>
+<p>The picture above shows what you see if you refresh the tool (it will then look for scss files and include them in the list) and then select your .scss file. On the right column I always choose auto compile and the expanded output style. In the mid area it is shown that the output for the .scss files will be writte to the styles directory, please take notice of this as the default behaviour of Koala is to put the .css output file in the source directory,</p>
+<h2>Override Examples</h2>
+<p>Overrides only make sense if you need to make a small number of adjustments to an otherwise standard template. If you like to make several changes, maybe consider to make another template. I found that overrides make most sense when you use background pictures for certain sections on the screen and without modifying the .css definitions the text would not be readible.</p>
+<p><em><strong>/* Make sure that the timer screen has a uni background */<br>
+  #gui_timers {<br>
+background-color:$wrapper_bg_color;<br>
+background-image:'';<br>
+}</strong></em></p>
+<p>The example above would add a solid (single color) background to the content area when the timer screen is selected. As a result all timer text and buttons can be read much better.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+</body>
+</html>

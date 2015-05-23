@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>LamPI 433Mhz controller for RaspberryPI</title>
+</head>
+
+<body>
+
+<h1>Zwave Devices</h1>
+<p>Zwave is a prototcol working on 868MHz used for controlling home automation devices. In comparison with the 433MHz series of devices, the Z-Wave protocol allows bi-directional communication and will allow devices to transmit values (back) to the controller as well. his means that it is possible to ask the device for its settings and this makes the protocol a lot more reliable than the 433 MHz protocol.</p>
+<p>In the 2.0 release of LamPI, it is not yet possible to &quot;pair&quot; or interview the 868MHz devices from the LamPI user interface. As a result, this one-time pairing needs to be initiated from the classic interface that ships with the Razberry device. As soon as the device number is assigned by that interface, you can use that number in the database.cfg file or assign that number when making a new device in your room.</p>
+<h1>Fibaro</h1>
+<p>Fibaro makes a range of small dimmers and switches. I bought a pair of small FGD-211 dimmer devices that can be built behind a traditional wall switch (preferrable a pulse switch) as well as the FGS-211 switch.</p>
+<p>&nbsp;</p>
+<h2>FGD211 Blues</h2>
+<p>The FGD211 dimmer has a serious glitch: Out of the box the dimmer works as expected when installed in a 2 or 3-wire installation. However, after pairing with the Razberry host manual operation with a the switch has changed: Suddenly the device seems to be sluggish and before it can be operated by the switch it first needs to wake up by pressing the switch for at least 3 seconds. After that it works as expected. But if you do not operate the switch for a minute or so it goes back to this sleep mode...<br>
+  Keep in mind that operation by the ZWave controller all that time worked without problems,and that pairing alone is enough to change the behaviour of the dimmer module.</p>
+<p>The solution is simple but unexpected: Change parameter 10 of the Dimmer module with help of one of the GUI interfaces on the controller. Switch off the parameter 10 function, or make its value 0. In my case I had to go back to version 1.9 driver of the Fibaro module in order to be able to set the parameter to the desired value.</p>
+<p>&nbsp;</p>
+<h1>Links</h1>
+<ul>
+  <li>http://www.openremote.org/display/docs/OpenRemote+2.0+How+To+-+Z-Wave+with+Razberry</li>
+</ul>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+</body>
+</html>

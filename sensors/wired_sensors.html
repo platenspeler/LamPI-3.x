@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Wired Sensors</title>
+</head>
+<body>
+<h1>Wired Sensors</h1>
+<p>This part of the documentation describes the sensors interface. With sensors
+  we mean devices that are physically connected/attached to the Raspberry&nbsp; to one
+  of the GPIO pins. So they are connected with a physical wire. Sensors typically
+  are temperature/humidity interfaces or energy sensors.</p>
+<p>What makes sensors different from the &quot;normal&quot; receivers: The
+  latter operate asynchronously and begin to send as they like it. The connected
+  wire sensors will only start once they receive a command over the line from the
+  MCU (Micro Controlling Unit aka Raspberry).</p>
+<p>For the sake of simplicity, I like to categorize wired sensors in the
+  following groups:</p>
+<ol>
+  <li><a href="no_bus_sensors.html">Sensors without a bus mechanism, so every sensor might have its own
+    protocol and will be connected to a free GPIO pin</a>.</li>
+  <li><a href="dallas_sensors.html">Single- or One-Wire sensors with Dallas bus protocol</a></li>
+  <li><a href="i2c_sensors.html">Two-wire sensors on the I2C bus</a></li>
+  <li><a href="energy_sensors.html">Energy sensors, connected to the  P1 bus of your Smart Meter</a></li>
+</ol>
+<p>&nbsp;</p>
+</body>
+</html>

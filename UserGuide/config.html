@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Config Screen</title>
+</head>
+
+<body>
+
+<h1>Config screen</h1>
+<p>This part of the documentation describes the configuration screen (called config in the GUI) and what you can (and sometimes cannot) do with it.</p>
+<p>The main purpose of the Config screen is to allow users to change configuration settings without having to modify a configuration file by hand. Instead, it offers a convenient Gui form that users can fill out and change the settings with.</p>
+<h2><img src="screenshots/config_screen_debug_grey.JPG" width="1109" height="742"></h2>
+<p>&nbsp;</p>
+<h2>Debug</h2>
+<p>This menu setting allows settig of the debug level of the front-end GUI application. 4 separate levels can be set with globally the following characteristics:</p>
+<ol>
+  <li>Level 0 diables output of most messages to either the message area or popups showing status changes.</li>
+  <li>Level 1 is the normal debug level and will display short status messages in the message area</li>
+  <li>Level 2 will for some alerts or errors show popups instead of messages, also more elaborate messages are displayed.</li>
+  <li>Level 3 Will show debugging information for most of the buttons and informstion to help debug the GUI program and understand the program flow.</li>
+</ol>
+<p>&nbsp;</p>
+<h2>Controller</h2>
+<p>The controller settting lets you choose whether the LamPI system should behave like a GUI for a klikaanklikuit ICS-1000 system or whether the RaspberryPI LamPI-daemon.php process is used. Not all functions of the GUI are available for the ICS-1000, but most features that are often used are.</p>
+<h2>SQL</h2>
+<p>This option is not used (any more)</p>
+<h2>Persist</h2>
+<p>This option is not used (any more)</p>
+<h2>Skin</h2>
+<p>This option allows the user to set his own skin for the program. As you can see on these documentation pages, two standard skins are used: grey and blue. Skins are written in .css so the user if free to make other skins should he or she wish to do so.</p>
+<p><img src="screenshots/config_skin_2_small.jpg" width="755" height="513"></p>
+<p><img src="screenshots/config_skin_1_small.jpg" width="752" height="512"></p>
+<h2>Backup</h2>
+<p>Backup and restore are two important features of the GUI program. This config option will store or retrieve configuration information. Data is stored in a user readible jSON-formatted file (database.cfg by default).</p>
+<p>&nbsp;</p>
+</body>
+</html>

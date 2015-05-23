@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>LamPI 433Mhz controller for RaspberryPI</title>
+</head>
+
+<body>
+
+<h1>Energy Sensors</h1>
+<p>For a lot of people, controlling their energy consumption in the house is equally important as controlling their lights alone. After all, only when you know when you consume most energy, and how much, you can effectively make a plan to save on energy in your home. This page describes the actions we have taken in our home to measure our usage of energy and present the information in dials or graphs.</p>
+<p>Somewhere in the middel of 2014 Liander in the Netherlands installed a smart meter in our home, and after a while I decided to connect the P1 port to a RaspberryPI and start collecting information about Electricity Power and Gas consumption. The hardware specifics can be found in the Energy section.</p>
+<h1>Energy Dials and Meters </h1>
+<p>Since LamPI version 2.1 we support Smart Meters. My Smart meter is a Landis-Gyr E350 and it is one of the latest models that outputs more than the averay amount of data.</p>
+<p>Below you see a screenshot of the energy screen... The snapshot was taken with the skin &quot;blackngrey&quot; as the active skin for the application.</p>
+<p><img src="screenshots/energy_screen_1.jpg" width="968" height="615" /></p>
+<p>&nbsp;</p>
+<h1>Energy Charts</h1>
+<p>When clicking in the weather screen on one of the dials, a separate screen will open that shows historical data for the weather sensors. This function is described separately in the section for rrd graphs.</p>
+<p><img src="screenshots/energy_graph_phase_1h.jpg.JPG" width="963" height="636"></p>
+<h1>Json message format for Energy</h1>
+<p>The Json message that is sent to the LamPI-daemon is as follows:</p>
+<p>message = {<br>
+tcnt : integer,<br>
+type : 'json',<br>
+action : 'energy',<br>
+brand: e350 # or another  brand, you should use the same brand as in the database.cfg file<br>
+address: integer, # (For example the last 6 digits of your meter id number, in my case 083867)<br>
+channel: integer, # 0<br>
+kw_hi_use: char[12], # For double metering, the hi usage in kWhr<br>
+kw_lo_use: char[12],	# For double metering the lo usage<br>
+  kw_hi_ret: char[12], # Return to network<br>
+  kw_lo_ret: char[12], # Lo return to network<br>
+  gas_use: char[12],	# Natural gas usage in m3<br>
+  kw_act_use: char[12],	# Actual momentary use (kW)<br>
+  kw_act_ret: char[12],	# Actual return<br>
+  kw_ph1_use: char[12],<br>
+  kw_ph2_use: char[12],  <br>
+  kw_ph3_use: char[12],  <br>
+</p>
+<p>}; <br>
+  <br>
+</p>
+<h1>Logging our Sensor data</h1>
+<p>The LamPI-daemon will listen to all incoming json messages on its port 5000. Incoing messages from sensors will be matched against the configuration items in the database.cfg file for missing data such as names, location etc that are not sensor defined but defined by the user.</p>
+<p>But in order to watch trends in data and analyze the collected data we need to add logging capabilities to the LamPI environment. There are several options:</p>
+<ol>
+  <li>Make LamPI-daemon store all collected data in a logfile and use Excel to analyze the data</li>
+  <li>Make a logging process tat listens to port 5000 and be informed ot every json message that is processed by the daemon.</li>
+  <li>Use an external PAAS service provider, forward all messages received to the service provider and use its analyzing functions to make sense of your data.</li>
+</ol>
+<p>The third option is attractive, as it will use external storage, services etc. to look at our data and the trend graphs are accessible from anywhere on the internet. The PAAS provider carriots.com provides this service for free for small users with up to 10 data streams.</p>
+<h3>re. Store in local logfile</h3>
+<p>The easiest method for analysing sensor data is to store all data collected to a local logfile on the PI, and import this file into excel on regular intervals. This is simple solution, and this also how I started.</p>
+<h3>re 2. Logging to rrdtool</h3>
+<p>There is a tools based on a round robin database tool that can be used to store sensors data and display graphs. </p>
+<h3>re 3. PAAS. Use a tool like Carriots</h3>
+<p>The PAAS (Platform As A Service) provider carriots.com provides a free membership for data analysis of a limited set of sensors.</p>
+<p>&nbsp;</p>
+</body>
+</html>

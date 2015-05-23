@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>LamPI 433Mhz controller for RaspberryPI</title>
+</head>
+
+<body>
+
+<h1>Change History</h1>
+<p>This document describes the main changes made for a certain release</p>
+<p>Release 3.0 beta</p>
+<ul>
+<li>Change all PHP daemons and change to node.js</li>
+<li>Integration with Z-Wave so that manual operations on switches will be visible in the GUI and Z-Wave 100% managed same as Kaku devices</li>
+<li>Several bug fixes such as soring Scenes</li>
+<li>Implement DeviceTree support</li>
+</ul>
+<p>Release 2.8 (beta)</p>
+<ul>
+  <li>Add basic alarm function for sensors. Trigger in LamPI-gate.php and send to daemon who will do action as specified by LamPI-gate (Either display message on LamPI Gui or start a predefined scene in the system).</li>
+  <li>Start rework for a LamPI-gate in node.js</li>
+  <li>The /opt/z-way-server/automation/userModules directory now contanins first modules as intended by z-way. Given the rather high cpu-load, limited socket functions available etc. it remains to be seen whethe rthis is a better solution than building a separate gateway in either JS or PHP.</li>
+</ul>
+<p>Release 2.7</p>
+<ul>
+  <li>Added several pages including pictures to the documentation and worked on the structure</li>
+  <li>Added .css support for the dialogs in askForm and myConfirm functions in LamPI</li>
+  <li>Support for Cookies / localStorage to store username, password preferences on the local machine.</li>
+  <li>Added localstorage support for skins. This means that skin setting will survive a page reload (because of the localStorage) without the skin being taken from the database upon reload. This allows users/sessions to have different skins.</li>
+  <li>Define a scaling css template. These templates are in the styles directory and start with the &quot;scale-&quot; in front of their name</li>
+</ul>
+<p>Release 2.6 </p>
+<ul>
+  <li>Added a health indicator in the header area. The color of this little bar indicates the health of the client-daemon communication</li>
+  <li>Solved a bug in ALL OFF command for a room. Since the id (used in the GUI) and the unit number used in the daemon might differ we need to make sure that ALL OFF command works as expected (on unit number).</li>
+  <li>Changed the CSS system significantly. Templates are now available in scss-styles directory that can be used together with tools like &quot;koala&quot; to build new Look and Feel in a matter of minutes.</li>
+  <li>Display the current skin in the &quot;skin settings&quot; dialog, and make the current skin the default option in the drop-down menu</li>
+</ul>
+<p>&nbsp;</p>
+</body>
+</html>

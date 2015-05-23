@@ -1,0 +1,18 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE project PUBLIC "-//audacityproject-1.3.0//DTD//EN" "http://audacity.sourceforge.net/xml/audacityproject-1.3.0.dtd" >
+<project xmlns="http://audacity.sourceforge.net/xml/" projname="B_button_data" version="1.3.0" audacityversion="2.0.4" sel0="2.6746428571" sel1="2.6746428571" vpos="0" h="2.6720975057" zoom="352800.0000000000" rate="96000.0">
+	<tags/>
+	<wavetrack name="Audiospoor" channel="2" linked="0" mute="0" solo="0" height="620" minimized="0" isSelected="1" rate="96000" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="498112">
+				<waveblock start="0">
+					<simpleblockfile filename="e00002a7.au" len="262144" min="-1.0" max="0.985657" rms="0.306934"/>
+				</waveblock>
+				<waveblock start="262144">
+					<simpleblockfile filename="e0000bb4.au" len="235968" min="-1.0" max="0.999969" rms="0.327705"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+</project>
