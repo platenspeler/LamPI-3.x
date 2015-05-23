@@ -46,13 +46,9 @@
 <file name="frontend_lib.php" server="192.168.2.53//home/pi/" local="130592679435839939" remote="130623720700000000" />
 <file name="frontend_set.php" server="192.168.2.53//home/pi/" local="130593388315654432" remote="130623720710000000" />
 <file name="frontend_sql.php" server="192.168.2.53//home/pi/" local="130687511578141418" remote="130687511610000000" />
-<file name="frontend_ics.php" server="192.168.2.55//home/pi/" local="130593387973782726" remote="130606418400000000" />
-<file name="frontend_rasp.php" server="192.168.2.55//home/pi/" local="130593388873377051" remote="130606418400000000" />
 <file name="frontend_set.php" server="192.168.2.55//home/pi/" local="130593388315654432" remote="130606418400000000" />
 <file name="frontend_sql.php" server="192.168.2.55//home/pi/" local="130592695531574892" remote="130606418410000000" />
-<file name="frontend_ics.php" server="192.168.2.51//home/pi/" local="130484299370000000" remote="130579559550000000" />
 <file name="frontend_lib.php" server="192.168.2.51//home/pi/" local="130571663075310995" remote="130579559550000000" />
-<file name="frontend_rasp.php" server="192.168.2.51//home/pi/" local="130484299370000000" remote="130579559550000000" />
 <file name="frontend_set.php" server="192.168.2.51//home/pi/" local="130521460829164769" remote="130579559550000000" />
 <file name="frontend_sql.php" server="192.168.2.51//home/pi/" local="130571663615441291" remote="130579559550000000" />
 <file name="frontend_lib.php" server="westenberg.org//home/pi/" local="130521460588156983" remote="130525987680000000" />
@@ -60,15 +56,11 @@
 <file name="frontend_set.php" server="westenberg.org//home/pi/" local="130521460829164769" remote="130525987700000000" />
 <file name="mobile.html" server="westenberg.org//home/pi/" local="130521469827471006" remote="130521470050000000" />
 <file name="dev.html" server="westenberg.org//home/pi/" local="130510511063379205" remote="130525987600000000" />
-<file name="frontend_ics.php" server="westenberg.org//home/pi/" local="130484299370000000" remote="130525987640000000" />
-<file name="frontend_rasp.php" server="westenberg.org//home/pi/" local="130484299370000000" remote="130525987690000000" />
 <file name="dev.html" server="192.168.2.51//home/pi/" local="130539826586969169" remote="130579559550000000" />
 <file name="frontend_lib.php" server="192.168.2.54//home/pi/" local="130592679435839939" remote="130695047640000000" />
 <file name=".htaccess" server="192.168.2.54//home/pi/" local="130243987260000000" remote="130544797200000000" />
 <file name="apple-touch-icon.png" server="192.168.2.54//home/pi/" local="130234670430000000" remote="130544797200000000" />
 <file name="dev.html" server="192.168.2.54//home/pi/" local="130765883368511500" remote="130765885260000000" />
-<file name="frontend_ics.php" server="192.168.2.54//home/pi/" local="130624613129429452" remote="130695047640000000" />
-<file name="frontend_rasp.php" server="192.168.2.54//home/pi/" local="130593388873377051" remote="130695047640000000" />
 <file name="frontend_set.php" server="192.168.2.54//home/pi/" local="130766324642733650" remote="130766324670000000" />
 <file name="frontend_sql.php" server="192.168.2.54//home/pi/" local="130687511578141418" remote="130695047640000000" />
 <file name="index.html" server="192.168.2.54//home/pi/" local="130765883543687407" remote="130765885290000000" />
@@ -78,8 +70,6 @@
 <file name="mobile.html" server="192.168.2.54//home/pi/" local="130672863332222175" remote="130695047640000000" />
 <file name="README.md" server="192.168.2.54//home/pi/" local="130336720910000000" remote="130544797630000000" />
 <file name="frontend_lib.php" server="192.168.2.52//home/pi/" local="130592679435839939" remote="130685141370000000" />
-<file name="frontend_ics.php" server="192.168.2.53//home/pi/" local="130624613129429452" remote="130624613330000000" />
-<file name="frontend_rasp.php" server="192.168.2.53//home/pi/" local="130593388873377051" remote="130623720710000000" />
 <file name="favicon.ico" server="192.168.2.53//home/pi/" local="130605597954655546" remote="130623720700000000" />
 <file name="favicon.png" server="192.168.2.53//home/pi/" local="130605596023475501" remote="130666974800000000" />
 <file name="favicon.ico" server="192.168.2.55//home/pi/" local="130605597954655546" remote="130606418400000000" />
@@ -87,8 +77,6 @@
 <file name="favicon.png" server="192.168.2.52//home/pi/" local="130605596023475501" remote="130629869120000000" />
 <file name="dev.html" server="192.168.2.52//home/pi/" local="130606043262357370" remote="130629869120000000" />
 <file name="favicon.ico" server="192.168.2.52//home/pi/" local="130605597954655546" remote="130629869120000000" />
-<file name="frontend_ics.php" server="192.168.2.52//home/pi/" local="130624613129429452" remote="130629869120000000" />
-<file name="frontend_rasp.php" server="192.168.2.52//home/pi/" local="130593388873377051" remote="130629869120000000" />
 <file name="frontend_set.php" server="192.168.2.52//home/pi/" local="130593388315654432" remote="130629869130000000" />
 <file name="frontend_sql.php" server="192.168.2.52//home/pi/" local="130625538534162693" remote="130685141320000000" />
 <file name="mobile.html" server="192.168.2.52//home/pi/" local="130617804676217062" remote="130629869180000000" />
