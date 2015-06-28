@@ -37,17 +37,60 @@ extern "C"
 // WAIT settings for the daemon and sockets
 //
 #define SLEEP 50000								// Sleeptime uSec in daemon mode between two PING messages to LamPI-daemon
-#define MILLIWAIT 60000							// 60 milli secs is  minute
+#define MILLIWAIT 60000							// 60 milli secs is minute
 
 // Default port setting
 //
-#define PORT "5000" 							// the port client will be connecting to 
+#define PORT "5002" 							// the port client will be connecting to 
 #define UDPPORT "5001"
+
+
+/*
+ *********************************************************************************
+ * Get local address
+ *********************************************************************************
+ */
+int getLocalAddress(char *host) {
+
+    struct ifaddrs *ifaddr, *ifa;
+    int family, s;
+    //char host[NI_MAXHOST];
+
+    if (getifaddrs(&ifaddr) == -1)
+    {
+        perror("getifaddrs");
+		return(-1);
+        //exit(EXIT_FAILURE);
+    }
+	fprintf(stderr,"Starting loop\n");
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+    {
+        if (ifa->ifa_addr == NULL)
+            continue;
+
+        s=getnameinfo(ifa->ifa_addr,sizeof(struct sockaddr_in),host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+
+        if((strcmp(ifa->ifa_name,"wlan0")==0)&&(ifa->ifa_addr->sa_family==AF_INET))
+        {
+            if (s != 0)
+            {
+                fprintf(stderr,"getnameinfo() failed: %s\n", gai_strerror(s));
+				return(-1);
+                //exit(EXIT_FAILURE);
+            }
+//            fprintf(stderr,"\tInterface : <%s>\n",ifa->ifa_name );
+//            fprintf(stderr,"\t  Address : <%s>\n", host);
+        }
+    }
+
+    freeifaddrs(ifaddr);
+    return(0);
+}
+
 
 /*
  *********************************************************************************
  * Get In Addr
- *
  * get sockaddr, IPv4 or IPv6: These new way of dealing with sockets in Linux/C 
  * makes use of structs.
  *********************************************************************************
@@ -131,7 +174,6 @@ int open_udp_socket() {
 /*
  *********************************************************************************
  * buf_2_server
- *
  * Send a message buffer to the server over either TCP or UDP
  * Be aware, that there is a minimum of arguments that need to be specified in
  * the jSon snd_buf string.
@@ -151,7 +193,7 @@ int buf_2_server(int sockfd,
 		// hostIP and port are global variables. Must be changed later!
 		
 		struct sockaddr_in servaddr; 			// server address */
-		short s_port = atoi(port);				// Instead of port 5000, use port 5001 as standard
+		short s_port = atoi(port);				// Instead of port 5002, use port 5001 as standard
 		
 		/* fill in the server's address and data, in this case 0 */ 
 		
@@ -171,7 +213,6 @@ int buf_2_server(int sockfd,
 	}
 	return(-1);
 }
-
 
 #ifdef __cplusplus
 }

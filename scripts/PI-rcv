@@ -1,15 +1,15 @@
 #!/bin/bash
 #
-#
-PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/pi:/home/pi/scripts:/home/pi/exe"; export PATH
-export DISPLAY=:0
-#
-EXEDIR="/home/pi/exe"; export EXEDIR
-SCRIPTDIR="/home/pi/scripts"; export SCRIPTDIR
+EXEDIR="$HOME/exe"; export EXEDIR
+SCRIPTDIR="$HOME/scripts"; export SCRIPTDIR
 SNIFFER="LamPI-receiver"; export SNIFFER
+LOGDIR="$HOME/log"; export LOGDIR
+
+cd $SCRIPTDIR
+BASENAME=`basename "$0"`
+echo "starting program: $0, $BASENAME"
 #
-LOGDIR="/home/pi/log"; export LOGDIR
-LOGFILE="$LOGDIR/$0.log"; export LOGFILE
+LOGFILE="$LOGDIR/$BASENAME.log"; export LOGFILE
 PID=""; export PID
 
 HOSTNAME="localhost"; export HOSTNAME
@@ -50,7 +50,8 @@ then
 	cd $EXEDIR
     
 	echo "`date`:: Starting $SNIFFER" >> $LOGFILE 2>&1
-	nohup ./$SNIFFER -d -v -h $HOSTNAME -p $PORTNUMBER >> $LOGFILE 2>&1 &
+    # Use -v (=verbose) flag only when necessary
+	nohup ./$SNIFFER -d -h $HOSTNAME -p $PORTNUMBER >> $LOGFILE 2>&1 &
 else
 	echo "$PID"
 fi

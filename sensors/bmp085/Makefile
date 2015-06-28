@@ -41,7 +41,7 @@ OBJ=$(SRC:.c=.o)
 
 BINS=$(SRC:.c=)
 
-all:	sensor
+all:	bmp085-sensor
 
 readme:
 	@cat README.TXT
@@ -50,7 +50,7 @@ readme:
 
 really-all:	$(BINS)
 
-sensor:	$(OBJ)
+bmp085-sensor:	$(OBJ)
 	@echo [link sensor]
 	@$(CC) -o $@ $(OBJ) $(LDFLAGS) $(LDLIBS)
     
@@ -59,7 +59,7 @@ sensor:	$(OBJ)
 	@$(CC) -c $(CFLAGS) $< -o $@
 
 install:
-	@cp sensor $(INSTALL)/bmp085-sensor
+	@cp bmp085-sensor $(INSTALL)/bmp085-sensor
 	chown root $(INSTALL)/bmp085-sensor
 	chmod u+s $(INSTALL)/bmp085-sensor
 

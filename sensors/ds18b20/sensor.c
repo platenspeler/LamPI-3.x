@@ -74,8 +74,8 @@ int checks = 0;									// Number of checks on messages
  */ 
 int ds18b20_read(char *dir)  
 {  
-	char dev[128];
-	char line[128];
+	char dev[192];
+	char line[192];
 	FILE *fp;
 	int temperature;
 	char * tpos = NULL;
@@ -90,6 +90,7 @@ int ds18b20_read(char *dir)
 	if (verbose) printf("dev: %s\n",dev);
 	
 	if (NULL == (fp = fopen(dev,"r") )) {
+		fprintf(stderr,"ds18w20 error:: error for device: %s\n",dev);
 		perror("Error opening device");
 		return(-1);
 	}
@@ -106,6 +107,7 @@ int ds18b20_read(char *dir)
 				// CRC error
 				crcpos = NULL;
 				if (verbose) fprintf(stderr,"crc error for device %s\n" , dev);
+				return(-1);
 			}
 		}
 		
@@ -120,7 +122,6 @@ int ds18b20_read(char *dir)
 			}
 			if (verbose) fprintf(stderr,"temp read: %d\n\n",temperature);
 		}
-		
 	}
 	
 	fclose(fp);
@@ -197,7 +198,7 @@ int main(int argc, char **argv)
 	
 	// -------------------- PRINT ERROR ---------------------------------------
 	// Print error message if parsing the commandline was not successful
-	
+	//
     if (errflg) {
         fprintf(stderr, "usage: argv[0] (options) \n\n");
 		fprintf(stderr, "-d\t\t; Daemon mode. Codes received will be sent to another host at port 5000\n");
@@ -234,60 +235,68 @@ int main(int argc, char **argv)
 		char str_temp[32];
 		
 		if ((dir = opendir (SPATH)) != NULL) {
-		
 			/* print all the files and directories within directory */
 			while ((ent = readdir (dir)) != NULL) {
 			
-				if (verbose) printf ("%s\n", ent->d_name);
+				if (verbose) printf("%s\n", ent->d_name);
 				
-				if (strncmp(ent->d_name,"28",2) == 0)	// 28 is the prefix for ds18b20
+				if (strncmp(ent->d_name,"28",2) == 0)		// found 28 as the prefix for ds18b20 devices
 				{
 					temp = ds18b20_read(ent->d_name);
-					sprintf(str_temp,"%3.1f",(float) temp/1000);
-					
-					if (dflg) {
-						char t[20];
+					if (temp == -1) {
+						// Error
+						fprintf(stderr,"ds18b20 error: No temperature returned for %s\n",ent->d_name );
+					}
+					else {
+						sprintf(str_temp,"%3.1f",(float) temp/1000);
+						if (dflg) {
+							char t[20];
 						
-						// If we are in daemon mode, initialize sockets etc.
-						if ((sockfd = socket_open(hostname, port, mode)) == -1) {
-							fprintf(stderr,"socket_open failed\n");
-							exit(1);
-						}
-						
-						seconds = get_time(t);
-						sprintf(snd_buf, "{\"tcnt\":\"%d\",\"action\":\"weather\",\"brand\":\"ds18b20\",\"type\":\"json\",\"address\":\"%s\",\"channel\":\"%ld\",\"temperature\":\"%s\"}", 
+							// If we are in daemon mode, initialize sockets etc.
+							if ((sockfd = socket_open(hostname, port, mode)) == -1) {
+								fprintf(stderr,"socket_open failed\n");
+								exit(1);
+							}
+							seconds = get_time(t);
+							sprintf(snd_buf, "{\"tcnt\":\"%d\",\"action\":\"weather\",\"brand\":\"ds18b20\",\"type\":\"json\",\"address\":\"%s\",\"channel\":\"%u\",\"temperature\":\"%s\"}", 
 							seconds,							// Nr of seconds as a message reference
 							ent->d_name,						// address
 							0,									// channel
 							str_temp);							// temperature
 											
-						buf_2_server(sockfd, hostname, port, snd_buf, mode);
-						printf("%s Sent to host: %s:%s, sensor: %s, temp: %s\n", t, hostname, port, ent->d_name, str_temp);
-					}
-					else {
-					// Commandline
-						if (temp > 0) {
-							printf("Temperature for dev %s: %s\n", ent->d_name, str_temp);
+							buf_2_server(sockfd, hostname, port, snd_buf, mode);
+							printf("%s Sent to host: %s:%s, sensor: %s, temp: %s\n", t, hostname, port, ent->d_name, str_temp);
 						}
 						else {
-							temp = -temp;
-							printf("Temperature for dev %s: -%d.%d\n",
-											ent->d_name, temp/1000,temp%1000);
-						}
-					}
+						// Commandline
+							if (temp > 0) {
+								printf("Temperature for dev %s: %s\n", ent->d_name, str_temp);
+							}
+							else {
+								temp = -temp;
+								printf("Temperature for dev %s: -%d.%d\n",
+												ent->d_name, temp/1000,temp%1000);
+							}
+						}//dflg
+					}//temp>0
+					delay(500);									// Only wait when we read a sensor (and not other inodes)
 				}
 				else {
-					// This would mean another sensor than the ds18b20
+					// Use this if there are another Dallas sensors than the ds18b20
 					// which is highly unlikely (there are no others)
+					// But . .. w1_bus_master1 are there also
+					//
+					if (verbose) fprintf(stderr,"ds18w20:: Number is not 28 but: %s\n",ent->d_name);
 				}
 			}
 			closedir (dir);
-		} 
+		}// open_dir
 		else {
   			/* could not open directory */
  			 perror ("No such directory ");
 			return EXIT_FAILURE;
 		}
+		delay(1000);
 	}
 	delay(1000);
 	

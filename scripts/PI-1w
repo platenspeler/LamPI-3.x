@@ -1,5 +1,5 @@
 #!/bin/bash
-# 150428; XXX Since the new Raspberry kernel containd device trees we have to adapt our code.
+# 150428; XXX Since the new Raspberry kernel contains device trees we have to adapt our code.
 #
 PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/pi:/home/pi/scripts:/home/pi/exe"; export PATH
 export DISPLAY=:0
@@ -21,9 +21,8 @@ pkill $SENSOR
 # Load the required module for the 1-wire sensor program
 #
 cat /proc/modules | fgrep w1_therm > /dev/null
-if [ $? = 0 ]; then
-	echo "Module loaded" >> $LOGFILE 2>&1 &
-else
+if [ $? != 0 ]; then
+	echo "Loading 1w Modules w1-therm and w1-gpio" >> $LOGFILE 2>&1 &
 	sudo modprobe w1-therm
     sudo modprobe w1-gpio
 fi
@@ -31,6 +30,6 @@ fi
 # Execute the program
 #
 echo "---------------------------------------------------" >> $LOGFILE 2>&1
-echo "`date`:: Starting $SENSOR" >> $LOGFILE 2>&1
+#echo "`date`:: Starting $SENSOR" >> $LOGFILE 2>&1
 # 
 cd $EXEDIR ; nohup ./$SENSOR -d -h $HOSTNAME -p $PORTNUMBER >> $LOGFILE 2>&1 &

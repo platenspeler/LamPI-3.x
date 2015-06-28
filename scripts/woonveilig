@@ -1,0 +1,104 @@
+#!/bin/bash
+
+########################################################################################
+### Woonveilig script v1.2 beta added checkstate option to request current armed state
+###
+### Domoticz <--> Woonveilig interface script
+###
+### Usage:
+### alarmpanel arm
+### puts the Woonveilig alarmpane is the Armed state
+###
+### alarmpanel armhome
+### puts the Woonveilig alarmpanel in the Armed & at Home state
+###
+### alarmpanel disarm
+### puts the Woonveilig alarmpanel in the Disarmed state
+###
+### alarmpanel sirenon
+### sounds the siren (and maybe the remote siren too) of the Woonveilig alarmpanel
+###
+### alarmpanel sirenoff
+### silences the siren (and maybe the remote siren too) of the Woonveilig alarmpanel
+###
+### alarmpanel checkstate
+### reads the current armed state of the Woonveilig alarmpanel and changes a Domoticz switch
+### to On when disarmed or armed & home and to Off when armed.
+###
+########################################################################################
+
+if [ $#  -lt 1 ]
+then
+        echo "Usage: alarmpanel {arm | armhome | disarm | sirenon | sirenoff | checkstate}"
+        exit
+fi
+
+### USER CONFIGURABLE PARAMETERS
+PANEL="192.168.2.113:80"                # Alarm panel IP:PORT (find this in your router DHCP scope)
+PANEL_USR=""              	  # Alarm panel username (default admin)
+PANEL_PASS=""               		 # Alarm panel password (default admin1234)
+DZSERVER="192.168.2.95:8080"            # Domoticz server IP:PORT
+AT_HOME="28"                            # Idx of dummy switch which reflects at home state
+                                        # (find this in Domoticz|Devices|Idx column)
+### END OF USER CONFIGURABLE PARAMETERS
+
+### First login to alarmpanel
+/usr/bin/curl -u $PANEL_USR:$PANEL_PASS -s http://$PANEL/setting/index.htm >/dev/null
+
+### Then issue appropriate command
+case "$1" in
+
+arm)            echo "Arm Alarmpanel"
+                /usr/bin/curl -d "mode=0" -u $PANEL_USR:$PANEL_PASS -s http://$PANEL/action/panelCondPost >/dev/null
+                ;;
+
+armhome)        echo "Armhome Alarmpanel"
+                /usr/bin/curl -d "mode=1" -u $PANEL_USR:$PANEL_PASS -s http://$PANEL/action/panelCondPost >/dev/null
+                ;;
+
+disarm)         echo "Disarm Alarmpanel"
+                /usr/bin/curl -d "mode=2" -u $PANEL_USR:$PANEL_PASS -s http://$PANEL/action/panelCondPost >/dev/null
+                ;;
+
+sirenon)        echo "Siren On"
+                /usr/bin/curl -d "sndsiren_onoff=0" -u $PANEL_USR:$PANEL_PASS -s http://$PANEL/action/sndSirenPost >/dev/null
+                ;;
+
+sirenoff)       echo "Siren Off"
+                /usr/bin/curl -d "sndsiren_onoff=1" -u $PANEL_USR:$PANEL_PASS -s http://$PANEL/action/sndSirenPost >/dev/null
+                ;;
+
+### Read current state webpage
+### And watch for Arm, Home or Disarm in the answer
+### Set (dummy) switch to On or Off as required
+
+checkstate)     strPanelState=`/usr/bin/curl -u $PANEL_USR:$PANEL_PASS -s http://$PANEL/action/panelCondGet`
+                if [[ $strPanelState == *\"Arm\"* ]]
+                then
+                        echo "State is Armed"
+#                        /usr/bin/curl "http://$DZSERVER/json.htm?type=command&param=switchlight&idx=$AT_HOME&switchcmd=Off&level=0"
+                else
+                  if [[ $strPanelState == *\"Disarm\"* ]]
+                  then
+                        echo "State is Disarmed"
+#                        /usr/bin/curl "http://$DZSERVER/json.htm?type=command&param=switchlight&idx=$AT_HOME&switchcmd=On&level=0"
+                  else
+                    if [[ $strPanelState == *\"Home\"*  ]]
+                    then
+                        echo "State is Armed Home"
+#                        /usr/bin/curl "http://$DZSERVER/json.htm?type=command&param=switchlight&idx=$AT_HOME&switchcmd=On&level=0"
+                    else
+                        echo "No matched state found"
+                    fi
+                  fi
+                fi
+
+                ;;
+
+*)              echo "Invalid argument. Usage: alarmpanel {arm | armhome | disarm | sirenon | sirenoff | checkstate}"
+                ;;
+
+esac
+
+### Done
+

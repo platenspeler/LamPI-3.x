@@ -51,8 +51,8 @@ src="1-Wire/DS18B20/18b20_1.jpg" alt="" width=338 height=327 hspace="20" vspace=
 <p><img src="1-Wire/DS18B20/code_2.JPG" width="664" height="180"></p>
 <p>Both modules w1-therm and w1-gpio need to be loaded prior to their usage. By
   default, GPIO pin 4 (P1 connector 7) is used. </p>
-<h3>2.3 Software</h3>
-<p>The small C software program can be found in the sensors/ds18b20 directory. The software program is very simple in design, as all low-level synchronization and interrupt handling is done completely in the module. As a result, the bus softwar eis very (I mean VERY) reliable compared to the DS11, especially when the system is serving a lot of other interrupts, socket messages and user interaction.</p>
+<h2>2.3 Software</h2>
+<p>The small C software program can be found in the sensors/ds18b20 directory. The software program is very simple in design, as all low-level synchronization and interrupt handling is done completely in the module. As a result, the bus software is very (I mean VERY) reliable compared to the DS11, especially when the system is serving a lot of other interrupts, socket messages and user interaction.</p>
 <p>My situations is the same as in the picture below (found it on the web somewhere). I have three sensors connnected to my RPI and read them with a small program..</p>
 <p><img src="1-Wire/DS18B20/ds1820connect.png" width="345" height="285"></p>
 <p>Maybe a restart is required to have your RPI recognized the modules, but after that  the device &quot;files&quot; w1_slave in the /sys/but/w1/device/28*/ directories can be read and will contain the lines we're loooking for ..</p>
@@ -61,10 +61,10 @@ src="1-Wire/DS18B20/18b20_1.jpg" alt="" width=338 height=327 hspace="20" vspace=
 <p>After changing directory to one of the sensor dirs (starting with 28-) , reading the w1_slave file will result in 2 lines being read. The first line contains the data followed by a checksum. Only when the checksum is Ok (YES) then we know that the sensor can be read successfully. The second line read contains the data as well as the temperature (* 1000). You get the actual temperature by dividing the value by 1000, so in this case the measured temperature is 22.125 degrees C. </p>
 <p>A quick test of the CRC function can be done by removing one of the sensors, which will for a while result in a checksum error and data errors (obviously). Note that after a while the third sensor completely disappeared from my system so the system has some self-healing properties. Luckily, installing the sensor again (in a live system) is possible and will immediately result in that sensor being available again.</p>
 <p>There are several examples on the net how to read the device files, most however are written in script language. As I wanted to post successful temperature readings to the LamPI-daemon for further processing, I made a little program in C that opens a socket and reads all sensors and sends the output to the LamPI-daemon. The source code can be found on ~/sensors/ds18b20, and after a successful 'sudo make install' the executable is put in the ~/exe directory</p>
-<h3>2.4 Conclusion</h3>
+<h2>2.4 Conclusion</h2>
 <p>The dallas 1-wire bus works VERY well, and the devices/bus is well supported by the RPI. Only drawback is that there are only a small amount of sensors available for Dallas. But the ds18b20 temperature sensors is a very good example of sensors that work very well and that are worth every penny and second of your time if temperature sensors is your main interest.</p>
 <p>Sheepwalkelectronics sells modules that will enable you to connect other sensors to the 1-wire bus as well such as humudity sensors or a relay.</p>
-<h3>2.5 Links</h3>
+<h2>2.5 Links</h2>
 <ul>
   <li><a href="http://kopfkino.irosaurus.com">http://kopfkino.irosaurus.com</a> (German site)</li>
   <li><a href="http://www.sheepwalkelectronics.co.uk/">http://www.sheepwalkelectronics.co.uk</a> an UK shop around 1-wire sensors</li>

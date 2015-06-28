@@ -22,7 +22,7 @@ Circuit detail:
 
 	SDA	- 	P1-03 / IC20-SDA
 	SCL	- 	P1-05 / IC20_SCL
-	XCLR	- 	Not Connected
+	XCLR- 	Not Connected
 	EOC	-	Not Connected
 	GND	-	P1-06 / GND
 	VCC	- 	P1-01 / 3.3V
@@ -41,6 +41,7 @@ Circuit detail:
 #include <linux/i2c.h>
 #include <sys/ioctl.h>
 #include <netdb.h>
+#include <ifaddrs.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -69,6 +70,7 @@ short int md;
 int b5; 
 
 unsigned int temperature, pressure;
+char host[NI_MAXHOST];
 
 
 // Open a connection to the bmp085
@@ -242,14 +244,18 @@ unsigned int bmp085_GetTemperature(unsigned int ut)
 	return result;
 }
 
+
 int main(int argc, char **argv)
 {
 	int mode = SOCK_DGRAM;					// Datagram is standard
 	char *hostname = "255.255.255.255";		// Default setting for our host == broadcast
 	char *port = UDPPORT;					// default port, 5001
 	int sockfd;
+	int channel=1;
+	int fake;
 	char buf[256];
 	
+	channel=1;
 	bmp085_Calibration();
 	
 	temperature = bmp085_GetTemperature(bmp085_ReadUT());
@@ -257,11 +263,21 @@ int main(int argc, char **argv)
 	
 	printf("Temperature\t%0.1f %cC\n", ((double)temperature)/10,0x00B0);
 	printf("Pressure\t%0.2f hPa\n", ((double)pressure)/100);
+	if (getLocalAddress(host) < 0) {
+		fprintf(stderr,"Cannot determine local address\n");
+	}
+	fprintf(stderr,"Local address: %s\n",host);
 	
+	sscanf(host,"%d.%d.%d.%d",&fake,&fake,&fake,&channel);
 	sockfd = socket_open(hostname, port, mode);
 	
 	// Make a jSon message to send to the server
-		sprintf(buf,"{\"tcnt\":\"21\",\"action\":\"weather\",\"brand\":\"bmp085\",\"type\":\"json\",\"address\":\"%x\",\"channel\":\"1\",\"temperature\":\"%2.1f\",\"airpressure\":\"%2.1f\"}", BMP085_I2C_ADDRESS, (double)(temperature)/10, (double)(pressure)/100 );
+			sprintf(buf,"{\"tcnt\":\"21\",\"action\":\"weather\",\"brand\":\"bmp085\",\"type\":\"json\",\"address\":\"%x\",\"channel\":\"%d\",\"temperature\":\"%2.1f\",\"airpressure\":\"%2.1f\"}", 
+		BMP085_I2C_ADDRESS,
+		channel,
+		(double)(temperature)/10, 
+		(double)(pressure)/100 
+		);
 	
 	buf_2_server(sockfd, 
 				hostname,			// HostIP, eg 255.255.255.255

@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 	// -v ; Verbose, Give detailed messages
 	// -b <buffer> ; specify the json buffer
 	//
-    while ((c = getopt(argc, argv, ":b:c:h:p:r:tsv")) != -1) {
+    while ((c = getopt(argc, argv, ":b:c:h:p:r:tdsv")) != -1) {
         switch(c) {
 			case 'b':						// Buffer (mandatory) if not it will be a ping
 				snd_buf = optarg;
@@ -101,6 +101,9 @@ int main(int argc, char **argv)
 			case 'c':
 				cflg = 1;					// Checks
 				checks = atoi(optarg);
+			break;
+			case 'd':
+				dflg = 1;					// Daemon mode
 			break;
 			case 'h':						// Socket communication
            		dflg++;						// Need daemon flag too, (implied)

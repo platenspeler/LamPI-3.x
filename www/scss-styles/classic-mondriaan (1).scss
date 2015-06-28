@@ -1,0 +1,50 @@
+/* SCSS Document for making generic LamPI .css files 									*/
+/* Author: M. Westenberg (mw12554@hotmail.com) 											*/
+
+/* ----------------------- SCCS variable definitions -----------------------------------*/
+$wrapper_bg_color: #002A00;
+$wrapper_bg_picture: "";
+
+$main_bg_color: blue;
+$main_nth_color: red;
+$main_msg_color: yellow;
+
+$content_background: $main_bg_color;
+$message_background: $main_bg_color;
+$header_background: $main_bg_color;
+$menu_background: $main_bg_color;
+
+$row_bg_color: yellow;
+$row_nth_color: red;
+
+$button_fg_color: black;
+$button_bg_color: yellow;			/* Background color for the buttons */
+$button_hover_bg_color: #0A0A0A;	/* How does the color of a button change if it is hovered */
+$button_hover_fg_color: #F7B707;	/* Foreground color for button when hovered */
+$button_active_fg_color: yellow;	/* When a button is active it has this color */
+$button_active_bg_color: #000;
+
+$dlabel_fg_color: white;
+$dlabel_bg_color: green;
+$dbutton_fg_color: white;
+$dbutton_bg_color: green;
+
+$dimmer_background: blue;		/* Color of the dimmer slider */
+$dimmer_handle: #ef2929;			/* Color of the dimmer handler */
+
+$thermo_background: red;			/* Color of the thermo slider */
+$thermo_handle: #ef2929;			/* Color of the thermo handler */
+
+$dialog_fg_color: white;
+$dialog_bg_color: #997309;
+
+/* ------------------------------------------------------------------------------------- */
+
+@import '_classic-template';
+
+.headrow {											/* header row */
+	background-color: green;
+}
+
+
+

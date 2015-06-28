@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Tiles.js Basic Demos</title>
+    
+    <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/themes/ui-lightness/jquery-ui.css" type="text/css" media="all" />
+    <link rel="stylesheet" href="../../tilesjs-master/demos/demo.css" />
+
+    <script type="text/javascript">
+      // debounce utility from underscorejs.org
+      var debounce = function(func, wait, immediate) {
+        var timeout;
+        return function() {
+          var context = this, args = arguments;
+          var later = function() {
+            timeout = null;
+            if (!immediate) func.apply(context, args);
+          };
+          if (immediate && !timeout) func.apply(context, args);
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      };
+    </script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+    
+    <script src="../../tilesjs-master/tiles.js"></script>
+    <script type="text/javascript">
+        // fallback to version hosted on thinkpixellab.com if local version doesn't exist
+        if (typeof Tiles == 'undefined') {
+            var url = 'http://thinkpixellab.com/tilesjs/tiles.js';
+            document.write('<' + 'script src="' + url + '"></' + 'script' + '>');
+        }
+    </script>
+
+    <script src="../../tilesjs-master/demos/demo.js"></script>
+</head>
+<body>
+
+    <h2>Sample 1: Resizable grid using 1x1 tiles</h2>
+    <p>
+        Let's start with a a simple resizable grid of 1x1 tiles. We'll create a Tiles.js grid and
+        provide a parent div which will hold our tiles. The parent div should use relative positioning
+        and tile divs should be absolutely positioned.
+
+        When the grid is drawn, the
+        library looks at the width of the element and determines the number of cell columns
+        that will fit given a minimum cell width. Once we have a grid of cells, the next 
+        step is to determine how to lay out the tiles on the grid.
+    </p>
+    <p>
+        The simple, default template factory is named UniformTemplates. All of the tiles in the templates
+        produced by this factory are the same size: 1x1s which each cover a single cell in the grid.
+    </p>
+    <p>
+        Adjust the slider below to change the number of tiles displayed by the grid. Try resizing the
+        browser window and watch the grid adjust the size and layout of the tiles. View the page source
+        to see the code.
+    </p>
+
+    <span class="sliderLabel">Number of Tiles</span>
+<div id="sample1-tiles" class="slider"></div>
+    <span id="tileCount" class="sliderLabel"></span>
+    <div id="sample1-grid" class="grid"></div>
+
+    <h2>Sample 2: Variable sized tiles using fixed templates</h2>
+    <p>
+        The grid uses a pluggable template factory, which makes it possible to generate 
+        templates at run time. The grid will provide the factory with the number of columns
+        and the target number of tiles. The template factory is expected to return a rectangular
+        template defined by the number of columns, rows, and the set of rectangles specifying
+        where each tile goes. 
+    </p>
+    <p> 
+        The tile count is only a target because it may not be possible for
+        some template factories to create a rectangular layout for a particular column + tile combination.
+        If that happens, the factory should add extra tiles so that the template remains rectangular.
+    </p>
+    <p>
+        For this example, we'll bypass the factory by setting the template directly. We've predefined 5 templates using JSON. Select any of the templates below to update the layout of the grid.
+    </p>
+
+<div id="sample2-templates" class="dev-tiles-templates">
+        <ul>
+            <li id="sample2-t1" class="dev-l1 selected dev-template"></li>
+            <li class="dev-l2 dev-template"></li>
+            <li class="dev-l3 dev-template"></li>
+            <li class="dev-l4 dev-template"></li>
+            <li class="dev-l5 dev-template"></li>
+        </ul>
+    </div>
+    <div id="sample2-grid" class="grid"></div>
+
+    <h2>Sample 3: Updating Tiles During Resize</h2>
+    <p>
+        In the previous sample we customized our grid by overriding tile creation and adding the tile number to the div. In this example, we'll create a custom Tile that can update content when the tile size changes. 
+    </p>
+    <p> 
+        The size of a tile may change for several reasons:
+<ul>
+            <li>The grid is resized</li>
+            <li>The template was changed</li>
+            <li>Tiles were added or removed</li>
+            <li>The width of a grid cell changed</li>
+</ul>
+    </p>
+    <p>
+        The grid determines the location and size of each tile based on the template and current
+        set of tiles. However, it delegates the element changes by calling Tile.resize(). There are 5 parameters:
+<ul>
+            <li><b>cellRect</b> - A rectangle which specifies the location of the tile in the cellular grid. So if the first tile is a 1x1 then the cellRect would be { x: 0, y: 0, width: 1, height: 1 }.</li>
+            <li><b>pixelRect</b> -  A rectangle which specifies the location of the tile relative to the top left pixel coordinates of the grid. So if the first tile is 1x1 and the cell size is 200px then the pixelRect would be { x: 0, y: 0, width: 200, height: 200 }.</li>
+            <li><b>animate</b> - Indicates whether the transition to the new location should be animated.</li>
+            <li><b>duration</b> - Duration of the animation</li>
+            <li><b>onComplete</b> - Callback fired once the tile has completed the move to the new location</li>
+</ul>
+    </p>
+    <p>
+        In this example, we'll override the resize method and render the cell size for each tile. Try switching between the following fixed templates and observe that the dimensions are updated when tiles are resized.
+    </p>
+
+<div id="sample3-templates" class="dev-tiles-templates">
+        <ul>
+            <li id="sample3-t1" class="dev-l1 selected dev-template"></li>
+            <li class="dev-l2 dev-template"></li>
+            <li class="dev-l3 dev-template"></li>
+            <li class="dev-l4 dev-template"></li>
+            <li class="dev-l5 dev-template"></li>
+        </ul>
+    </div>
+    <div id="sample3-grid" class="grid"></div>
+
+</body>
+</html>

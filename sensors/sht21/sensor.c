@@ -110,12 +110,12 @@ int main(int argc, char **argv)
 	
 	if(HwRev < 2) 	I2C_Open("/dev/i2c-0");	 // Hardware Revision 1.0
 		else		I2C_Open("/dev/i2c-1");  // Hardware Revision 2.0
+
 	I2C_Setup(I2C_SLAVE, 0x40);
-	
 	if(I2cError)
 	{	
 		I2C_PrintError();
-		exit(1);
+		exit(1);							// Leave the program upon error and DO NOT send to daemon
 	}
 			
 	SHT21_Read(&Temperature,&Humidity);

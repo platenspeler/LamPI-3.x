@@ -42,21 +42,21 @@
 //
 -->
 
-	<title>LamPI 2.7</title>  
+	<title>LamPI 3.1</title>  
 
-	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+	<link rel="stylesheet" href="/jquerymobile/jquery.mobile-1.4.5.min.css" />
     <link rel="stylesheet" href="http://mobipick.sustainablepace.net/css/mobipick.css" />
-	<link rel="stylesheet" href="styles/android-vertical.css">
+	<link rel="stylesheet" href="/styles/android-vertical.css">
     
-	<script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
-	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+	<script src="jquery-1.11.2.min.js"></script>
+    <script src="jquerymobile/jquery.mobile-1.4.5.min.js"></script>
     <script src="steel/tween-min.js"></script>
     
 	<script src="http://mobipick.sustainablepace.net/external/xdate.js"></script>    
     <script src="http://mobipick.sustainablepace.net/external/xdate.i18n.js"></script>        
     <script src="http://mobipick.sustainablepace.net/js/mobipick.js"></script>
     
-    <script src="LamPI-2.7.min.js"></script> 
+    <script src="LamPI-3.1.js"></script> 
 
 	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=0.8, maximum-scale=1.2 user-scalable=yes">
     
@@ -69,27 +69,17 @@
     
 <script type="text/javascript">
 
-var wr = location.pathname;
-var ind = wr.lastIndexOf('/');
-if ((ind != -1) && (ind != 0)) murl = wr.substr(0,ind)+"/";
-else murl = '';
-s_controller = murl + 'frontend_rasp.php';
+//var wr = location.pathname;
+//var ind = wr.lastIndexOf('/');
+//else murl = '';
+//s_controller = murl + 'frontend_rasp.php';
 //alert("location.pathname: "+location.pathname+", murl: "+murl);
 
 jqmobile=1;												// We use the jquerymobile libs and css settings
-phonegap=0;												// NO phonegap, we run mobile version in browser
+//phonegap=0;											// NO phonegap, we run mobile version in browser
 // dynamicIP=1;
-fake=0;
+w_port = 5000;
 debug=1;
-
-//if (debug>0) alert("controller: "+s_controller+"\nhost: "+location.host+"\nmurl: "+murl);
-
-//if (window.File && window.FileReader && window.FileList && window.Blob ) {
-	// Success
-//}
-//else {
-//	alert("The w3 File APIs are not fully supported in this browser.");
-//}
 
 // -----------------------------------
 // START THE MAIN PROGRAM
@@ -100,33 +90,20 @@ start_LAMP();
 </script>	
    
 <div id="wrapper">
-<div data-role="page" id="page1">
-	<div data-role="header">
-    </div>
-	<div data-role="content">
-<!-- This is the top area with the menu tabs --> 	
-      	<div id="gui_menu">
-        </div>
-        <div id="gui_header">
-        </div>
-<!-- This is where the buttons for the lamps/dimmers go -->
-		<div id="gui_content">
-        </div>
-	</div>       
-<!-- This is the message/comment area -->                         
-	<div id="gui_messages">
+	<div data-role="page" id="page1">
+    	<div id="gui_menu"></div>
+   	 	<div id="gui_header"></div> 
+    	<div id="content">
+			<div id="gui_content"></div>                        
+			<div id="gui_messages"></div>
+    	</div>
 	</div>
-    
-	<div data-role="footer">
-    </div>
-</div> 
-<!-- wrapper --> 
+</div>
 
 <div data-role="page" id="page2">
-<div id="popup">
+	<div id="popup"></div>
+</div>
 
-</div>
-</div>
 
 <!-- popup -->
 </body>

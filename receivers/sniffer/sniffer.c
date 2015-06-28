@@ -78,6 +78,7 @@ static int pulse_array [MAXDATASIZE];			// circular Array to store the pulse tim
 static int binary_count = 0;
 static char binary    [256];						// Resulting bit stream
 static char chk_buf [256];						// Check buffer. Compare real bits in binary array (not pulses)
+char timebuffer [26];
 
 static int low_pass   = 80;						// Init so that min pulse_time - 30%  > low_pass
 
@@ -115,6 +116,22 @@ unsigned int sock_stamp;						// Timestamp of last socket send call
 //  5=max_short, 6=min_long, 7=avg_long, 8=max_long
 //
 int statistics [I_MAX_ROWS][I_MAX_COLS];
+
+/*
+ **********************************************************************************	
+ 	look up the time and put in a buffer
+ **********************************************************************************
+*/
+int time2buf(char * buf) {
+    time_t timer;
+    struct tm* tm_info;
+
+    time(&timer);
+    tm_info = localtime(&timer);
+
+    strftime(buf, 26, "%Y:%m:%d %H:%M:%S", tm_info);
+	return(0);
+}
 
 /*
  *********************************************************************************
@@ -407,7 +424,6 @@ int wt440h(int p_length)
 			binary[binary_count++]=0;
 			binary[binary_count++]=0;
 			
-			
 			for (i=0; i<32; i++)						// 4 bits leader, 32 bits remaining
 			{
 				if (   (pulse_array[ j % MAXDATASIZE] > WT440H_MIN_LONG) 
@@ -479,24 +495,24 @@ int wt440h(int p_length)
 						printf("%d ",binary[i]);
 					}
 					printf(">\n");
-					
-					// Print the address and device information
-					//
-					printf ("leader: %d, address: %d, channel: %d, constant: %d, humid: %d, temp: %d.%d, par: %d\n",
-						leader, address, channel, constant, humidity, temperature/10, temperature%10, parity);
+				}	
+				// Print the address and device information
+				//
+				time2buf(timebuffer);
+				printf ("%s:: leader: %d, address: %d, channel: %d, constant: %d, humid: %d, temp: %d.%d, par: %d\n",
+						timebuffer, leader, address, channel, constant, humidity, temperature/10, temperature%10, parity);
 						
-					// When debugging, print the timing data too
-					//
-					if (debug==1) {
+				// When debugging, print the timing data too
+				//
+				if (debug==1) {
 						printf("Timing:: r_index: %5d, j: %d\n",r_index,j);
 						for (i=0; i<pcnt; i++)
 						{
 							printf("%03d ",pulse_array[(r_index+i)%MAXDATASIZE]);
 						}
 						printf("\n");
-					}
-					fflush(stdout);
 				}
+				fflush(stdout);
 				
 				// Do communication to the daemon of print output
 				socktcnt++;
@@ -1500,7 +1516,6 @@ int open_socket(char *host, char *port) {
 
 
 
-
 /*
  *********************************************************************************
  * main Program
@@ -1511,7 +1526,8 @@ int open_socket(char *host, char *port) {
 
 int main (int argc, char **argv)
 {
-	int r_pin = 1;							// This is the Raspberry Programmable Interrupt Number
+	int r_pin = 1;							// This is the Raspberry Programmable Interrupt Number (PIN)
+											// At the moment it is fixed on pin 1
 											
 	int i;									// counters
 	int c;

@@ -54,7 +54,6 @@ var fake=0;												// Set to 1 if we fake communication
 // WebSocket definitions
 //
 var w_url = location.host; 								// URL of webserver
-var w_svr = 'LamPI-daemon.php';							// webserver filename
 var w_port = '5000'; 									// port
 var w_uri;
 var w_sock;												// Socket variable
@@ -74,10 +73,11 @@ var murl='/';											// For Phonegap and Ajax usage, build a url. DO NOT CHAN
 // 
 //
 var skin = "";
-var debug = 1;											// debug level. Higher values >0 means more debug
+var debug = "1";										// debug level. Higher values >0 means more debug
 var persist = "1";										// Set default to relaxed
 var mysql = "1";										// Default is using mySQL
 var cntrl = "1";										// ICS-1000== 0 and Raspberry == 1
+var tcnt= 0;
 
 // ----------------------------------------------------------------------------
 // s_STATE variables. They keep track of current room, scene and setting
@@ -86,6 +86,7 @@ var cntrl = "1";										// ICS-1000== 0 and Raspberry == 1
 // State changes of device values need be forwarded to the active screen
 // IF the variable is diaplayed on the screen
 //
+var healthcount = 5;									// Needs to be above 0 to show activity
 var s_sensor_id = 0;									// bmp085-1 or other idents
 var graphType = "E_ACT";								// temperature, humidity, airpressure
 var graphPeriod = "1d";
@@ -95,8 +96,10 @@ graphSensors['E_ACT'] = [ 'kw_act_use', 'kw_act_ret' ];
 graphSensors['E_PHA'] = [ 'kw_ph1_use', 'kw_ph2_use', 'kw_ph3_use' ];
 graphSensors['E_GAS'] = [ 'gas_use' ];
 
+var sensors = {};
+var energy = {};
+
 var s_screen = 'room';									// Active screen: 1=room, 2=scene, 3=timer, 4=config
-var s_controller = murl + 'frontend_rasp.php';			// default device handles transmits to the lamps/devices
 var s_room_id =1;										// Screen room_id
 var s_scene_id =1;
 var s_timer_id = 1;
@@ -185,7 +188,6 @@ function start_ENERPI()
 			});
 			graphSensors[sensor_type] = sensornames;
 			console.log("sensor button:: sensornames newly defined: "+graphSensors[sensor_type]);
-
 			make_graphs("energy",graphType,graphPeriod,graphSensors[sensor_type]);
 	});
 						  
@@ -286,9 +288,48 @@ function start_ENERPI()
 	var ret = load_database("init");	
 	
   });
-  //enerpi_init();
+  //init();
   
   console.log("Start ENERPI done");
+  		// Start the logic of thsi page	
+	if ( jqmobile == 1 ) 
+	{
+		init_websockets();									// For regular web based operations we start websockets here
+		var ret = load_database("init");					// Just send the message
+		if (ret<0) {
+			alert("Error:: loading database failed");
+		}
+	}
+	//
+	// The solution is to start init_lamps, init_rooms and init_menu 
+	// in the result function of the AJAX call in load_database
+	// Upon success, we know that we have read the whole database, and have all buttons etc.
+	// without the database being present, nothing will be displayed
+	//
+	else {
+		if (typeof(Storage) !== "undefined") {
+			logger("Loading user and database settings from localStorage",1);
+			var uname= localStorage.getItem("uname");		// username
+			var pword= localStorage.getItem("pword");		// pin
+			var saddr= localStorage.getItem("saddr");		// Server address
+
+			rooms	= localStorage.getObject('rooms'); 		// logger("rooms[0]: "+rooms[0]['name'],1);
+			devices	= localStorage.getObject('devices');
+			scenes	= localStorage.getObject('scenes');
+			timers	= localStorage.getObject('timers');
+			handsets= localStorage.getObject('handsets');
+			brands	= localStorage.getObject('brands');
+			sensors	= localStorage.getObject('sensors');
+			//users   = localStorage.getObject('users');
+			settings= localStorage.getObject('settings');	// Needs to be defined to call init()
+		}
+		init_websockets();									// For regular web based operations we start websockets here
+		var ret = load_database("init");
+		if (ret<0) {
+			alert("Error:: loading database failed");
+		}
+	}	
+	
   // Once every 60 seconds we update graphs based on the current
   // value of the energy database (which might change due to incoming messages
   // over websockets.
@@ -311,6 +352,391 @@ function start_ENERPI()
 			}
 		}, 60000);		// 60 seconds (in millisecs)
 }
+
+// ----------------------------------------------------------------------------------------
+	//	INIT WEBSOCKETS communication
+	//	Especially the handlers for websockets etc, that need to test the state of the connection
+	//	
+	function init_websockets() {
+	// ** These are the handlers for websocket communication.
+	// ** We only use either websockets or regular/normal sockets called by .ajax/php handlers
+	// ** User can specify/force bahaviour by setting a variable
+	//
+		// Make a new connection and start registering the various actions,
+		// State 0: Not ready
+		// State 1: Ready
+		// State 2: Close in progress
+		// State 3: Closed
+	// Apparently, after closing the socket will reopen automatically (in a while)
+	//
+		var urlParts = w_url.split(':');					// remove the calling port number
+		logger("init_websockets:: Splitting url and port: "+urlParts[0],2);
+		w_uri = "ws://"+urlParts[0]+":"+w_port;				// and add the port number of server
+		logger("init_websockets:: new WebSocket w_uri: "+w_uri,1);
+		w_sock = new WebSocket(w_uri);						// Create a socket for server communication
+		
+		w_sock.onopen = function(ev) { 						// connection is open 
+			logger("Websocket:: Opening socket "+w_uri,1);	// notify user
+			message("websocket reopen",1);
+		};
+		w_sock.onclose	= function(ev){
+			logger("Websocket:: socket closed "+w_uri+", code: "+ev.code,1);
+			message('<DIV style="textdecoration: blink; background-color:yellow; color:black;">Restarting the Websocket. Please wait ...</DIV>');
+			setTimeout( function() { message(''); }, 500);
+
+			// w_sock.close();
+			//message("",0);
+			setTimeout( function() { init_websockets(); }, 1000);
+			logger("Websocket:: socket re-opened: "+w_sock.readyState);
+		};
+		w_sock.onerror	= function(ev){
+			var state = w_sock.readyState;
+			logger("Websocket:: error. State is: "+state);
+			// message("websocket:: error: "+state,1);
+		};
+		
+		// This is one of the most important functions of this program: It receives asynchronous
+		// messages from the daemon and needs to process them for the GUI.
+		// ALL(!) Messages are in json format, but type field defines whether the content is also
+		// in json or in ICS format (for historical and backward compatibility reasons).
+		// 
+		// As all messages are received async, we need to "forward" or temporarily store info
+	  // before it is being handled by the client. The easy way: store in a var and depending on 
+		// the current open screen in the client decide what to do...
+		//
+		w_sock.onmessage = function(ev) 
+		{
+			if (healthcount < 10) healthcount++;// Make the health indicator greener
+			if (debug >= 2) { logger("Websocket:: message received: "); console.log(ev.data); }
+			var rcv = JSON.parse(ev.data);		//PHP sends Json data
+			logger("Websocket:: message rcv: "+rcv.action,1); 
+			if (debug >= 2) console.log(rcv); 
+			// First level of the json message is equal for all
+			var tcnt   = rcv.tcnt; 				// message transaction counter
+			var type   = rcv.type;				// type of content part, either raw or json
+			var action = rcv.action; 			// message text: handset || sensor || gui || sensors || energy
+												// || login || console || alert || alarm
+			// Now we need to parse the message and take action.
+			// Best is to build a separate parse function for messages
+			// and route them to the approtiate screen
+			switch (action) 
+			{	
+				// ack messages ae just confirmations and may be further discarded
+				case "ack":
+					if (debug>=3) {
+						message("action: "+action+", tcnt: "+tcnt+", mes: "+msg+", type: "+type,3);
+					}
+					else {
+						logger("action: "+action+", tcnt: "+tcnt+", mes: "+msg+", type: "+type,2);
+					}
+				break;
+				// The daemon wants to display something on the message area, or if the debug level
+				// is high enough will display through an alert.
+				case "alert":
+					myAlert("Server msg:: "+rcv.message);
+				break;
+				// ALARM ALARM ALARM
+				// Display the alarm, or take other action
+				case "alarm":
+					myAlert("Server msg:: "+rcv.message);
+					// also .scene would be possible for a scene to start when the alarm is in effect
+				break;
+				// Update messages can contain updates of devices, scenes, timers or settings.
+				// And this is list is sorted on urgency as well. changes in device values need to be
+				// reflected on the dashboard immediately.
+				// Changes in settings are less urgent and frequent
+				case "upd":
+				case "gui":
+					var msg   = rcv.message;
+					// if content is coded in json, decode rest of message
+					switch (type) {
+						case 'json': 
+							logger("onmessage:: read upd message. Type is: "+type+". Json is not supported yet",1);
+							var room   = rcv.room;
+							var gaddr  = rcv.gaddr;				// Group address of the receiver
+							var uaddr  = rcv.uaddr;				// Unit address of the receiver device
+							var val    = rcv.val;
+							var brand  = rcv.brand;				// Brand of the receiver device
+							var ind = lookup_uaddr(room, uaddr);
+							devices[ind]['val']=val;
+							if ((room == s_room_id) && (s_screen == 'room')) {
+								activate_room(s_room_id);
+							}
+						break;
+						case 'raw':
+							var msg    = rcv.message;		// The message in ICS format e.g. "!RxDyFz"
+							logger("onmessage:: read upd message. Type is: "+type,1);
+							var pars = parse_int(msg);	// Split into array of integers
+														// This function works for normal switches AND dimmers
+														// Only for dimmers string is longer !RxxDxxFdPxx
+							// As we receive updates for devices
+							if ( msg.substr(0,2) == "!R" ) {
+								var room = pars[0];
+								var uaddr = pars[1];
+								// find the correct device index based on the unit address
+								var ind = lookup_uaddr(room, uaddr); 
+								// Now we need to check if it's a dim or F1 command. If dim
+								// we need not use value 1 but last used value in devices!
+								// XXX
+								var val;
+								if (msg.search("FdP") > -1) {
+									val = pars[2];
+								}
+								else {
+									val = pars[2];
+								}
+								logger("onmessage:: room: "+room+", device: "+uaddr+", val: "+val+", ind: "+ind,2);
+								devices[ind]['val']=val;
+								if ((room == s_room_id) && (s_screen == 'room')) {
+									activate_room(s_room_id);
+								}
+							}//if
+						break;
+						default: 
+							logger("onmessage:: read upd message. Unknown type: "+type,1);
+					}
+					// After updating the switch or the slider in the content area
+					// Now print more information in the message area for the user
+					if (debug == 0) {
+						// For debug equal to 0, print human readable message
+						message("Update: "+devices[ind]['name']+" to value: "+val,0);
+					}
+					else {
+						// For debug type of messages, print devices codes etc
+						message("action: "+action+", tcnt: "+tcnt+", mes: "+msg+", type: "+type,1);
+					}
+				break;
+				case 'graph':
+					logger("rcv:: graph response received",1);
+					display_graph(rcv.gtype, rcv.gperiod);
+				break;
+				// If we receive a sensors message, we scan the incoming message based
+				// on the addr/channel combination and look those up in the sensors array.
+				// If the sensors station is not present in the array, we will not show its values !!!
+				// The sensors stations that we allow for receiving are specified in the 
+				// database.cfg file (and in the database).
+				case 'sensor':
+					logger("Lampi.js:: received sensor message");
+					var j;
+					// Compare address and channel to identify a sensors sensor
+					// Decided not to use the name for this :-)
+					for (j = 0; j<sensors.length; j++ ) {
+       					if (( sensors[j]['address'] == rcv.address ) &&
+							( sensors[j]['channel'] == rcv.channel )) {
+							break;// return value of the object
+						}
+					}
+					// if we found a match, j will be smaller than length of array
+					if (j<sensors.length) {
+						if (rcv.hasOwnProperty('temperature')) sensors[j]['sensor']['temperature']['val']=rcv.temperature;
+						if (rcv.hasOwnProperty('humidity')) sensors[j]['sensor']['humidity']['val']		 =rcv.humidity;
+						if (rcv.hasOwnProperty('airpressure')) sensors[j]['sensor']['airpressure']['val']=rcv.airpressure;
+						if (rcv.hasOwnProperty('windspeed')) sensors[j]['sensor']['windspeed']['val']=rcv.windspeed;
+						if (rcv.hasOwnProperty('winddirection')) sensors[j]['sensor']['winddirection']['val']=rcv.winddirection;
+						if (rcv.hasOwnProperty('rainfall')) sensors[j]['sensor']['railfall']['val']=rcv.railfall;
+						
+						//sensors[j]['winddirection']	=rcv.winddirection;
+						//sensors[j]['rainfall']		=rcv.rainfall;
+						
+						var msg="";
+						if (debug >=2) {
+							msg += "Weather "+sensors[j]['name']+"@ "+sensors[j]['location'];
+							msg += ": temp: "+sensors[j]['temperature'];
+							msg += ", humi: "+sensors[j]['humidity']+"%<br\>";
+							
+							logger("Weather "+sensors[j]['name']+"@"+sensors[j]['location']
+								+": temp: "+sensors[j]['temperature']
+								+", humi: "+sensors[j]['humidity']+"%");
+						}
+						message(msg);
+					}
+				break;
+				// Support for energy systems is tbd
+				case 'energy':
+					logger("Energy message, kw_act_use: "+rcv.kw_act_use,1);
+					energy['kw_hi_use']	=rcv.kw_hi_use;
+					energy['kw_lo_use']	=rcv.kw_lo_use;
+					energy['kw_hi_ret']	=rcv.kw_hi_ret;
+					energy['kw_lo_ret']	=rcv.kw_lo_ret;
+					energy['gas_use']	=rcv.gas_use;
+					energy['kw_act_use']=rcv.kw_act_use;
+					energy['kw_act_ret']=rcv.kw_act_ret;
+					energy['kw_ph1_use']=rcv.kw_ph1_use;
+					energy['kw_ph2_use']=rcv.kw_ph2_use;
+					energy['kw_ph3_use']=rcv.kw_ph3_use;
+				break;
+				//
+				// Console functions; messages that relate to the console option in the config section
+				case 'console':
+					logger("console message received"+rcv.message,2);
+					myAlert("<br>"+rcv.message,rcv.request+" Output");
+				break;
+				// List all users and "jump" (back) to the setting page
+				case 'list_user':
+					logger("list_user message received",1);
+					users = rcv.message;
+					activate_setting("2b");						// XXX Hardcoded setting!
+				break;
+				// The login message coming from the server tells us whether the user credentials
+				// are sufficient. If so, the level of trust is reported.
+				case 'login':
+					var uname;
+					var pword;
+					if (loginprocess) break;								// We do not want more than one menu displayed
+					loginprocess=true;
+					
+					if(typeof(Storage)!=="undefined") {
+  						// Code for localStorage/sessionStorage.
+						uname= localStorage.getItem('uname');				// username
+						pword= localStorage.getItem('pword');				// pin
+						if (debug>=1) {
+							logger("Support for localstorage, uname: "+uname);
+						}
+						if (uname === null) uname = "";
+						if (pword === null) pword = "";
+ 					}
+					else {
+  						// Sorry! No Web Storage support..
+						logger("No local storage in browser",1);
+						message("No local storage in browser");
+						uname="login";
+						pword="****";
+ 					}//storage
+					
+					//var saddr= window.localStorage.getItem("saddr");		// Server address
+					if (rcv.message !== undefined)
+						logger("Lampi.js:: received login request, message"+rcv.message,1);
+					else { logger("Lampi.js:: received login request",1); 
+						rcv.message = "Please logon ";
+					}
+					
+					askForm('<form id="addRoomForm"><fieldset>'		
+					+ '<p>Since your computer <'+rcv.address+'> might be outside our network, we ask '
+					+ 'you to logon to the system and prove your identity <br><br>'
+					+ rcv.message+'</p>'
+					+ '<label for="val_1">Login: </label>'
+					+ '<input type="text" name="val_1" id="val_1" value="'+uname+'" class="text ui-widget-content ui-corner-all" />'
+					+ '<br />'
+					+ '<label for="val_2">Password: </label>'
+					+ '<input type="text" name="val_2" id="val_2" value="'+pword+'" class="text ui-widget-content ui-corner-all" />'
+					+ '</fieldset></form>'
+					
+					// Create
+					,function (ret) {
+						// OK Func, need to get the value of the parameters
+						// Add the device to the array
+						// SO what are the variables returned by the function???
+						if (debug > 2) alert(" Dialog returned val_1,val_2,val_3: " + ret);	
+						
+						// All OK? 
+						var login_msg = {
+							tcnt: ++w_tcnt%1000,
+							type: 'raw',
+							action: 'login',
+							login:  ret[0],
+							password:  ret[1]
+						}
+						w_sock.send(JSON.stringify(login_msg));
+						
+						logger(login_msg);
+						if(typeof(Storage)!=="undefined")
+  						{
+  							// Code for localStorage/sessionStorage.
+  							localStorage.setItem('uname',ret[0]);
+							localStorage.setItem('pword',ret[1]);
+							logger("localstorage:: uname: "+ret[0]);
+ 						}				
+						// Send the password back to the daemon
+						// message("Login and Password sent to server",1);
+						if (debug >= 2) myAlert("Submit login: "+ret[0]+", password: "+ret[1]);
+						loginprocess=false;
+						logger("s_screen is: "+s_screen,1);
+						return(1);									//return(1);
+						
+						// Cancel	
+  					}, function () {
+						if (debug >= 2) myAlert("Submit login Cancelled");
+						loginprocess=false;
+						return(0); 									// Avoid further actions for these radio buttons 
+  					},
+  					'Confirm Login'
+					); // askFor
+				break;
+				case 'load_database':
+					logger("Receiving load_database message",2);
+					
+					rooms = rcv.response['rooms'];			// Array of rooms
+					devices = rcv.response['devices'];		// Array of devices			
+					scenes = rcv.response['scenes'];
+					timers = rcv.response['timers'];
+					handsets = rcv.response['handsets'];
+					settings = rcv.response['settings'];
+					brands = rcv.response['brands'];
+					sensors = rcv.response['sensors'];
+					
+					init();									// init must be here before localstorage to work
+					
+					// If there is local storage, fill it with the received values
+					if (typeof(Storage) !== undefined) {
+						localStorage.setObject('rooms',rooms);
+						localStorage.setObject('devices',devices);
+						localStorage.setObject('scenes',scenes);
+						localStorage.setObject('timers',timers);
+						localStorage.setObject('handsets',handsets);
+						localStorage.setObject('settings',settings);
+						localStorage.setObject('brands',brands);
+						localStorage.setObject('sensors',sensors);
+					}
+					message("database received: #rooms: "+rooms.length+", #devices:"+devices.length);
+
+				break;
+				case 'upd_config':							// Update the configuration with new data, might be partial tree
+					logger("rcv:: upd_config message received",1);
+					Object.keys(rcv.message).forEach(function(key) {
+						lroot[key]=rcv.message[key];		// Replace this set of values
+						switch (key) {
+							case 'rooms':	settings = rcv.message[key]; break;
+							case 'devices':	devices = rcv.message[key]; break;
+							case 'scenes':	scenes = rcv.message[key]; break;
+							case 'timers':	timers = rcv.message[key]; break;
+							case 'handsets':	handsets = rcv.message[key]; break;
+							case 'sensors':	sensors = rcv.message[key]; break;
+							case 'brands':	brands = rcv.message[key]; break;
+							case 'settings': settings = rcv.message[key]; break;
+							default:
+								myAlert("rcv upd_config:: received unknown message key: "+key);
+							break;
+						}
+					})
+					activate(s_screen);
+				break;
+				default:
+					message("Unknown message: action: "+action+", tcnt: "+tcnt+", mes: "+msg+", type: "+type);
+			}
+			//return(0);
+		};// on-message
+		
+		logger("Websocket:: readyState: "+w_sock.readyState,1);	
+	}//function init_websockets
+
+
+// ----------------------------------------------------------------------------------------
+//	function logger, displays a message on the standard log
+//	Input Parameter is now just the text to display
+//	The lvl parameter specifies the minimum debug leve necessary to log the txt
+//
+function logger(txt,lvl) 
+{
+	if (debug >=3 ) alert("Message called: "+txt+", lvl: "+lvl+", debug: "+debug);
+	if (typeof lvl === 'undefined') {
+		// alert("undefined");
+		lvl = debug ;
+	}
+	if (lvl <= debug) {
+		console.log(txt);	
+	}
+}
+
 
 // ----------------------------------------------------------------------------------------
 //	function message, displays a message down in the gui_messages area
@@ -336,6 +762,33 @@ function message(txt,lvl)
 }
 
 
+// ----------------------------------------------------------------------------------------
+//
+// localStorage does not store objects, this one does
+//
+Storage.prototype.setObject = function(key, value) {
+	logger("setObject:: key: "+key+":"+JSON.stringify(value),2);
+    this.setItem(key, JSON.stringify(value));
+}
+
+//
+//
+Storage.prototype.getObject = function(key) {
+    var value = this.getItem(key);
+	logger("getObject:: type: "+typeof(value)+", key: "+key+":"+JSON.stringify(value),2);
+	if (value == null) return (null);
+	try {
+		var ret = JSON.parse(value);
+	} catch (e) {
+		// Error occurred
+		logger("getObject:: Exception error JSON parse");
+		return(null);
+	}
+    return value && JSON.parse(value);
+}
+
+
+
 // -------------------------------------------------------------------------------------
 // FUNCTION INIT
 // This function is the first function called when the database is loaded
@@ -343,13 +796,10 @@ function message(txt,lvl)
 // the button of that room
 // See function above, we will call from load_database !!!
 //
-function enerpi_init() {
+function init() {
 
-	//debug = settings[0]['val'];
+	debug = settings[0]['val'];
 	cntrl = settings[1]['val'];
-	s_controller = murl + 'backend_rasp.php';
-	console.log("init:: started with controller: "+s_controller);
-
 	mysql = settings[2]['val'];
 	//persist = settings[3]['val'];
 	
@@ -382,16 +832,16 @@ function init_graph(type, period) {
 	$("#gui_content").empty();
 	switch (type) {
 		case "E_USE":
-			but += '<div><img id="graph" src="pwr_use_'+period+'.png" width="750" height="400"></div>';
+			but += '<div><img id="graph" src="pwr_use_'+period+'.png" width="750" height="500"></div>';
 		break;
 		case "E_ACT":
-			but += '<div><img id="graph" src="pwr_act_'+period+'.png" width="750" height="400"></div>';
+			but += '<div><img id="graph" src="pwr_act_'+period+'.png" width="750" height="500"></div>';
 		break;
 		case "E_PHA":
-			but += '<div><img id="graph" src="pwr_pha_'+period+'.png" width="750" height="400"></div>';
+			but += '<div><img id="graph" src="pwr_pha_'+period+'.png" width="750" height="500"></div>';
 		break;
 		case "E_GAS":
-			but += '<div><img id="graph" src="gas_use_'+period+'.png" width="750" height="400"></div>';
+			but += '<div><img id="graph" src="gas_use_'+period+'.png" width="750" height="500"></div>';
 		break;
 		case "E_SET":
 			alert("Error Settings of sensor not yet implemented");
@@ -414,6 +864,7 @@ function init_graph(type, period) {
 function init_menu(type) 
 {
 	html_msg = '<table border="0">';
+	$( "#gui_menu" ).empty();
 	$( "#gui_menu" ).append( html_msg );
 	var table = $( "#gui_menu" ).children();		// to add to the table tree in DOM
 	console.log("init_menu started");
@@ -524,6 +975,7 @@ function init_periods(period)
 {
 	if (debug >= 2) console.log("init periods");
 	html_msg = '<table border="0">';
+	$( "#gui_periods" ).empty();
 	$( "#gui_periods" ).append( html_msg );
 	var table = $( "#gui_periods" ).children();		// to add to the table tree in DOM
 	
@@ -608,76 +1060,21 @@ function display_graph(type, period) {
 //
 function make_graphs(gcmd,gtype,gperiod,gsensors) 
 {
-	var result;
-	var graphServer = murl + 'graphs/energy.php';
-	if (typeof gsensors == 'undefined') {
-		message("make_graphs:: gsensors not specified");
-	}
-	if (debug>=2) alert("make_graphs:: server:: " + graphServer+", gtype: "+gtype+", gperiod: "+gperiod);
-	else console.log("make_graphs:: server: "+ graphServer+", gtype: "+gtype+", gperiod: "+gperiod);
-	
-	message("make_graphs:: making graph for "+gsensors);
-	console.log("make_graphs:: json gsensors: "+gsensors);
-	
-	$.ajax({
-        url: graphServer,	
-		async: true,							// Asynchronous operation 
-		type: "POST",								
-        dataType: 'json',
-		data: {
-			action: gcmd,						// "graph"
-			gtype: gtype,						// "T", "H", "P"
-			gperiod: gperiod,					// "1d" "1w" "1m" "1y"
-			gsensors: gsensors					// { 'temperature': {}, 'humidity': {} }
-		},
-		timeout: 25000,
-        success: function( data )
-		{
-			// XXX Future improvement: Only get one room or scene at a time, not the whole array !!
-			// On the other hand, for TCP/IP sending a large array or just a smaller one
-			// does not make a lot of difference in time and processing
-			result = data.result;							// Array of rooms
-
-			// Send debug message is desired
-			if (debug >= 2) {								// Show result with alert		
-          		alert('Ajax call make_graphs success. '
-					+ '\nTransaction Nr: ' + data.tcnt
-				  	+ ',\nStatus: ' + data.status 
-					+ '.\nApp Msg: ' + data.result 
-					+ '.\nApp Err: ' + data.error 
-				);
-			}
-			// Function finished successfully. This may take some time to process
-			// but as soon as we have an updated chart, display it in the content area.
-			switch (data.status) {
-					case "OK":
-						console.log("make_graph:: Returned OK, displaying new graph");
-						display_graph(gtype,gperiod);
-						return(data.result);
-					break;
-					case "ERR":
-						alert("\t\tmake_graphs found an ERROR\n\nresult: "+data.result+",\n\nERROR MSG: "+data.error);
-						return(data.error);
-					break
-			}
-			return(0);
-        }, 
-		error: function(jqXHR, textStatus, errorThrown)
-		{
-          	// data.responseText is what you want to display, that's your error.
-			if (debug>=1) {
-          		alert("make graphs:: Error " + graphServer
-					+ " sending type:: " + graphType+", period: "+gperiod
-					+ "\nError: " + jqXHR.status
-					+ "\nTextStatus: "+ textStatus
-					+ "\nerrorThrown: "+ errorThrown
-					+ "\n\nFunction will finish now!" );
-			}
-			else
-				alert("Timeout connecting to graph server on "+graphServer);
-			return(-1);
+	var test=true;
+	if (test) {
+		logger("make_graphs:: Started");
+		var graph = {
+				tcnt: ""+tcnt++ ,
+				type: "json",
+				action: "graph",							// actually the class of the action
+				gcmd: gcmd,
+				gtype: gtype,								// Contains the brandname for the device!!
+				gperiod: ""+gperiod,
+				gsensors: gsensors	
 		}
-	});		
+		w_sock.send(JSON.stringify(graph));
+		return;
+	}
 }
 
 
@@ -689,73 +1086,82 @@ function make_graphs(gcmd,gtype,gperiod,gsensors)
 //
 function load_database(dbase_cmd) 
 {
-	var sqlServer = murl + 'frontend_sql.php';
-	if (debug>=2) alert("load_database:: sqlServer:: " + sqlServer);
-	else console.log("load_database:: sqlServer: "+ sqlServer);
-	
-	$.ajax({
-        url: sqlServer,	
-		async: false,					// Synchronous operation 
-		type: "POST",								
-        dataType: 'json',
-		data: {
-			action: "load_database",
-			message: dbase_cmd
-		},
-		timeout: 10000,
-        success: function( data )
-		{
-			// XXX Future improvement: Only get one room or scene at a time, not the whole array !!
-			// On the other hand, for TCP/IP sending a large array or just a smaller one
-			// does not make a lot of difference in time and processing
-			rooms = data.appmsg['rooms'];			// Array of rooms
-			devices = data.appmsg['devices'];		// Array of devices			
-			scenes = data.appmsg['scenes'];
-			timers = data.appmsg['timers'];
-			handsets = data.appmsg['handsets'];
-			settings = data.appmsg['settings'];
-			brands = data.appmsg['brands'];
-			weather = data.appmsg['weather'];		// we want the id and name values
-
-			// For all rooms write a button to the document
-			$("#gui_header").append('<table border="0">');	// Write table def to DOM
-			var table = $( "#gui_header" ).children();		// to add to the table tree in DOM
-
-			// Send debug message is desired
-			if (debug >= 2) {							// Show result with alert		
-          			alert('Ajax call load_database success. '
-					+ '\nTransaction Nr: ' + data.tcnt
-				  	+ ',\nStatus: ' + data.status 
-					+ '.\nApp Msg: ' + data.appmsg 
-					+ '.\nApp Err: ' + data.apperr 
-				);
+	logger("load_database:: Calling send2daemon with load_database, "+dbase_cmd+" , "+dbase_cmd,2);
+	// Make the buffer we'll transmit. Most GUI messages are really simple
+	// and be same as ICS-1000, and will not be full-blown json.
+	var id;
+	id = setInterval(function() {
+				// Make a new connection and start registering the various actions,
+				// State 0: Not ready (yet), connection to be established
+				// State 1: Ready
+				// State 2: Close in progress
+				// State 3: Closed
+			var state = w_sock.readyState;
+			if (state != 1) {
+					logger("load_database Websocket:: ERROR. State is: "+state,1);
+					message("load_database:: Websocket:: ERROR. State is: "+state);
+					//w_sock = new WebSocket(w_uri);
 			}
-			// Function finished successfully
-			but = 'Load_database success' ;
-			if (debug > 1) {
-				but += "<br>AppErr: " + data.apperr;
+			else {
+				clearInterval(id);				// Kill this timer if state is 1 (=connected)
+				message("load_database:: sending load_database request");
+				send2daemon("load_database",dbase_cmd,dbase_cmd);
 			}
-			message(but);
-			// INIT IS THE ONLY FUNCTION DONE AFTER LOADING THE DATABASE
-			// FIRST TIME. AND BY PUTTING IT IN SUCCESS WE MAKE IT SYNCHRONOUS!
-			enerpi_init();
-			
-			return(0);
-        }, 
-		error: function(jqXHR, textStatus, errorThrown)
-		{
-          	// data.responseText is what you want to display, that's your error.
-			if (debug >= 2) {
-          		alert("load_database:: Error " + sqlServer
-					+ " sending cmd:: " + dbase_cmd
-					+ "\nError: " + jqXHR.status
-					+ "\nTextStatus: "+ textStatus
-					+ "\nerrorThrown: "+ errorThrown
-					+ "\n\nFunction will finish now!" );
-			}
-			else
-				message("Timeout connecting to database on "+sqlServer);
-			return(-1);
-         }
-	});		
+	}, 500);		// 1/2 seconds (in millisecs)
+	return(1);
 }
+
+// ---------------------------------------------------------------------------------------
+// SEND2DAEMON
+//
+// Universal function for sending buffers to the daemon for websockets only.
+// action: "gui","dbase","login", "set"
+// This function is called by function message_device()
+//
+function send2daemon(action,cmd,message) 
+{
+	logger("send2daemon: action: "+action+", cmd: "+cmd,2);
+	// Make the buffer we'll transmit. As you see, the message(s) are really simple
+	// and be same as ICS-1000, and will not be full-blown json.
+	var data = {
+		tcnt: ++w_tcnt%1000+"",
+		type: "raw",
+		action: action,				// actually the class of the action
+		cmd: cmd,					// The command for that class (gui dbase login).
+		message: message			// Message contains the parameter(s) necessary
+	};
+	//if (debug>=1) logger("send2daemon:: jSon: "+JSON.stringify(data));
+		
+	// Now check the state of the socket. This could take forever, have to build a limit ...
+	// In practice, this sending part will likely NOT find out that the connection is lost,
+	// but the registered receiver handler (somewhere around line 1800) will.
+	
+	for (var i=0; i<4; i++) {				
+		switch (w_sock.readyState) {
+		// 0: Not yet ready, wait for connect
+		case 0:
+			setTimeout( function() { logger("send2daemon:: socket not ready: "+w_sock.readyState,2); }, 1000);
+		break;
+		// 1: socket is ready, send the data
+		case 1: 
+			logger("send2daemon:: sending: "+JSON.stringify(data),2);
+			w_sock.send(JSON.stringify(data));
+			return(0);
+		break;
+		// 2: close in progress
+		// Must wait the disconnect out?
+		case 2:
+			setTimeout( function() { logger("send2daemon:: socket not ready: "+w_sock.readyState,2); }, 1000);
+		break;
+		// 3: closed. if closed, reopen the socket again
+		case 3:
+			setTimeout( function() { logger("send2daemon:: socket not ready: "+w_sock.readyState,2); }, 1000);
+		break;
+		default:
+			logger("send2daemon:: readystate not defined: "+w_sock.readyState,1);
+		}
+	}// for
+	logger("send2daemon:: unable to transmit message 4 times: "+w_sock.readyState,1);
+	return(-1);
+}
+

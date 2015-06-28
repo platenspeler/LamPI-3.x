@@ -122,7 +122,7 @@ int dtransmit(char *brand, char *gaddr, char *uaddr, char *val)
 	// The device specific executable uses unit addresses starting from 1 to n
 	// And for Blokker that starts with 0, is corrected in the exe code.
 	//
-	if (verbose) fprintf(stderr,"dtransmit:: calling with %s %s %s %s\n",brand,gaddr,uaddr,val);
+	fprintf(stderr,"dtransmit:: transmotting %s %s %s %s\n",brand,gaddr,uaddr,val);
 	if (strcmp(brand,"kaku") ==0)     { dkaku(gaddr,uaddr,val); return(0); }
 	if (strcmp(brand,"action") ==0)   { send_2_device(brand,gaddr,uaddr,val); return(0); }
 	if (strcmp(brand,"livolo") ==0)   { send_2_device(brand,gaddr,uaddr,val); return(0); }

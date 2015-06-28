@@ -5,6 +5,7 @@ LamPI Version:
 	3.0.0; Mar 01, 2015; Webserver
 	3.0.1; Mar 22, 2015; Rewriting PI-gate for node
 	3.0.2; May 10, 2015; Rewriting LamPI-daemon for node
+	3.0.3; May 26, 2015; Adding support for Woonveilig Alarm system
 
 ***********************************************************************************	*/
 var debug = 1;
@@ -15,58 +16,51 @@ var alarm_interval=   2000;			// Determines how often we scan sensors for change
 var timer_interval=  30000;			// Timer resolution in LamPI timers (crontab) is about 1 minute
 
 var webPort  = 8080;				// The generic http webserver port
-var udpPort  = 5001;				// In LamPI-daemon.php this is port 5001
-var tcpPort  = 5002;				// Port for net raw tcp connections
-var sockPort = 5004;				// In LamPI-daemon.php websockets (gui) this is port 5000
+var sockPort = 5000;				// Websockets (gui) (XXX this must become port 5000)
+var udpPort  = 5001;				// UDP sensors this is port 5001
+var tcpPort  = 5002;				// RAW connected sensors: Port for net raw tcp connections
 
 var tcnt = 0;						// transaction counter
 var zroot;							// Z-Wave root object (devices is one of its children)
+var zhost = "192.168.2.52";			// IP of local Z-way gateway
 var devices;						// The Z-Wave array of devices
 var clients = [];					// Keep track of all connected clients
 var loops = [];						// Keep track of running loop id's
-var config={};						// This is the overall LamPI configuration array
-var lampi_devices;
+var config={};						// This is the overall LamPI configuration array root
 var lampi_admin=[];
 
 var homeDir = "/home/pi";
-var logDir = homeDir+"/log"
-var rrdDir = homeDir+"/rrd"
-var wwwDir = homeDir+"/www"
-
+var logDir  = homeDir+"/log"
+var rrdDir  = homeDir+"/rrd"
+var wwwDir  = homeDir+"/www"
 
 // --------------------------------------------------------------------------------
 // Put startup require dependencies here
 // --------------------------------------------------------------------------------
 
-console.log("Loading http");
-var http  = require('http');
-console.log("Loading net");
-var net   = require('net');						// Raw Sockets Server
-console.log("Loading dgram");
-var dgram = require("dgram");
-console.log("Loading mySQL");
-var mysql = require('mysql');
-console.log ("Loading express");
-var express= require('express');				// Middleware
-console.log("Loading Async");
-var async = require("async");
-console.log("Loading String");
-var S     = require("string");
-console.log("Loading fs");
-var fs    = require("fs");						// Filesystem
-console.log("Loading child_process");
-var exec  = require('child_process').exec;
-console.log     ("Loading serve-static");
-var serveStatic= require('serve-static');
+var http  = require('http'); console.log("http loaded");
+var net   = require('net');	console.log("net loaded");					// Raw Sockets Server
+var dgram = require("dgram"); console.log("dgram loaded");
+var mysql = require('mysql'); console.log("mySQL loaded");
+var express= require('express'); console.log ("express loaded");		// Middleware
+var async = require("async"); console.log("ssync loaded");
+var S     = require("string"); console.log("string loaded");
+var fs    = require("fs"); console.log("fs loaded");					// Filesystem
+var exec  = require('child_process').exec; console.log("child_process loaded");
+var serveStatic= require('serve-static'); console.log("erve-static loaded");
+var WebSocketServer = require('ws').Server; console.log ("ws loaded");
 
 // External apps
 console.log("Loading required external modules");
 var SunCalc = require('suncalc');
 var strip = require("strip-json-comments");
-// Own modules
 
+// Own Local modules
+console.log("Loadinglocal/own modules");
+var alarmRouter = require('./modules/alarmRouter');
+var woonveilig = require('./modules/woonveilig');
 
-console.log("All required code loaded");
+console.log("All required modules loaded");
 
 
 // --------------------------------------------------------------------------------
@@ -86,33 +80,36 @@ function logger(txt,lvl) {
 	}
 }
 
+// Supportive functions
+Array.prototype.contains = function(element){
+    return this.indexOf(element) > -1;
+};
+
 // --------------------------------------------------------------------------------
 // COMMAND LINE ARGUMENTS
 // --------------------------------------------------------------------------------
 process.argv.forEach(function (val, index, array) {
-  console.log(index + ': ' + val);
-  switch (val) {
-	  // init, read config file and make new database
+  
+  if (index < 2) logger("process.argv["+index+"] skipping: "+val);				// Skip node command and the LamPI-node.js script
+  else switch (val) {
 	case "-i":
-		var str = "";
-		str += 'Suspending '+loops.length+' timers<br>';
-		for (var i=0; i<loops.length; i++) clearInterval(loops[i]);
+		logger("Calling init",1);
+		// init, read config file and make new database
+		for (var i=0; i<loops.length; i++) clearInterval(loops[i]);		// Skip command and path
+		logger('Suspending '+loops.length+' timers');
 		config = readConfig();
+		//console.log("config: ",config);
 		createDbase(function (err, result) {
 			if (err) { logger("init:: ERROR: "+err ); return; }
 			logger("init:: createDbase returned "+result,1);
 			Object.keys(config).forEach(function(key) {
 				logger("createDbase: "+key+", length: "+config[key].length);
-				for (k=0; k<config[key].length; k++) {
-					str += ''+key+','+k+': '+ config[key][k]['name']+"<br>";
-				}
-				str += "<br>";
 			});
 			// nested, as we can start loading once the database is created
 			logger("init:: Starting loadDbase");
 			loadDbase( function (err, result) { 
 				if (err == null) logger("init:: loadDbase returned successful "+result,1);
-				lampi_devices = config['devices'];
+				var str = "";
 				Object.keys(config).forEach(function(key) {
 					logger("loadDbase: "+key+", length: "+config[key].length);
 					for (j=0; j<config[key].length; j++) {
@@ -122,18 +119,18 @@ process.argv.forEach(function (val, index, array) {
 				});
 				str += '<br>init:: done, restarting loops';
 				logger(str,2);						// Can only send results to web client once
-				main(0, "init:: Restart Main");
+				start_loops();
 			});
 		});
 	break;
 	case "-r":
-		// Only re=read the database
+		// Only re-read the database
 		var str = "";
 		for (var i=0; i<loops.length; i++) clearInterval(loops[i]);
 		config = readConfig();
+		logger("reload:: read config #: "+config.length,1);
 		loadDbase( function (err, result) { 
 				if (err == null) logger("init:: loadDbase returned successful "+result,1);
-				lampi_devices = config['devices'];
 				Object.keys(config).forEach(function(key) {
 					logger("loadDbase: "+key+", length: "+config[key].length);
 					for (j=0; j<config[key].length; j++) {
@@ -143,10 +140,11 @@ process.argv.forEach(function (val, index, array) {
 				});
 				str += '<br>init:: done, restarting loops';
 				logger(str,2);						// Can only send results to web client once
-				main(0, "init:: Restart Main");
+				start_loops();
 		});
 	break;
 	default:
+		logger("Process argv:: Unknown commandline argument "+val,1);
 	break;
   }
 });
@@ -166,36 +164,21 @@ app.all('/init', function (req, res, next) {
 	str += 'init started<br>';
 	str += 'Suspending '+loops.length+' timers<br>';
 	for (var i=0; i<loops.length; i++) clearInterval(loops[i]);
-	config = readConfig();
+	config = readConfig();							// Read the config file
 	createDbase(function (err, result) {
 		if (err) { logger("init:: ERROR: "+err ); return; }
 		logger("init:: createDbase returned "+result,1);
-		Object.keys(config).forEach(function(key) {
-			logger("createDbase: "+key+", length: "+config[key].length);
-			for (k=0; k<config[key].length; k++) {
-				str += ''+key+','+k+': '+ config[key][k]['name']+"<br>";
-			}
-			str += "<br>";
-		});
 		// nested, as we can start loading once the database is created
 		logger("init:: Starting loadDbase");
 		loadDbase( function (err, result) { 
 			if (err == null) logger("init:: loadDbase returned successful "+result,1);
-			lampi_devices = config['devices'];
-			Object.keys(config).forEach(function(key) {
-				logger("loadDbase: "+key+", length: "+config[key].length);
-				for (j=0; j<config[key].length; j++) {
-					str += ''+key+','+j+': '+ config[key][j]['name']+"<br>";
-				}
-				str += "<br>";
-			});
+			str += printConfig();
 			str += '<br>init:: done, restarting loops';
 			logger(str,2);
 			res.send(str);							// Can only send results to web client once
-			main(0, "init:: Restart Main");
+			start_loops();
 		});
 	});
-
   //next(); // pass control to the next handler
 });
 
@@ -210,7 +193,6 @@ app.all('/load', function (req, res, next) {
 	config = readConfig();
   	loadDbase( function (err, result) { 
 			if (err == null) logger("load:: loadDbase returned successful "+result,1);
-			lampi_devices = config['devices'];
 			Object.keys(config).forEach(function(key) {
 				logger("load::: "+key+", length: "+config[key].length);
 				for (j=0; j<config[key].length; j++) {
@@ -221,24 +203,32 @@ app.all('/load', function (req, res, next) {
 			str += '<br>load:: done, restarting loops';
 			logger(str,2);
 			res.send(str);							// Can only send results to web client once
-			main(0, "load:: restart Main");
+			start_loops();
 	});
   //next(); // pass control to the next handler
 });
 
-//
-//
-app.all('/weather', function (req, res, next) {
-  console.log('Accessing the weather section ...');
-  res.send('weather');
+//  ROUTE to sensors
+app.all('/sensors', function (req, res, next) {
+  console.log('Accessing the sensors section ...');
+  res.send('sensors');
   //next(); // pass control to the next handler
 });
 
+//  ROUTE to config
+app.all('/config', function (req, res, next) {
+  console.log('Printing configuration ...');
+  res.send(printConfig());
+  //next(); // pass control to the next handler
+});
+
+//  ROUTE to alarm
+app.use('/alarm', alarmRouter);
 
 // --------------------------------------------------------------------------------
 // Initiate Filesystem and define related functions
 // Read the standard database configuration file and return the config array object
-//
+
 function readConfig() {
 	var dbCfg = homeDir+"/config/database.cfg";
 	var ff = fs.readFileSync(dbCfg, 'utf8');
@@ -247,18 +237,55 @@ function readConfig() {
 	return(obj);
 }
 
+function printConfig() {
+	var str="";
+	Object.keys(config).forEach(function(key) {
+		logger("loadDbase: "+key+", length: "+config[key].length);
+		str+="<table>";
+		for (j=0; j<config[key].length; j++) {
+			str += "<tr>"
+			str += "<td>"+key+"["+j+"]</td>";
+			str += "<td>: "+ config[key][j]['name']+"</td>";
+			switch (key) {
+				case "rules":
+					str += "<td>, active: "+config[key][j]['active']+"</td>"
+					str += "<td>, jrule: "+JSON.stringify(config[key][j]['jrule'])+"</td>"
+					str += "<td>, brule: "+JSON.stringify(config[key][j]['brule'])+"</td>";
+//					str += "<td>, loc: "+config[key][j]['location']+"</td>";
+//					str += "<td>, brand: "+config[key][j]['brand']+"</td>";
+//					str += "<td>, temp: "+config[key][j]['temperature']+"</td>";
+//					str += "<td>, humi: "+config[key][j]['humidity']+"</td>";
+//					str += "<td>, press: "+config[key][j]['airpressure']+"</td>";
+				break;
+				case "sensors":
+					str += "<td>, addr: "+config[key][j]['address']+"</td>"
+					str += "<td>, chan: "+config[key][j]['channel']+"</td>";
+					str += "<td>, loc: "+config[key][j]['location']+"</td>";
+					str += "<td>, brand: "+config[key][j]['brand']+"</td>";
+					if (config[key][j]['sensor'].hasOwnProperty('temperature') )
+						str += "<td>, temp: "+config[key][j]['sensor']['temperature']['val']+"</td>";
+					if (config[key][j]['sensor'].hasOwnProperty('humidity') )
+						str += "<td>, humi: "+config[key][j]['sensor']['humidity']['val']+"</td>";
+					if (config[key][j]['sensor'].hasOwnProperty('airpressure') )
+						str += "<td>, press: "+config[key][j]['sensor']['airpressure']['val']+"</td>";
+				break;
+			}
+			str += "</tr>"
+		}//for
+		str += "<br></table>";				// Between sub objects
+	});
+	return(str);
+}
+
 // ============================================================================
 // CURL: How to call (curl style) the Z-Wave JS API?
 //	We can do this to retrieve the configuration of Z-Wave 
 //	The http request can be called multiple times
 // ----------------------------------------------------------------------------
-//  
-
-// For ALL Z-Wave data, the URL must end with 0
 function zwave_init (cb) {
 	var zwave_init_options = {
-		host: '192.168.2.52',
-		path: '/ZWaveAPI/Data/0',
+		host: zhost,
+		path: '/ZWaveAPI/Data/0',		// To get ALL Z-Wave data, the URL must end with 0
 		port: '8083',
 		method: 'GET',
 		headers: { 'Content-Type': 'application/json' }
@@ -284,7 +311,7 @@ function zwave_init (cb) {
 
 // For GETting data changed from a certain moment
 var zwave_upd_options = {
-	host: '192.168.2.52',
+	host: zhost,
 	path: '/ZWaveAPI/Data/'+(Math.floor(Date.now()/1000) - alarm_interval),
 	port: '8083',
 	method: 'GET',
@@ -292,6 +319,7 @@ var zwave_upd_options = {
 };
 
 // Get ONLY updates drom the ZWave controller
+// XXX Strange bug found
 var zwave_upd_cb = function(response) {
 	var str = '';
 	//another chunk of data has been recieved, so append it to `str`
@@ -301,12 +329,17 @@ var zwave_upd_cb = function(response) {
 	response.on('end', function () {
     	if (debug>=3) console.log(str);
 		var js = JSON.parse(str);
+		
 		Object.keys(js).forEach(function(key) {
-			var pobj = zroot;							// XXX Zroot MUST have been initialize before					 
+			var pobj = zroot;							// XXX Zroot MUST have been initialize before
 			var pe_arr = key.split('.');
-			for (var pe in pe_arr.slice(0, -1)) {
+			
+			for (var i=i; i< (pe_arr.length-1); i++) {
+			//for (var pe in pe_arr.slice(0,-1)) {
+					pe = pe_arr[i];				// Only when not using for in loop (en that uses 1 additional loop)
                 	pobj = pobj[pe_arr[pe]];
             };
+			if (pobj === undefined ) logger("pobj is null line 347, "+pe_arr.slice(-1),1);
 			pobj[pe_arr.slice(-1)] = js[key];
 		});
 		logger("Successfully read the Z-Wave Data stucture, Read "+ Object.keys(js).length +" records",2);
@@ -318,7 +351,7 @@ var zwave_upd_cb = function(response) {
 // Make sure that broadcasts are timed so that there be no collissions of transmissions
 // and each broadcast to slaves is dealt with correctly
 // --------------------------------------------------------------------------------
-function broadcast(message, sender) {	// MMM
+function broadcast(message, sender, mask) {	// MMM
 	logger("broadcast:: message: "+message, 2);
 	var funcs = [];
 	var args  = [];
@@ -330,7 +363,12 @@ function broadcast(message, sender) {	// MMM
 	  funcs.push( function(callback) { 				// Push the function code for later use
 		setTimeout(function() {
 			var cl = args.shift();
-			if ((cl !== sender) || ( cl.type == "ws" )) {
+			//if ((cl !== sender) || ( cl.type == "ws" )) {
+				if ((mask != undefined ) && (mask.indexOf(cl.type) >= 0 )) {	// if masked for this type of message
+					logger("broadcast:: Masking for socket: "+cl.name+", type: "+cl.type,3);
+					callback(null , cl.name+"-masked");
+				}
+				else
 		  		switch (cl.type) {
 				case "raw":
 					logger("Broadcast to Rawsocket: "+cl.name,2);
@@ -339,7 +377,7 @@ function broadcast(message, sender) {	// MMM
 						callback("broadcast raw error" , null)
 					}
 					else {
-						logger("bcst :: raw client: "+cl.name,3);
+						logger("broadcast :: raw client: "+cl.name,3);
 						callback(null, cl.name);
 					}
 				break;
@@ -350,7 +388,7 @@ function broadcast(message, sender) {	// MMM
 							callback(error, null) 
 						}
 						else {
-							logger("bcst :: web client: "+cl.name,3);
+							logger("broadcast :: web client: "+cl.name,3);
 							callback(null, cl.name);
 						}
 					});
@@ -361,8 +399,8 @@ function broadcast(message, sender) {	// MMM
 				break;
 		  		}//switch
 				//callback("broadcast:: Error Unknown type: "+cl.type, null);
-			}//if
-		}, 400);//setTimeout
+			//}//if
+		}, 300);//setTimeout
 	  });// funcs
 	});// forEach
 	
@@ -377,15 +415,15 @@ function broadcast(message, sender) {	// MMM
 // RAW SOCKET Server, listen for incoming connections
 // The TCP server below defines the actual listening address
 // --------------------------------------------------------------------------------
-//
 var HOST = "0.0.0.0";
 
 var server = net.createServer(function(socket) { //'connection' listener									  
 	// Upon incoming request
 	socket.name = socket.remoteAddress + ":" + socket.remotePort;
 	socket.type = "raw";
+	socket.trusted = 1;									// raw sockets from sensors are trusted by default
 	logger('SOCKET:: socket server connected to: '+socket.name,1);
-	clients.push(socket);								// Put this new client in the list
+	clients.push(socket);								// Push this new client in the list
 	socket.on('end', function() {						// End of connection
 		logger("SOCKET:: socket server "+socket.name+" disconnected",1);
 		clients.splice(clients.indexOf(socket), 1);
@@ -394,8 +432,8 @@ var server = net.createServer(function(socket) { //'connection' listener
 		logger('SOCKET:: socket server received text: '+txt,1);
 	});
 	socket.on('data', function(data) {				// This function is calld when receiving data from sensors
-		logger("SOCKET:: socket data received: "+ data, 2);
-		//socket.write(200,{ 'Content-Type': 'text/html' });
+		logger("SOCKET:: socket data received: "+ data+", trusted: "+socket.trusted, 2);
+		//socket.write(200,{ 'Content-Type': 'text/html' });"
 		socketHandler(data,socket);
 	});
 	socket.on('message', function(data) {
@@ -423,20 +461,33 @@ server.listen(tcpPort, HOST, function() { 			//'listening' listener
 	logger('TCP server listening to addr:port: '+HOST+":"+tcpPort);
 });
 
-
 // ----------------------------------------------------------------------------
 // WEBSOCKET SERVER
 //		Here we receive the messages from the GUI
+//		Since the GUI will normally only start AFTER static webserver has started
+//		timing is no issue here
 // ----------------------------------------------------------------------------
-var WebSocketServer = require('ws').Server;
+function checkIP(ip) {
+	var ips = ip.split("."); 
+	ips[0] = ips[0].split("//")[1];			// We know that the ip address starts with "http://"
+	var zips = zhost.split(".");
+	if ((zips[0] == ips[0]) && (zips[1] == ips[1]) && (zips[2] == ips[2]) ) {
+		logger("checkIP:: client is from local network",1);
+		return(1);
+	}
+	logger("checkIP:: client is from remote network: "+ips[0]+" "+ips[1]+" "+ips[2],1);
+	return(0);
+};
+
 var wss = new WebSocketServer({port: sockPort});
 wss.on('connection', function(ws) {
-	//console.log("WS:: socket connected: ", ws);
 	ws.name = ws.upgradeReq.headers.origin;			// In general the address and port of our webserver
 	ws.type = "ws";									// Add the type ws (websocket)
+	ws.trusted = checkIP(ws.upgradeReq.headers.origin);	// Guest is 0 status, 1 if on local IP
+	logger("WS:: new socket connected: "+ ws.name,1);
 	clients.push(ws);								// Put this new client in the list
 	ws.on('message', function(message) {
-		if (debug >=2) console.log('WS received: %s', message);
+		if (debug >=2) console.log('WS rcv msg, trusted: '+ws.trusted+': %s', message);
 		socketHandler(message, ws);
 	});
 	// ws.send('ping');
@@ -449,8 +500,8 @@ wss.on('connection', function(ws) {
 // ----------------------------------------------------------------------------
 // UDP Server
 // Bind to a well known address and listen to incoming DGRAM messages
+// The listener is started in the main loop to avoid reference to uninitialized objects
 // ----------------------------------------------------------------------------
-//
 var userver = dgram.createSocket("udp4");
 
 userver.on("error", function (err) {
@@ -469,8 +520,6 @@ userver.on("listening", function () {
   logger("UDP server listening to addr:port: " + address.address + ":" + address.port,1);
 });
 
-userver.bind(udpPort);
-
 // ============================================================================
 // NODE_MYSQL: How to call database functions
 // 	The call to the database is used to retrieve the list of devices used by LamPI
@@ -478,12 +527,11 @@ userver.bind(udpPort);
 //	definitions and address to name translation for Z-Wave devices in our
 //	network
 // ----------------------------------------------------------------------------
-//
 var connection = mysql.createConnection({
   host     : '192.168.2.11',
   user     : 'coco',
   password : 'coco',
-  database : 'dorm'
+  database : 'LamPI'
 });
 
 function connectDbase(cbk) {
@@ -494,14 +542,14 @@ function connectDbase(cbk) {
 			cbk(null, "mysql connected");
 		}
 		else {
-			logger("ERROR:: Connecting to the MySQL Database",1);
+			logger("ERROR:: Connecting to the MySQL Database, make sure database exists and permissions are OK",1);
 			cbk("connectDbase error","null");
 		}
 	});
 }
 
 // ----------------------------------------------------------------------------
-// Perform a single SELECT query, and  callback function
+// Perform a single SELECT query, and callback function
 // ----------------------------------------------------------------------------
 function queryDbase(qry,cbk) {
   var query = connection.query(qry, function(err, rows, fields) {
@@ -515,7 +563,6 @@ function queryDbase(qry,cbk) {
 	}
   });
 }
-
 
 // ----------------------------------------------------------------------------
 // Insert in DB
@@ -532,7 +579,6 @@ function insertDb(table, obj, cbk) {
 		}
   	});	
 }
-
 
 // ----------------------------------------------------------------------------
 // update in DB
@@ -566,14 +612,10 @@ function deleteDb(table, obj, cbk) {
   	});	
 }
 
-
 // ----------------------------------------------------------------------------
 // Delete Device(!) in DB, based on correct room and id
 // ----------------------------------------------------------------------------
 function delDevDb(table, obj, cbk) {
-	//var kk = Object.keys(obj);		// id, unit, gaddr, room, name, type, val, lastval, brand
-	//var vv = "";
-	//Object.keys(obj).forEach(function(key) {vv +=obj[key]+","; });
 	var query = connection.query('DELETE FROM '+table+' WHERE id=? and room=?', [ obj.id, obj.room ], function(err, result)  {
 		//logger("delDevDb:: query: "+query);
   		if (!err) {
@@ -607,33 +649,58 @@ function updDevDb(table, obj, cbk) {
 // Create Database, belongs to init function
 // ----------------------------------------------------------------------------
 function createDbase(cb) {
-	
-  async.series([
-  function (callback) {
-	queryDbase('DROP TABLE IF EXISTS rooms',function(err, ret) { 
-		queryDbase('CREATE TABLE rooms(id INT, descr CHAR(128), name CHAR(20) )', function(err, ret) {
-			callback(err,'rooms made, sizeof rooms is:  '+config['rooms'].length);
+  async.series(
+  [
+    // ONLY! when there is no table users, create it and add the users from the database.cfg file.
+	// in other case, edit the database table by hand!! If the table exists, we do not overwrite
+	// its cnotent.
+	function (callback) {
+		queryDbase('CREATE TABLE IF NOT EXISTS users(id INT, descr CHAR(128), name CHAR(20), login CHAR(20), passw CHAR(32), class INT )',function(err, ret) { 
+			var u = [];
+			if (!err) {
+				queryDbase('SELECT * FROM users', function(err, ret, fields) {
+					if (!err) {
+						if (ret.length == 0) {
+							for (var i=0; i< config['users'].length; i++) { 
+								insertDb("users", config['users'][i], function(cb) { u.push("u"); }); 	
+							}
+							callback(err,'uers made, sizeof users is:  '+config['users'].length);
+						}
+						else {
+							logger("createDbase:: WARNING: There are already users in the user table");
+							callback(err,"existing users");
+						}
+					}
+					else { callback(err,null); }
+				});
+			}
+			else { callback(err,null); }
 		});
-	});
-  },
-  function (callback) {
-	queryDbase('DROP TABLE IF EXISTS devices',function(err, ret) { 
-		queryDbase('CREATE TABLE devices(id CHAR(3), descr CHAR(128), uaddr CHAR(3), gaddr CHAR(12), room CHAR(12), name CHAR(20), type CHAR(12), val INT, lastval INT, brand CHAR(20) )',function(err, ret) {																																	
-			callback(err,'devices made, sizeof rooms is: '+config['rooms'].length);
+	},
+	function (callback) {
+		queryDbase('DROP TABLE IF EXISTS rooms',function(err, ret) { 
+			queryDbase('CREATE TABLE rooms(id INT, descr CHAR(128), name CHAR(20) )', function(err, ret) {
+				callback(err,'rooms made');
+			});
 		});
-	});
-  },
+	},
+	function (callback) {
+		queryDbase('DROP TABLE IF EXISTS devices',function(err, ret) { 
+			queryDbase('CREATE TABLE devices(id CHAR(3), descr CHAR(128), uaddr CHAR(3), gaddr CHAR(12), room CHAR(12), name CHAR(20), type CHAR(12), val INT, lastval INT, brand CHAR(20) )',function(err, ret) {																																	
+				callback(err,'devices made');
+			});
+		});
+	},
   function(callback) {
 	queryDbase('DROP TABLE IF EXISTS scenes',function(err, ret) { 
 		queryDbase('CREATE TABLE scenes(id INT, descr CHAR(128), val INT, name CHAR(20), seq CHAR(255) )',function(err, ret) {
-			callback(err,"scenes made, sizeof rooms is: "+config['rooms'].length);
+			callback(err,"scenes made");
 		});
 	});
   },
   function (callback) {
 	queryDbase('DROP TABLE IF EXISTS timers',function(err, ret) { 
 		queryDbase('CREATE TABLE timers(id INT, descr CHAR(128), name CHAR(20), scene CHAR(20), tstart CHAR(20), startd CHAR(20), endd CHAR(20), days CHAR(20), months CHAR(20), skip INT )',function(err, ret) {
-			logger("createDB timers, sizeof rooms is: "+config['rooms'].length);
 			callback(err,'timers made');
 		});
 	});
@@ -667,13 +734,21 @@ function createDbase(cb) {
 	});
   },
   function (callback) {
-	queryDbase('DROP TABLE IF EXISTS weather',function(err, ret) { 
-		queryDbase('CREATE TABLE weather(id INT, descr CHAR(128), name CHAR(20), location CHAR(20), brand CHAR(20), address CHAR(20), channel CHAR(8), temperature CHAR(8), humidity CHAR(8), airpressure CHAR(8), windspeed CHAR(8), winddirection CHAR(8), rainfall CHAR(8), luminescence CHAR(8) )',function(err,ret) {
-			logger("createDB weather, sizeof rooms is: "+config['rooms'].length);
-			callback(null,'weather made');
+	queryDbase('DROP TABLE IF EXISTS sensors',function(err, ret) { 
+		queryDbase('CREATE TABLE sensors(id INT, descr CHAR(128), name CHAR(20), location CHAR(20), brand CHAR(20), address CHAR(20), channel CHAR(8), type CHAR(32), caps CHAR(64), sensor CHAR(255) )',function(err,ret) {
+			callback(null,'sensors made');
 		});
 	});
   },
+  function (callback) {
+    queryDbase('DROP TABLE IF EXISTS rules',function(err, ret) { 
+		queryDbase('CREATE TABLE rules(id INT, descr CHAR(128), name CHAR(20), active CHAR(1), jrule TEXT(65000), brule CHAR(255) )',function(err,ret) {
+  		callback(null,'rules made');
+		});
+  	});
+  },
+  //
+  // Now all tables are made, we can start filling the databases
   function (callback) { var r = [];
 	logger("createDb starting for devices, #devices: "+config['devices'].length);
 	for (var i=0; i< config['devices'].length; i++) { 
@@ -683,7 +758,6 @@ function createDbase(cb) {
   function (callback) { var r = [];
 	logger("createDb starting for rooms, #rooms: "+config['rooms'].length);
 	for (var i=0; i< config['rooms'].length; i++) { 
-		//logger("createDb:: inserting: "+config['rooms'][i]['name']);
 		insertDb("rooms", config['rooms'][i], function(cb) { r.push("r") }); }
 	callback(null, 'fill rooms'+config['rooms'].length);
   },
@@ -718,12 +792,23 @@ function createDbase(cb) {
 	callback(null, 'brands: '+r);
   },
   function (callback) { var r = [];
-	for (var i=0; i< config['weather'].length; i++) { 
-		insertDb("weather", config['weather'][i], function(cb) { r.push("w"); }); 	
+    for (var i=0; i< config['rules'].length; i++) {
+		var obj = config['rules'][i];
+		obj.jrule = JSON.stringify(config['rules'][i]['jrule']);
+		obj.brule = JSON.stringify(config['rules'][i]['brule']);
+ 		insertDb("rules", obj, function(cb) { r.push("s"); }); 	
 	}
-	callback(null, 'weather: '+r);
+	callback(null, 'rules: '+r);
+  },
+  function (callback) { var r = [];
+	for (var i=0; i< config['sensors'].length; i++) { 
+		var obj = config['sensors'][i];
+		obj.sensor = JSON.stringify(config['sensors'][i]['sensor']);
+		insertDb("sensors", obj, function(cb) { r.push("w"); }); 	
+	}
+	callback(null, 'sensors: '+r);
   }
-  ], 
+  ], // end of async part
   function (err, result) { 
   	if (err) { 
 		logger("createDbase:: ERROR: "+err); 
@@ -739,20 +824,21 @@ function createDbase(cb) {
 
 // ----------------------------------------------------------------------------
 // LOAD DATABASE
+// Read the config object with all database data
+// NOTE: Only users is NOT exported
 // ----------------------------------------------------------------------------
 function loadDbase(db_callback) {
   async.series([			  
 	function(callback) {
 	  queryDbase('SELECT * from devices',function(err, dev) { 
-		config['devices']=dev; 
-		lampi_devices = config['devices'];  
-		for (var i=0; i< lampi_devices.length; i++) {				// Init the lampi_admin array
-			if (lampi_devices[i]['gaddr'] == "868") {				// Is this a Z-Wave device
-				var rec = {											// Make sure every rec is defined only once
-					val: lampi_devices[i]['val'],
+		config['devices']=dev;  
+		for (var i=0; i< config['devices'].length; i++) {		// Init the lampi_admin array
+			if (config['devices'][i]['gaddr'] == "868") {		// Is this a Z-Wave device
+				var rec = {										// every rec is defined only once
+					val: config['devices'][i]['val'],
 					checks: 3
 				}
-				var unit = lampi_devices[i]['uaddr'];
+				var unit = config['devices'][i]['uaddr'];
 				lampi_admin[unit] = rec;
 			}//if 868
 		}//for
@@ -761,39 +847,69 @@ function loadDbase(db_callback) {
 	},
 	// Do the CURL request to Z-Wave to load the devices data
 	function(callback) {
-		queryDbase('SELECT * from rooms',function cbk(err, arg) { 
+		queryDbase('SELECT * from rooms',function(err, arg) { 
 			config['rooms']=arg; callback(null,'rooms '+arg.length); });
 	},
 	function(callback) {
-		queryDbase('SELECT * from scenes',function cbk(err, scn) { 
-			config['scenes']=scn; callback(null,'scenes '+scn.length); });
+		queryDbase('SELECT * from scenes',function(err, arg) { 
+			config['scenes']=arg; callback(null,'scenes '+arg.length); });
 	},
 	function(callback) {
-		queryDbase('SELECT * from timers',function cbk(err, arg) { 
+		queryDbase('SELECT * from timers',function(err, arg) { 
 			config['timers']=arg; callback(null,'timers '+arg.length); });
 	},
 	function(callback) {
-		queryDbase('SELECT * from settings',function cbk(err, arg) { 
+		queryDbase('SELECT * from settings',function(err, arg) { 
 			config['settings']=arg; callback(null,'settings '+arg.length); });
 	},
 	function(callback) {
-		queryDbase('SELECT * from brands',function cbk(err, arg) { 
+		queryDbase('SELECT * from brands',function(err, arg) { 
 			config['brands']=arg; callback(null,'brands '+arg.length); });
 	},
 	function(callback) {
-		queryDbase('SELECT * from handsets',function cbk(err, arg) { 
+		queryDbase('SELECT * from handsets',function(err, arg) { 
 			config['handsets']=arg;callback(null,'handsets '+arg.length); });
 	},
 	function(callback) {
-		queryDbase('SELECT * from weather',function cbk(err, arg) { 
-			config['weather']=arg; callback(null,'weather '+arg.length); });
+		queryDbase('SELECT * from rules',function(err, arg) {
+			if (arg === null) { 
+				logger("loadDbase:: select rules returns 0",1);
+				callback("loadDbase rules error",null); 
+			} else {
+			  for (var i=0; i<arg.length; i++) { 
+				try {
+					arg[i]['jrule'] = JSON.parse(arg[i]['jrule'] );
+					arg[i]['brule'] = JSON.parse(arg[i]['brule'] );
+				}
+				catch(e) {
+					logger("JSON error parsing rules",1);
+					console.log(e);
+					callback("loadDbase rules error",null); 
+				}
+			  }
+			  config['rules']=arg;
+			  callback(null,'rules '+arg.length); 
+			}
+		});	
+	},
+	function(callback) {
+		queryDbase('SELECT * from sensors',function(err, arg) { 
+			if (arg === null) { 
+				logger("loadDbase:: select sensors returns 0",1);
+				callback("loadDbase sensors error",null); 
+			} else {
+				config['sensors']=arg; 
+				for (var i=0; i<arg.length; i++) { arg[i]['sensor'] = JSON.parse(arg[i]['sensor'] ); }
+				callback(null,'sensors '+arg.length); 
+			}
+		});
 	},
 	function(callback) {
 		queryDbase('SELECT * from controllers',function cbk(err, arg) { 
 			config['controllers']=arg; callback(null,'controllers '+arg.length); });
 	}
 ], function(err, result) { 
-		// logger("database read: ",1); console.log(lampi_devices);
+		// logger("database read: ",1); console.log(config['devices']);
 		db_callback(null, result) 
   });	
 }
@@ -806,9 +922,9 @@ function loadDbase(db_callback) {
 //	zdev is the index in the zway device structure
 // --------------------------------------------------------------------------------
 function deviceSet (ldev, val) {
-	var zdev = lampi_devices[ldev]['uaddr'];
-	var type = lampi_devices[ldev]['type'];
-	var zval = Math.floor( val * 99 / 32) ;
+	var zdev = config['devices'][ldev]['uaddr'];
+	var type = config['devices'][ldev]['type'];
+	var zval = Math.floor( val * 99 / 32);
 	var opt4set = {
 		host: '192.168.2.52',
 		path: '',
@@ -852,12 +968,10 @@ function deviceSet (ldev, val) {
 //	The dev parameter defines the device that we like to update 
 // ldev is index of device in LamPI devices array
 // --------------------------------------------------------------------------------
-//
-function deviceGet(ldev,ltype) {
-	
-	var dev  = lampi_devices[ldev]['uaddr'];		// LamPI Device
-	var lVal = lampi_devices[ldev]['val'];		// LamPI gui value
-	var aVal = lampi_admin[dev]['val'];			// This array is indexed like the Z-Way(!!!) devices[] array
+function deviceGet(ldev,ltype) {	
+	var dev  = config['devices'][ldev]['uaddr'];	// LamPI Device address
+	var lVal = config['devices'][ldev]['val'];		// LamPI gui value
+	var aVal = lampi_admin[dev]['val'];			// NOTE: This array is indexed like the Z-Way(!) devices[] array
 	var newVal, lastUpdate, inValid;
 	var opt4get = {
 		host: '192.168.2.52',
@@ -926,11 +1040,11 @@ function deviceGet(ldev,ltype) {
 			// The LamPI gui value lVal is different from the administrative value and Z-Wave measured value newVal
 			else if (( newVal != lVal ) && ( aVal == newVal )) { 
 				logger("Y X X, The gui valui of "+dev+" has changed",1);
-				lampi_devices[ldev]['val'] = newVal;						// Change value in working array
-				updDevDb("devices", lampi_devices[ldev], function(cbk) { 
+				config['devices'][ldev]['val'] = newVal;						// Change value in working array
+				updDevDb("devices", config['devices'][ldev], function(cbk) { 
 						logger("deviceGet:: store_device "+dev+" finished OK",1); });
 				// prepare a broadcast message for all connected gui's
-				var ics = "!R"+lampi_devices[ldev]['room']+"D"+dev+"F";
+				var ics = "!R"+config['devices'][ldev]['room']+"D"+dev+"F";
 				if (newVal == 0) ics = ics+"0";
 				else ics = ics + "dP" + newVal;
 				var data = {
@@ -959,21 +1073,21 @@ function deviceGet(ldev,ltype) {
 							gaddr: "868",
 							uaddr: ""+dev,
 							val: ""+newVal,
-							message: "!R"+lampi_devices[ldev]['room']+"D"+dev+"F"+newVal	// switch
+							message: "!R"+config['devices'][ldev]['room']+"D"+dev+"F"+newVal	// switch
 				};
 				switch (ltype) {
 					case "switch":
-						data.message = "!R"+lampi_devices[ldev]['room']+"D"+dev+"F"+newVal;
+						data.message = "!R"+config['devices'][ldev]['room']+"D"+dev+"F"+newVal;
 					break;
 					case "dimmer":
-						data.message = "!R"+lampi_devices[ldev]['room']+"D"+dev+"FdP"+newVal ;	// Message parameter(s) ICS code
+						data.message = "!R"+config['devices'][ldev]['room']+"D"+dev+"FdP"+newVal ;	// Message parameter(s) ICS code
 					break;
 					default:
 						logger("No Manual Update Action defined");
 					break;
 				}//switch
 				logger("Sending data to broadcast: "+JSON.stringify(data),2);
-				var ret = broadcast(JSON.stringify(data) );
+				var ret = broadcast(JSON.stringify(data), null );
 				lampi_admin[dev]['val'] = newVal;
 				logger("Updated dimmer to "+newVal+", cmd string: "+data.message);
 			}//if laval != zval
@@ -1007,10 +1121,20 @@ function getTime() {
 	var date = new Date();
 	return S(date.getHours()).padLeft(2,'0').s+ ':' +S(date.getMinutes()).padLeft(2,'0').s+ ':' +S(date.getSeconds()).padLeft(2,'0').s ;
 }
-
+// We use the time but devide the time by 1000 to work in milliseconds to our timers
 function getTicks() {
 	//var date = new Date();
 	return (Math.floor(Date.now()/1000));
+}
+
+function getSunRise() {
+	var times = SunCalc.getTimes(new Date(), 51.5, -0.1);
+	return (Math.floor(times.sunrise.getTime()/1000));
+}
+
+function getSunSet() {
+	var times = SunCalc.getTimes(new Date(), 51.5, -0.1);
+	return (Math.floor(times.sunset.getTime()/1000));
 }
 
 function printTime(t) {
@@ -1018,46 +1142,63 @@ function printTime(t) {
 	return S(date.getHours()).padLeft(2,'0').s+ ':' +S(date.getMinutes()).padLeft(2,'0').s+ ':' +S(date.getSeconds()).padLeft(2,'0').s ;
 }
 
-
 // --------------------------------------------------------------------------------
-// Function returns an index to the devices or scenes in the config array
+// HANDSET helper functions
+//		a is the address, u is the unit (button id)
 // --------------------------------------------------------------------------------
-function findDevice (room, uaddr) {
-	logger("findDevice:: length: "+lampi_devices.length+", room: "+room+", uaddr: "+uaddr,2);
+function findHandset (a, u, v) {
+	var hsets = config['handsets'];
+	logger("findHandset:: length: "+hsets.length+", addr: "+a+", unit: "+u,2);
 	var i;
-	for (i=0; i < lampi_devices.length; i++) {
-		if ((lampi_devices[i]['room'] == room ) && (lampi_devices[i]['uaddr'] == uaddr )) {
-			break;
-		}
+	for (i=0; i < hsets.length; i++) {
+		if ((hsets[i]['addr'] == a ) && (hsets[i]['unit'] == u )&& (hsets[i]['val'] == v )) { break; }
 	}
-	if (i < lampi_devices.length) return(i);
+	if (i < hsets.length) return(i);
 	return(-1);
 }
 
-function idDevice (room, id) {
-	logger("findDevice:: length: "+lampi_devices.length+", room: "+room+", id: "+id,2);
+// --------------------------------------------------------------------------------
+// DEVICE helper functions
+// 		Function returns an index to the devices or scenes in the config array
+// 		Use config instead of the lampi-devices shortcut!
+// --------------------------------------------------------------------------------
+function findDevice (room, uaddr) {
+	var devs = config['devices'];
+	logger("findDevice:: length: "+devs.length+", room: "+room+", uaddr: "+uaddr,2);
 	var i;
-	for (i=0; i < lampi_devices.length; i++) {
-		if ((lampi_devices[i]['room'] == room ) && (lampi_devices[i]['id'] == id )) {
-			break;
-		}
+	for (i=0; i < devs.length; i++) {
+		if ((devs[i]['room'] == room ) && (devs[i]['uaddr'] == uaddr )) { break; }
 	}
-	if (i < lampi_devices.length) return(i);
+	if (i < devs.length) return(i);
+	return(-1);
+}
+
+// Find index
+function idDevice (room, id) {
+	logger("findDevice:: length: "+config['devices'].length+", room: "+room+", id: "+id,2);
+	var i;
+	for (i=0; i < config['devices'].length; i++) {
+		if ((config['devices'][i]['room'] == room ) && (config['devices'][i]['id'] == id )) { break; }
+	}
+	if (i < config['devices'].length) return(i);
 	return(-1);
 }
 
 function gaddrDevice (gaddr, uaddr) {
-	logger("gaddrDevice:: length: "+lampi_devices.length+", gaddr: "+gaddr+", uaddr: "+uaddr,2);
+	logger("gaddrDevice:: length: "+config['devices'].length+", gaddr: "+gaddr+", uaddr: "+uaddr,2);
 	var i;
-	for (i=0; i < lampi_devices.length; i++) {
-		if ((lampi_devices[i]['gaddr'] == gaddr ) && (lampi_devices[i]['uaddr'] == uaddr )) {
+	for (i=0; i < config['devices'].length; i++) {
+		if ((config['devices'][i]['gaddr'] == gaddr ) && (config['devices'][i]['uaddr'] == uaddr )) {
 			break;
 		}
 	}
-	if (i < lampi_devices.length) return(i);
+	if (i < config['devices'].length) return(i);
 	return(-1);
 }
 
+// --------------------------------------------------------------------------------
+// SCENE helper functions
+// --------------------------------------------------------------------------------
 function findScene (name) {
 	var i;
 	for (i=0; i < config['scenes'].length; i++) {
@@ -1070,20 +1211,32 @@ function findScene (name) {
 }
 
 function addrSensor (address, channel) {
-	logger("addrSensor:: length: "+config['weather'].length+", address: "+address+", channel: "+channel,2);
+	logger("addrSensor:: address: "+address+", channel: "+channel,2);
 	var i;
-	for (i=0; i < config['weather'].length; i++) {
-		if ((config['weather'][i]['address'] == address ) && (config['weather'][i]['channel'] == channel )) {
+	for (i=0; i < config['sensors'].length; i++) {
+		if ((config['sensors'][i]['address'] == address ) && (config['sensors'][i]['channel'] == channel )) {
 			break;
 		}
 	}
-	if (i < config['weather'].length) return(i);
+	if (i < config['sensors'].length) return(i);
 	return(-1);
 }
 
+//function addrWeather (address, channel) {
+//	logger("addrWeather:: address: "+address+", channel: "+channel,2);
+//	var i;
+//	for (i=0; i < config['weather'].length; i++) {
+//		if ((config['weather'][i]['address'] == address ) && (config['weather'][i]['channel'] == channel )) {
+//			break;
+//		}
+//	}
+//	if (i < config['weather'].length) return(i);
+//	return(-1);
+//}
+
 // --------------------------------------------------------------------------------
 // Delete a value based on id !! from the (config) array
-function delFromArray (arr, element) {
+function delFromArray(arr, element) {
 	var i;
 	for (i=0; i<arr.length; i++) {
 		if (arr[i]['id'] == element['id'] ) break;
@@ -1093,33 +1246,43 @@ function delFromArray (arr, element) {
 
 // --------------------------------------------------------------------------------
 // Update a value in the (config) array based on id !! 
-function updFromArray (arr, element) {
+// XXX Name must be update TO array
+function updFromArray(arr, element) {
 	var i;
 	for (i=0; i<arr.length; i++) {
 		if (arr[i]['id'] == element['id'] ) { arr[i] = element; break; }
 	}
 }
 
+function iArray (arr, element) {
+	var i;
+	for (i=0; i<arr.length; i++) {
+		if (arr[i]['id'] == element['id'] ) { return i; }
+	}
+	return -1;
+}
+
 // --------------------------------------------------------------------------------
 // ALLOFF handling
 //	Switch all devices in room 'room' off
 //	Use async serial to assure synchronized execution of broadcasts with 2 sec interval
+// NOTE we should only accept from OR send messages to trusted devices.
 // --------------------------------------------------------------------------------
 function allOff(room, socket) {
 	var series =[];
 	var str=[];
-	for (var i=0; i<lampi_devices.length; i++) {
-		if (lampi_devices[i]['room'] == room) {
-			var brandi = lampi_devices[i]['brand'];
+	for (var i=0; i<config['devices'].length; i++) {
+		if (config['devices'][i]['room'] == room) {
+			var brandi = config['devices'][i]['brand'];
 			var data = {
 				tcnt: ""+tcnt++ ,
 				type: "raw",
 				action: "gui",								// actually the class of the action
 				cmd: config['brands'][brandi]['fname'],
-				gaddr: ""+lampi_devices[i]['gaddr'],
-				uaddr: ""+lampi_devices[i]['uaddr'],
+				gaddr: ""+config['devices'][i]['gaddr'],
+				uaddr: ""+config['devices'][i]['uaddr'],
 				val: "0",
-				message: "!R"+room+"D"+lampi_devices[i]['uaddr']+"F0"
+				message: "!R"+room+"D"+config['devices'][i]['uaddr']+"F0"
 			};
 			str.push(JSON.stringify(data));					// The message array that must survive async operation
 			series.push( function(callback) { 				// Push the function code for later use
@@ -1130,7 +1293,7 @@ function allOff(room, socket) {
 					callback(null, "yes"); 
 				}, 2000); 
 			});
-			if (lampi_devices[i]['gaddr'] == "868" ) deviceSet(i, "0");	// zwave only
+			if (config['devices'][i]['gaddr'] == "868" ) deviceSet(i, "0");	// zwave only
 		}
 	}
 	// Now call the execution
@@ -1146,7 +1309,6 @@ function allOff(room, socket) {
 // --------------------------------------------------------------------------------
 function alarmHandler(buf, socket) {
 	logger("alarmHandler:: buf: "+buf,1);
-	
 }
 
 // --------------------------------------------------------------------------------
@@ -1166,7 +1328,7 @@ function consoleHandler(request, socket) {
 					type: 'raw',
 					action: 'console',
 					request: request,
-					response: list
+					message: list
 				};
 				var ret = socket.send(JSON.stringify(response));
 			});
@@ -1177,9 +1339,9 @@ function consoleHandler(request, socket) {
 		break;
 		case "sunrisesunset":
 			var times = SunCalc.getTimes(new Date(), 51.5, -0.1);
-			var sunriseStr = times.sunrise.getHours() + ':' + times.sunrise.getMinutes();
-			var sunsetStr = times.sunset.getHours() + ':' + times.sunset.getMinutes();
-			list = "Sunrise: "+sunriseStr+"\nSunset: "+sunsetStr;
+			var sunriseStr = times.sunrise.getHours() + ':' + ("00"+times.sunrise.getMinutes()).slice(-2);
+			var sunsetStr = times.sunset.getHours() + ':' + ("00"+times.sunset.getMinutes()).slice(-2);
+			list = "<br>Sunrise: "+sunriseStr+" Hrs<br>Sunset: "+sunsetStr+" Hrs<br>";
 		break;
 		case "clients":
 			logger("Active socket Clients:: ",1);
@@ -1195,6 +1357,9 @@ function consoleHandler(request, socket) {
 				});
 			}, 2000);
 		break;
+		case "printConfig":
+			var list = printConfig();
+		break;
 		default:
 			logger("consoleHandler:: Unknown request: "+request);
 			list = "Unknown request<br>";
@@ -1205,7 +1370,7 @@ function consoleHandler(request, socket) {
 		type: 'raw',
 		action: 'console',
 		request: request,
-		response: list
+		message: list
 	};
 	var ret = socket.send(JSON.stringify(response));
 }
@@ -1220,7 +1385,7 @@ function dbaseHandler(cmd, args, socket) {
 		console.log(args);
 	}
 	switch (cmd) {
-		case 'add_room':					//  a new room
+		case 'add_room':					//  add a new room
 			insertDb("rooms", args, function(result) { logger("add_room finished OK "+result,1); });
 			config['rooms'].push(args);
 		break;
@@ -1260,20 +1425,118 @@ function dbaseHandler(cmd, args, socket) {
 			deleteDb("handsets", args, function(result) { logger("delete_handsets finished OK "+result,1); });
 			delFromArray(config['handsets'],args);
 		break;
-		case 'add_weather':
-			insertDb("weather", args, function(result) { logger("add_weather finished OK "+result,1); });
-			config['weather'].push(args);
+		case 'list_user':
+			var response = {};
+			if (socket.trusted >= 3) {
+				var query = connection.query("Select * FROM users", function (err,rows,fields) {
+					if(err){logger("list_user:: ERROR: "+err);} 
+					else {
+						response = {
+							tcnt: tcnt++ ,
+							type: "raw",
+							action: "list_user",				// actually the class of the action	
+							message: rows
+						};
+						logger("list_user returning: "+response);
+						var ret = socket.send(JSON.stringify(response),function (error){
+							if (error !== undefined) { 
+								logger("list_user:: ERROR sending user data "+error,1);
+								logger("list_user:: Socket: "+socket.name+", type: "+socket.type,1);
+							}
+						});	
+					}
+				});
+			}
+			else { 
+				response = {
+					tcnt: tcnt++ ,
+					type: "raw",
+					action: "login",				// actually the class of the action	
+					message: "Please login with a user that has a higher trustlevel"
+				};
+				var ret = socket.send(JSON.stringify(response),function (error){
+							if (error !== undefined) { 
+								logger("list_user:: ERROR responding load database "+error,1);
+								logger("list_user:: Socket: "+socket.name+", type: "+socket.type,1);
+							}
+				});	
+				logger("list_user:: trust level socket "+socket.name+" insufficient: "+socket.trusted); 
+			}
 		break;
-		case 'delete_weather':
-			deleteDb("weather", args, function(result) { logger("delete_weather finished OK "+result,1); });
-			delFromArray(config['weather'],args);
+		case 'add_user':
+			insertDb("users", args, function(result) { logger("add_user finished OK "+result,1); });
+			config['users'].push(args);
+		break;
+		case 'delete_user':
+			deleteDb("users", args, function(result) { logger("delete_user finished OK "+result,1); });
+			delFromArray(config['users'],args);
+		case 'store_user':
+			updateDb("users", args, function(result) { logger("store_user finished OK "+result,1); });
+			updFromArray(config['users'],args);
+		break;
+		case 'add_sensor':
+			insertDb("sensors", args, function(result) { logger("add_sensor finished OK "+result,1); });
+			config['sensors'].push(args);
+		break;
+		case 'delete_sensor':
+			deleteDb("sensors", args, function(result) { logger("delete_sensor finished OK "+result,1); });
+			delFromArray(config['sensors'],args);
+		break;
+		case 'add_rule':
+			config['rules'].push(args);
+			//args.jrule = JSON.stringify(args.jrule);	// convert to json before storing in database
+			//args.brule = JSON.stringify(args.brule);
+			insertDb("rules", args, function(result) { logger("add_rule finished OK "+result,1); });
+		break;
+		case 'store_rule':
+			updFromArray(config['rules'],args);
+			// XXX For some reasons, we do NOT need to use JSON.stringify for XML structure
+			//args.jrule = JSON.stringify(args.jrule);	// convert to json before storing in database
+			//args.brule = JSON.stringify(args.brule);			
+			updateDb("rules", args, function(result) { logger("add_rule finished OK "+result,1); });
+		break;
+		case 'delete_rule':
+			deleteDb("rules", args, function(result) { logger("delete_rule finished OK "+result,1); });
+			delFromArray(config['rules'],args);
 		break;
 		case 'store_setting':
-			updateDb("settings", args, function(result) { logger("store_settings finished OK "+result,1); });
-			updFromArray(config['settings'],args);
+			// specific actions to take when settings change
 			if (args['name'] == "debug") debug = Number(args['val']);
+			if (args['name'] == "alarm") {
+				if (socket.trusted >= 3)
+					woonveilig.wvSet(args['val'], function(err,res){ logger("Alarm set to: "+res)},1);
+				else {
+					var response = { tcnt: tcnt++ , type: "raw", action: "login", 
+						message: "Alarm can only be set with a user that has a higher trustlevel"
+					};
+					var ret = socket.send(JSON.stringify(response),function (error){
+						if (error !== undefined) { 
+							logger("store_setting:: ERROR sending login request "+error,1);
+							logger("store_setting:: Socket: "+socket.name+", type: "+socket.type,1);
+						}
+					});	
+					
+					var i = iArray(config['settings'], args);
+					args['val'] = config['settings'][i]['val'];		// reverse value to value in config
+					logger("store_setting:: trust of "+socket.name+" too low: "+socket.trusted+"to change "+config['settings'][i]['name'],1);
+					//break;										// No update
+				}
+			}//alarm
+			// Generic update part
+			updateDb("settings", args, function(result) { 
+				logger("store_settings finished OK "+result,1); 
+				updFromArray(config['settings'],args);
+				var lroot = {};
+				lroot.settings = config['settings'];
+				var msg = { tcnt: tcnt++ , type: "json", action: "upd_config", message: lroot }; 
+				var ret = socket.send(JSON.stringify(msg),function (error){
+						if (error !== undefined) { 
+							logger("store_setting:: ERROR sending settings "+error,1);
+							logger("store_setting:: Socket: "+socket.name+", type: "+socket.type,1);
+						}
+				});
+			});
 		break;
-		
 		// Devices are special, they do not have one unique key, but need room + id to make unique
 		case 'add_device':
 			insertDb("devices", args, function(result) { logger("add_device finished OK",1); });
@@ -1305,11 +1568,11 @@ function createEnergyDb (db, buf, socket) {
 	var str=[];
 	logger("createEnergyDb:: ",1);
 	
-	str += ((buf['kw_hi_use'] !== undefined) ? "DS:kw_hi_use:COUNTER:600:0:999999999 " : "");
-	str += ((buf['kw_lo_use'] !== undefined) ? "DS:kw_lo_use:COUNTER:600:0:999999999 " : "");
-	str += ((buf['kw_hi_ret'] !== undefined) ? "DS:kw_hi_ret:COUNTER:600:0:999999999 " : "");
-	str += ((buf['kw_lo_ret'] !== undefined) ? "DS:kw_lo_ret:COUNTER:600:0:999999999 " : "");
-	str += ((buf['gas_use'] !== undefined) ? "DS:gas_use:COUNTER:600:0:999999999 " : "");
+	str += ((buf['kw_hi_use']  !== undefined) ? "DS:kw_hi_use:COUNTER:600:0:999999999 " : "");
+	str += ((buf['kw_lo_use']  !== undefined) ? "DS:kw_lo_use:COUNTER:600:0:999999999 " : "");
+	str += ((buf['kw_hi_ret']  !== undefined) ? "DS:kw_hi_ret:COUNTER:600:0:999999999 " : "");
+	str += ((buf['kw_lo_ret']  !== undefined) ? "DS:kw_lo_ret:COUNTER:600:0:999999999 " : "");
+	str += ((buf['gas_use']    !== undefined) ? "DS:gas_use:COUNTER:600:0:999999999 " : "");
 	str += ((buf['kw_act_use'] !== undefined) ? "DS:kw_act_use:GAUGE:600:0:999999 " : "");
 	str += ((buf['kw_act_ret'] !== undefined) ? "DS:kw_act_ret:GAUGE:600:0:999999 " : "");
 	str += ((buf['kw_ph1_use'] !== undefined) ? "DS:kw_ph1_use:GAUGE:600:0:999999 " : "");
@@ -1345,7 +1608,7 @@ function energyHandler(buf, socket) {
 	logger("energyHandler:: action: "+ buf.action+", brand: "+buf.brand,1);
 
 	if (!fs.existsSync(db)) {
-		logger("weatherHandler:: rrdtool db "+db+" does not exist ... creating",1);
+		logger("energyHandler:: rrdtool db "+db+" does not exist ... creating",1);
 		createEnergyDb(db,buf);
 	}
 	//if (array_key_exists('kw_hi_use',$sensor))		$values .= ":".intval($sensor['kw_hi_use']*1000,10);
@@ -1369,7 +1632,117 @@ function energyHandler(buf, socket) {
 		else  { logger("energyHandler:: ERROR: "+ error  + "; stderr: " + stderr ); 
 		}
 	});
+	broadcast(JSON.stringify(buf), socket, "raw");			// Mask the raw clients, these are receivers themselves
 }
+
+// --------------------------------------------------------------------------------
+// GRAPH HANDLER
+// --------------------------------------------------------------------------------
+function graphHandler(buf,socket) {
+	var gcmd = buf.gcmd;
+	var gtype = buf.gtype;
+	var gperiod = buf.gperiod;
+	var gsensors = buf.gsensors;
+	var pstep, eol;
+	var valStack="";
+	var width = '750'; var height='500';		// Image is 3 by 2, and should be resizable at the client side
+	var graphName, valUnit;
+	var rrd_dir='/home/pi/rrd/db/';				// Database directory
+	var output='/home/pi/www/graphs/';
+	var rrd_db='e350.rrd';						// Database filename
+	var graphColor = ["ff0000","111111","00ff00","0000ff","ff00ff","666666","00ffff","ff3399","ffff00"];
+	
+	logger("graphHandler:: Starting for "+gcmd+":"+gtype+":"+gperiod+":"+gsensors);
+	switch(gcmd) {
+		// Energy specific rrd stuff
+	  case 'energy':
+	  	switch(gtype) {
+		case 'E_GAS':
+			sensorType="gas_use";
+			graphName="gas_use";
+			valUnit="M3";
+		break;
+		case 'E_ACT':
+			sensorType="pwr act";
+			graphName="pwr_act";
+			valUnit="kWhr";
+		break;
+		case 'E_USE':
+			sensorType="pwr use";
+			graphName="pwr_use";
+			valUnit="kWhr";
+		break;
+		case 'E_PHA':
+			sensorType="phase use";
+			graphName="pwr_pha";
+			valUnit="kWhr";
+		break;
+		}
+
+	  break;
+	  // For sensors make some mods as well
+	  case 'weather':
+	  case 'sensors':
+		switch (gtype) {
+		case 'T':
+			sensorType='temperature';
+			graphName='all_temp';
+			valUnit="C";
+		break;
+		case 'H':
+			sensorType="humidity";
+			graphName="all_humi";
+			valUnit="\\%";
+		break;
+		case 'P':
+			sensorType="airpressure";
+			graphName="all_press";
+			valUnit="hPa";
+		break;
+		}
+	  break;
+	}
+	switch(gperiod) {
+		case '1h': pstep=""; break;
+		case '1d': pstep=""; break;
+		case '1w': pstep=":step=3600"; break;		// One hour
+		case '1m': pstep=":step=8640"; break;		// 3 hours
+		case '1y': pstep=":step=21300"; break;
+		default: logger("graphHandler:: ERROR unknown period: "+gperiod,1);
+	}
+	var DEFpart = ""; var LINEpart= ""; var GPRINTpart="";
+	for (var i=0; i<gsensors.length; i++) {
+		if ((i+1) == gsensors.length) {				// last one, no newline
+			eol = '\\n';
+		}
+		else { eol=""; }
+		if (gcmd == "energy") {
+			rrd_db = "e350.rrd";
+			DEFpart+= 'DEF:t'+(i+1)+'='+rrd_dir+rrd_db+':'+gsensors[i]+':AVERAGE'+pstep+' ';
+		} else {
+			rrd_db = gsensors[i]+'.rrd';
+			DEFpart += 'DEF:t'+(i+1)+'='+rrd_dir+rrd_db+":"+sensorType+':AVERAGE ';
+		}
+		LINEpart+= 'LINE2:t'+(i+1)+'#'+graphColor[i % graphColor.length]+':"'+gsensors[i]+eol+valStack+'" ';
+		GPRINTpart+= 'GPRINT:t'+(i+1)+':LAST:"'+gsensors[i]+' %3.0lf '+valUnit+eol+'" ';
+	}
+	var execStr = '/usr/bin/rrdtool graph '+output+graphName+'_'+gperiod+'.png' ;
+	execStr += ' -s N-'+gperiod+' -a PNG -E --title="'+sensorType+' readings" ';
+	execStr += '--vertical-label "'+sensorType+'" --width '+width+' --height '+height+' ';
+	execStr += DEFpart ;
+	execStr += LINEpart ;
+	execStr += GPRINTpart ;
+	logger("graphHandler:: \n"+execStr,2);
+	exec(execStr, function (error, stdout, stderr) {
+		if (error === null) { 
+			logger("graphHandler:: ok, stdout: "+ stdout + "; stderr: " + stderr , 2); 
+			broadcast(JSON.stringify(buf), socket, "raw");
+		}
+		else  { logger("graphHandler:: ERROR: "+ error  + "; stderr: " + stderr ); 
+		}
+	});		
+}
+
 
 // --------------------------------------------------------------------------------
 // GUI Handler
@@ -1377,10 +1750,10 @@ function energyHandler(buf, socket) {
 // --------------------------------------------------------------------------------
 function guiHandler(buf, socket) {
 	logger("guiHandler:: buf: "+buf,1);
-	var index = gaddrDevice(buf.gaddr, uaddr);		// which gaddr matches the received gaddr in lampi_devices array
-	if (lampi_devices[index]['gaddr'] == "868" ) deviceSet(index, buf.val);	// zwave only 
+	var index = gaddrDevice(buf.gaddr, uaddr);		// which gaddr matches the received gaddr in config['devices'] array
+	if (config['devices'][index]['gaddr'] == "868" ) deviceSet(index, buf.val);	// zwave only 
 	// Have to make a good data.ics value (cannot assume that a json message has a good ics)
-	var ics = "!R"+lampi_devices[index]['room']+"D"+lampi_devices[index]['uaddr']+"F";
+	var ics = "!R"+config['devices'][index]['room']+"D"+config['devices'][index]['uaddr']+"F";
 	if (buf.val == 0) ics = ics+"0";
 	else ics = ics + "dP" + buf.val;
 	var data = {
@@ -1408,10 +1781,11 @@ function guiHandler(buf, socket) {
 // 'action'  : 'gui'
 // 'message' : '<ICS 1000 message format>'
 function icsHandler(buf, socket) {
-	logger("icsHandler:: receiving message: "+buf.message,2);
+	//logger("icsHandler:: receiving message: "+buf.message,2);
 	var ics =    buf.message;
 	var type =   buf.type;
 	var action = buf.action;
+	var ldev = config['devices'];
 	
 	var r = /\d+/;
 	///\d+\.?\d*/g
@@ -1428,7 +1802,6 @@ function icsHandler(buf, socket) {
 			var s = ics.indexOf('D');
 			var uaddr = ics.substr(s+1,2).match(r);
 			logger("icsHandler:: uaddr: "+uaddr,2);
-			
 			s = ics.indexOf('FdP');
 			var value;
 			if (s != -1) {									// Dimmer
@@ -1443,16 +1816,16 @@ function icsHandler(buf, socket) {
 				if (value == 1) val = "on";
 				logger("icsHandler:: Found switch value: "+value ,2);
 			}
-			var index = findDevice(room,uaddr);	
+			var index = findDevice(room,uaddr);
 			if ((index <0) || (index> config['devices'].length)) {
 				logger("icsHandler:: ERROR for index: "+index+", #devices: "+config['devices'].length+" room: "+room+", uaddr: "+uaddr+", ics: "+ics,1);
 				return;
 			}
 			var gaddr = config['devices'][index]['gaddr'];		// which gaddr is ok (send to correct 433 or 868 device handler)
 			var brand = config['brands'][ config['devices'][index]['brand'] ]['fname'];
-			if (lampi_devices[index]['gaddr'] == "868" ) deviceSet(index, value);	// zwave only 
+			if (gaddr == "868" ) deviceSet(index, value);	// zwave only 
 			var data = {
-				tcnt: ""+tcnt++ ,
+				tcnt: ""+tcnt++,
 				type: "raw",
 				action: "gui",							// actually the class of the action
 				cmd: brand,								// Contains the brandname for the device!!
@@ -1470,7 +1843,8 @@ function icsHandler(buf, socket) {
 		case '!F': // Scene commands
 			// !FcP"scene name" ; Stop a scene
 			// !FqP"scene name" ; Start a scene
-			queue.qinsert({ticks: getTicks(), scene: "gui", seq: "weetikveel"});
+			logger("icsHandler:: !F Scene handler",1);
+			queue.qinsert({ticks: getTicks(), scene: "gui", seq: "!R1D1FdP10,00:00:01"});
 		break
 		case '!T': // Timer command, deal with time, sunrise, sunset
 			// Find correct syntax for Timer messages
@@ -1478,26 +1852,161 @@ function icsHandler(buf, socket) {
 			queue.qinsert({ticks: getTicks(), scene: "gui", seq: "!R1D1F0"});
 		break
 		case '!A':
-			logger("icsHandler:: Handset command",1);
+			logger("icsHandler:: Handset message "+buf.message,1);
+			var addr = ics.match(r);
+			var s = ics.indexOf('D');
+			var unit = ics.substr(s+1,2).match(r);
 			
+			var s = ics.indexOf('F');
+			var val = ics.substr(s+1,2).match(r);
+			logger("icsHandler:: handset addr: "+addr+",unit: "+unit+", val: "+val,1);
+			var i = findHandset(addr, unit, val);
+			if (i>=0) {
+				var h = config['handsets'][i];
+				switch (h.type ) {
+					case "scene":
+						var scene = h.scene;
+						queueScene(scene);
+					break;
+					default:
+						logger("icsHandler:: handset type not recognized: "+h.type,1);
+					break;
+				}
+			}
+			else { logger("icsHandler:: Handset "+addr+" not found",1);	}
 		break
 		case '!Q':
 			logger("icsHandler:: All Off Q command",1);
-			
 		break
 		default:
 			logger("icsHandler:: Unknown command ics code: <"+ics+">" , 1);	
 		break
 	}
-	// Now make a ICS command for either Z-Wave or for KlikAanKlikUit
+}
+
+// --------------------------------------------------------------------------------
+// LOGIN Handler
+// --------------------------------------------------------------------------------
+function loginHandler(buf, socket) {
+	// Lookup the user password combination in the database, and if found
+	// update the trusted parameter for this connection with the database value
+	// Not the most trusted solution, but OK for non commercial home use.
+	var login = buf.login.toLowerCase();
+	var passw = buf.password;
+	logger("loginHandler:: login: "+login,1);
+	var query = connection.query('SELECT * FROM users WHERE login=?', [ login ], function(err, rows, fields) {
+		if (!err) {
+			if (debug >= 1) { console.log('loginHandler:: returns: \n', rows); }
+			if (rows.length == 0) { 							// No password match
+				logger("loginHandler:: ERROR not results for user "+buf.login,1); 
+				buf.action="login";
+				socketHandler(JSON.stringify(buf), socket);
+			}
+			else if (rows.length > 1) { 						// Should be impossible, more than 1 match
+				logger("loginHandler:: ERROR returning "+rows.length+" values",1); 
+			}
+			else if (rows[0]['passw'] == buf.password) {		// Passwords match
+				logger("loginHandler:: checked user name: "+rows[0]['name'],1);
+				// If the existing trustlevel == 0, we have an "outside line" with initial login request
+				// Therefore we still need to send the database
+				if (socket.trusted == 0) {
+					var dbs = { tcnt: tcnt++, type: "json", action: "load_database", cmd: "", response: config };
+					var ret = socket.send(JSON.stringify(dbs),function (error){
+						if (error !== undefined) { 
+							logger("loginHandler:: ERROR responding load database "+error,1);
+							logger("loginHandler:: Socket: "+socket.name+", type: "+socket.type,1);
+						}
+					});
+				}
+				else {
+					// User did have lower trust level before, give confirmation
+					var msg = { tcnt:buf.tcnt, type:'raw', action:'alert', 
+						message:'Login Success<br>Depending on your trustlevel services will be enabled' };
+					socket.send(JSON.stringify(msg), socket);
+				}
+				socket.trusted = rows[0]['class'];
+			}
+			else {
+				logger("loginHandler:: ERROR wrong password ",1); 
+				buf.action="login";
+				buf.message="Wrong Password"
+				socket.send(JSON.stringify(buf));	// Only for websockets!!
+			}
+		}
+		else {
+			console.log('queryDbase:: err: '+err+', query: <'+query.sql+">");
+		}
+  	});
+}
+
+// --------------------------------------------------------------------------------
+// New function to handle incoming sensor data with teh new sensor structure
+// sensor message: {"tcnt":"INT","action":"sensor","brand": "x","type":"json","address":"y","channel":"z","temperature":"" }
+//
+function sensorHandler(buf, socket) {
+	var index = addrSensor(buf.address,buf.channel);
+	if (index <0) { 
+		logger("sensorHandler:: ERROR unknown index for sensor: "+buf.address+":"+buf.channel,1);
+		return;
+	} else {
+		logger("sensorHandler index: "+index+" name: "+config['sensors'][index]['name'],1);
+	}
+
+	var name = config['sensors'][index]['name'];
+	
+	// Make sure that sensor updates are stored in config array and ready for gui clients
+	// For the moment, the order of the sensor types is significant.
+	if (( buf['temperature'] !== undefined)	&& (config['sensors'][index]['sensor'].hasOwnProperty('temperature')) )
+							config['sensors'][index]['sensor']['temperature']['val'] = buf['temperature'];
+	if ( (buf['humidity'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('humidity')) )
+							config['sensors'][index]['sensor']['humidity']['val'] = buf['humidity'];
+	if (buf['airpressure'] !== undefined)	config['sensors'][index]['sensor']['airpressure']['val'] = buf['airpressure'];
+	if (buf['altitude'] !== undefined)		config['sensors'][index]['sensor']['altitude']['val'] = buf['altitude'];
+	if (buf['windspeed'] !== undefined)		config['sensors'][index]['sensor']['windspeed']['val'] = buf['windspeed'];
+	if (buf['winddirection'] !== undefined) config['sensors'][index]['sensor']['winddirection']['val'] = buf['winddirection'];
+	if (buf['rainfall'] !== undefined)		config['sensors'][index]['sensor']['rainfall']['val'] = buf['rainfall'];
+	if (buf['luminescense'] !== undefined)	config['sensors'][index]['sensor']['luminescense']['val'] = buf['luminescense'];
+
+	// XXX Other and new sensors come here!
+	var db = rrdDir + "/db/"+name+".rrd";
+	var str=[]; var sname;
+	if ((socket !== undefined) && (socket !== null)) sname = socket.name; else sname = "datagram";
+	logger("sensorHandler:: from: "+sname+", name: "+ name+", addr: "+buf.address+", chan: "+buf.channel+", temp: "+buf.temperature,1);
+	
+	if (!fs.existsSync(db)) {
+		logger("sensorHandler:: rrdtool db "+db+" does not exist ... creating",1);
+		createSensorDb(db,buf, socket);	
+	}
+ 
+	// If a key does not exits, use empty value and print NO colon
+	str += ((buf['temperature'] !== undefined)	? ":"+Number(buf['temperature']) : "");
+	str += ((buf['humidity'] !== undefined)		? ":"+Number(buf['humidity']) : "");
+	str += ((buf['airpressure'] !== undefined)	? ":"+Number(buf['airpressure']) : "");
+	str += ((buf['altitude'] !== undefined)		? ":"+Number(buf['altitude']) : "");
+	str += ((buf['windspeed'] !== undefined)	? ":"+Number(buf['windspeed']) : "");
+	str += ((buf['winddirection'] !== undefined) ? ":"+Number(buf['winddirection']) : "");
+	str += ((buf['rainfall'] !== undefined)		? ":"+Number(buf['rainfall']) : "");
+	str += ((buf['luminescense'] !== undefined)	? ":"+Number(buf['luminescense']) : "");
+	var execStr = "rrdtool update "+db+" N"+str;
+	logger("sensorHandler:: execStr: "+execStr,2);
+	exec(execStr, function (error, stdout, stderr) {
+		if (error === null) {
+			logger("sensorHandler:: stdout: "+ stdout + "; stderr: " + stderr , 2); 
+		}
+		else  { logger("sensorHandler:: ERROR: "+ error  + "; stderr: " + stderr ,0); 
+		}
+	});
+	broadcast(JSON.stringify(buf) ,socket, "raw");			// Send only to websockets, mask all raw sockets
 }
 
 // --------------------------------------------------------------------------------
 // WEATHER Handlers with RRDTOOL
+// The db parameter contains full file name, based on name!!! of the sensor!
+// So you can shuffle a sensor in location as long as the name stays the same
 // --------------------------------------------------------------------------------
-function createWeatherDb(db,buf,socket) {
+function createSensorDb(db,buf,socket) {
 	var str=[];
-	logger("createWeatherDb:: ",1);
+	logger("createSensorDb:: ",1);
 	str += ((buf['temperature'] !== undefined) ? "DS:temperature:GAUGE:600:-20:95 " : "");
 	str += ((buf['humidity'] !== undefined) ? "DS:humidity:GAUGE:600:0:100 " : "");
 	str += ((buf['airpressure'] !== undefined) ? "DS:airpressure:GAUGE:600:900:1100 " : "");
@@ -1513,63 +2022,48 @@ function createWeatherDb(db,buf,socket) {
 	str += "RRA:MAX:0.5:20:720 ";				
 	str += "RRA:AVERAGE:0.5:20:720 ";	
 	
-	var execStr = "rrdtool create "+db+" --step 180 "+str;
-	logger("createWeatherDb:: execStr: "+execStr,1);
+	var execStr = "rrdtool create "+db+" --step 180 "+str;	// Steps of 180 secs is 3 minutes
+	logger("createSensorDb:: execStr: "+execStr,1);
 	exec(execStr, function (error, stdout, stderr) {
 		if (error === null) { 
-			logger("createWeatherDb:: ok, stdout: "+ stdout + "; stderr: " + stderr , 2); 
-			weatherHandler(buf, socket);				// sort of callback mechanism. But only 1 time
+			logger("createSensorDb:: ok, stdout: "+ stdout + "; stderr: " + stderr , 2); 
+			sensorHandler(buf, socket);		// sort of callback mechanism. But only 1 time
 		}
-		else  { logger("createWeatherDb:: ERROR: "+ error  + "; stderr: " + stderr ); 
+		else { logger("createSensorDb:: ERROR: "+ error  + "; stderr: " + stderr ); 
 		}
 	});		
 }
 
-function weatherHandler(buf, socket) {
-	var index = addrSensor(buf.address,buf.channel);
-	var name = config['weather'][index]['name'];
-	var db = rrdDir + "/db/"+name+".rrd";
-	var str=[]; var sname;
-	if ((socket !== undefined) && (socket !== null)) sname = socket.name; else sname = "datagram";
-	logger("weatherHandler:: from: "+sname+", name: "+ name+", addr: "+buf.address+", chan: "+buf.channel+", temp: "+buf.temperature,1);
-
-	if (!fs.existsSync(db)) {
-		logger("weatherHandler:: rrdtool db "+db+" does not exist ... creating",1);
-		createWeatherDb(db,buf, socket);
+// -------------------------------------------------------------------------------
+// SETTING HANDLER
+// Needs more work
+// -------------------------------------------------------------------------------
+function settingHandler(buf, socket) {
+	switch (buf.cmd) {
+		case 'store_config':
+			logger("settingHandler:: store_config database name selected",1);
+		break;
+		case 'load_config':
+			logger("settingHandler:: load_config database name selected",1);
+		break;
+		case 'list_config':
+			logger("settingHandler:: list_config database name selected",1);
+		break;
 	}
-	// XXX assignments below need rework. 
-	// If a key does not exits, use empty value and print NO colon
-	str += ((buf['temperature'] !== undefined) ? ":"+Number(buf['temperature']) : "");
-	str += ((buf['humidity'] !== undefined) ? ":"+Number(buf['humidity']) : "");
-	str += ((buf['airpressure'] !== undefined) ? ":"+Number(buf['airpressure']) : "");
-	str += ((buf['altitude'] !== undefined) ? ":"+Number(buf['altitude']) : "");
-	str += ((buf['windspeed'] !== undefined) ? ":"+Number(buf['windspeed']) : "");
-	str += ((buf['winddirection'] !== undefined) ? ":"+Number(buf['winddirection']) : "");
-	str += ((buf['rainfall'] !== undefined) ? ":"+Number(buf['rainfall']) : "");
-	var execStr = "rrdtool update "+db+" N"+str;
-	logger("weatherHandler:: execStr: "+execStr,2);
-	exec(execStr, function (error, stdout, stderr) {
-		if (error === null) {
-			logger("weatherHandler:: stdout: "+ stdout + "; stderr: " + stderr , 2); 
-		}
-		else  { logger("weatherHandler:: ERROR: "+ error  + "; stderr: " + stderr ,0); 
-		}
-	});
 }
 
 // -------------------------------------------------------------------------------
-// Handle incoming messages over the socket
+// SOCKET HANDLER: Handle incoming messages over the socket
 // 	This is a generic fuction to read messages from socket. The separate gui/weather specific
 //	functions are found above.
 // The data variable is a json string.
 // -------------------------------------------------------------------------------
-
+//
 function socketHandler(data,socket) {
 	var str = data+"";						// String termination is required for search() and probably JSON too
 	//console.log("dat: "+str);
-	var s = str.search(/\}{/);				// With raw sockets 2 concatenated messages may arrive
-	if (s != -1) 
-	{										// Split data and call recursively
+	var s = str.search(/\}{/);				// With raw sockets 2 concatenated messages may arrive (or half a message)
+	if (s != -1) {										// Split data and call recursively
 		var str1 = str.substr(0,s+1);
 		var str2 = str.substr(s+1);
 		logger("socketHandler:: string 1: "+str1,2);
@@ -1579,20 +2073,18 @@ function socketHandler(data,socket) {
 		return;
 	};
 	logger("socketHandler:: Starting with data: "+data,2);
-	
 	try {
 		var buf = JSON.parse(str);
 	} catch(e){
 		logger("socketHandler:: JSON parse error: "+e,1);
 		return;
 	}
-	if (socket == undefined) {				// UDP message most likely
+	if (socket == undefined) {				// UDP message most likely, or queueHandler
 		logger("socketHandler socket undefined. action: "+buf.action,2);
 		if (debug >= 2) console.log("data: ",str);
 		socket = null;
 	}
 	logger("Handler:: Action: "+buf.action,2);
-	
 	switch (buf.action) {
 		case 'alarm':
 			logger("socketHandler:: alarm received",1);
@@ -1601,35 +2093,47 @@ function socketHandler(data,socket) {
 		case 'console':		// request can be: "logs", "zlogs", "sunrisesunset", "clients", "rebootdaemon"
 			consoleHandler(buf.request, socket);
 		break;
-		case 'dbase':						// cmd can be: delete_scene, 
+		case 'dbase':							// cmd can be: delete_scene, etc etc
 			dbaseHandler(buf.cmd, buf.message, socket);
 		break;
-		case 'energy':						// cmd can be: energy
+		case 'energy':							// cmd can be: energy
 			energyHandler(buf, socket);			// Do something: such as store in RRD etc
-			broadcast(str ,socket);				// Just forward to clients
+		break;
+		case 'graph':
+			graphHandler(buf,socket);
 		break;
 		case 'gui':			//
-			if (buf.type == "raw")  icsHandler(buf, socket);
-			if (buf.type == "json") guiHandler(buf, socket);		
+			if (buf.type == "raw")  icsHandler(buf, socket);			// ics type messages
+			if (buf.type == "json") guiHandler(buf, socket);			// JSON style message (better, but not common)
 		break;
-		case 'load_database':		// Re-Read the database (NOT init the database), response contains result
+		case 'handset':
+			if (buf.type == "raw")  icsHandler(buf, socket);			// This should work for handsets too!
+			if (buf.type == "json") guiHandler(buf, socket);			// XXX Not tested yet
+		break;
+		case 'login':
+			logger("socketHandler:: login message received");
+			loginHandler(buf, socket);
+		break;
+		case 'load_database':					// A gui requests to read the database
 			logger("socketHandler:: load_database received",1);
-			var response = {
-				tcnt: tcnt++ ,
-				type: "raw",
-				action: "load_database",		// actually the class of the action
-				cmd: "",	
-				response: config				// Message to popup in 
-			};
-			//if (socket.type == "ws") { 	
-				var ret = socket.send(JSON.stringify(response),function (error){
-					if (error !== undefined) { 
-						logger("socketHandler:: ERROR returning load database "+error,1);
-						logger("socketHandler:: Socket: "+socket.name+", type: "+socket.type,1);
-					}
-				});	
-			//}	
-			//else logger("Not a Websocket");
+			// If the socket is new and not trusted, ask user to authorize
+			var response = {};
+			if (socket.trusted == 0) {
+				logger("socketHandler:: Socket is not trusted: "+ socket.name,1);
+				response = { tcnt: tcnt++ , type: "raw", action: "login", message: "Please login first" };
+			}
+			else {
+				logger("socketHandler:: Socket is trusted: "+ socket.name,1);
+				response = { tcnt: tcnt++, type: "raw", action: "load_database", cmd: "", response: config };
+			}
+			logger("socketHandler:: Sending "+response.action+" message to socket: "+socket.name)
+ 	
+			var ret = socket.send(JSON.stringify(response),function (error){
+				if (error !== undefined) { 
+					logger("socketHandler:: ERROR responding load database "+error,1);
+					logger("socketHandler:: Socket: "+socket.name+", type: "+socket.type,1);
+				}
+			});	
 		break;
 		case 'ping':							// Respond to ping with ack to requestor only => healthcount++
 		case 'PING':
@@ -1645,12 +2149,20 @@ function socketHandler(data,socket) {
 		break;
 		case 'scene':
 			logger("socketHandler:: scene received",2);
-			
+			// XXX TBD
+		break;
+		case 'setting':										// Several settings from gui
+			logger("socketHandler:: setting received: "+buf.cmd,2);
+			settingHandler(buf, socket)
+		break;
+		case 'user':
+			logger("socketHandler:: user received",2);
 		break;
 		case 'weather':
-			// XXX tbd Handle incoming weather messages for RRDtool
-			weatherHandler(buf, socket);
-			broadcast(str, socket);
+			logger("socketHandler:: weather received",1);
+			buf.action = 'sensor';
+		case 'sensor':
+			sensorHandler(buf, socket);
 		break;
 		default:
 			logger("SocketHandler:: action not recognized: "+buf.action,1);
@@ -1659,10 +2171,44 @@ function socketHandler(data,socket) {
 }
 
 // --------------------------------------------------------------------------------
+// Queue a scene string.
+// put the scene in the run queue, in parts based on the individual device commands
+// XXX At the moment only ICS commands are queued -> must change
+// --------------------------------------------------------------------------------
+function queueScene(scene) {
+	// This means that ics strings have a time component in the scene array. Make sure
+	// every timer is copied on the queue as well
+	var splits;
+	splits = scene.split(",");
+	for (var k=0; k< splits.length; k+=2) {
+		logger("queueScene item: "+(k/2)+", val: "+splits[k]+", time: "+splits[k+1],1);
+		var tmp = splits[k+1].split(":");
+		var sticks = +(tmp[0]*3600)+(tmp[1]*60)+tmp[2];
+		logger("qinsert:: ticks: "+sticks+", name: "+splits[k]+", seq: "+splits[k],1);
+		// Use gui as name as we have a gui ICS seq here. 
+		// The queue can handle scene names as well but then leave the seq field empty
+		queue.qinsert({ ticks: Number(sticks) + getTicks(), name: "gui", seq: splits[k] });
+	}//for k
+}
+
+// --------------------------------------------------------------------------------
+// Function to put a device setting in the queue.
+// dev is a device index, val is new value, start is "hh:mm:ss" time
+// XXX function for times still to be implemented
+// --------------------------------------------------------------------------------
+function queueDevice(dev, val, start, freq, times) {
+	var tmp = start.split(":");
+	var sticks = +(tmp[0]*3600)+(tmp[1]*60)+tmp[2];
+	var dimmer= config['devices'][dev]['type']=="dimmer"?"FdP":"F";
+	var theItem = "!R"+config['devices'][dev]['room']+config['devices'][dev]['id']+dimmer+val;
+	logger("queueDevice:: item: "+theItem+", dev: "+config['devices'][dev].name+", val: "+val+", time: "+start,1);
+	queue.qinsert({ ticks: Number(sticks) + getTicks(), name: "gui", seq: theItem });
+}
+
+// --------------------------------------------------------------------------------
 // QUEUE Object definitions (singleton stye as a function)
 // The queue contains a list of actions that are outstanding
 // --------------------------------------------------------------------------------
-//
 var queue = new function() {
 	this.qlist= [];
 	// Need to use the splice function here
@@ -1705,14 +2251,10 @@ var queue = new function() {
 	}
 }
 
-queue.qinsert({ticks: getTicks()+ 30, name: "gui", seq: "!R1D1FdP10"});
-queue.qinsert({ticks: getTicks()+ 45, name: "gui", seq: "!R1D1F0"});
-
-
 // --------------------------------------------------------------------------------
 // QUEUE Loop with interval
 //
-// As from that moment on the lampi_devices will be in memory and always available
+// As from that moment on the config['devices'] will be in memory and always available
 // XXX At the moment, for gui only ICS raw coded commands are stored in Queue
 // XXX Todo: We can put whatever task we want in the queue, including thermostat, emails etc etc.
 
@@ -1723,79 +2265,108 @@ function queueHandler() {
 		for (var i=0; i< task.length; i++) {					// For every scene runnable after pop(), could be 0
 			var cmds;
 			if (debug>=1) console.log("\t\tqueueHandler:: processing task: ",task[i]);
-			if (task[i].name != "gui") {						// The scene name is a real scene 
-				// Lookup scene or task and Send to connected sockets
-				var index = findScene(task[i].name);
-				cmds = config['scenes'][index].seq.split(",") ;
-			}
-			else {												// Gui ALL OFF command
-				cmds = task[i].seq.split(",");					// Get all ICS commands in the scene
+			switch (task[i].name) {
+				case "gui":										// We use this fake name for separate ICS commands
+					cmds = task[i].seq.split(",");				// Get all ICS commands in the scene, could be allOff
+				break;
+				default:
+					// Lookup scene or task and Send to connected sockets
+					var index = findScene(task[i].name);
+					cmds = config['scenes'][index].seq.split(",") ;
+				break;
 			}
 			// For each cmd in the seq separately call the handler
-			for (var j = 0; j<cmds.length; j++) {
+			for (var j = 0; j<cmds.length; j=j+2) {
 				var data = {
 					tcnt: ""+tcnt++ ,
 					type: "raw",
 					action: "gui",								// actually the class of the action
-					cmd:   "",									// Optional for ics messages, otherwise kaku, zwave, livolo etc.
+					cmd:   "",									// Optional ics messages, otherwise kaku, zwave, livolo etc.
 					gaddr: "",									// Optional
 					uaddr: "",									// Optional
 					val:   "",									// Optional
 					message: cmds[j]
 				};
-				icsHandler(data);								// Fills out missing JSON fields. We do not specify socket as 2nd arguments
-			}	// XXX Should be socketHandler to be more generic!
+				//icsHandler(data);								// Fills out missing JSON fields. We do not specify socket as 2nd arguments
+			}	socketHandler(JSON.stringify(data)); 			//XXX Should be socketHandler to be more generic!
 		}
 		task = queue.qpop();									// Next pop
 	}
 	if (debug>=2) queue.qprint();
 }
 
+// --------------------------------------------------------------------------------
+// RULE HANDLER Loop with interval
+//
+function ruleHandler() {
+	for (var i = 0; i< config['rules'].length; i++) {
+		if (config['rules'][i].active == "Y") {
+			logger("ruleHandler:: rule "+config['rules'][i]['name']+" is active",1);
+			try {
+				logger("ruleHandler:: eval: "+config['rules'][i]['jrule'],1);
+				eval( config['rules'][i]['jrule'] );
+			}
+			catch (e) {
+				logger("ruleHandler:: Error evaluating rule "+config['rules'][i]['name']+", error: "+e,1);
+			}
+		}
+		else {
+			logger("ruleHandler:: rule "+config['rules'][i]['name']+" not active",3);
+		}
+	}
+	logger("ruleHandler:: Ended",2);
+}
+
 
 // ================================================================================
-//
 //                                MAIN part
-//
 // ================================================================================
-logger("MAIN part started");
+logger("MAIN part started",1);
 
 // INIT Put all functions for init here, after that, main() is started.
 async.series([
 	function (callback) {
 		connectDbase(callback);
 	},
-	// Load the database to get the LamPI data
-	function(callback) {
-		loadDbase(callback);
-	},
 	// Do the CURL request to Z-Wave to load the devices data
 	function(callback) {
 		zwave_init(function(err,result) { callback(null,result); } );
+	},
+	// Load the database to get the LamPI data
+	function(callback) {
+		loadDbase(callback);
 	}
 ], function(err,results)  {
 	main(err,results); 
 })
 
-function main(err,results) {
+// Simple function to restart the loops. This function is called
+// by main, but also by the /init functions
+function start_loops() {
 	loops = [];
-	// Callback function after done all relevant init functions
 	logger("All Init functions done",1); 
-	if (debug>= 1) console.log("Return values: \n",results);
 	alarm_loop();						// Every 2 seconds handle alarms
 	timer_loop();						// Every 60 seconds timer queue and logging
 	poll_loop();						// Every 6 seconds test changed values from Z-Wave
-	log_loop();
-	
+	zwave_loop();
+}
+
+// Callback function after done all relevant initialization functions
+function main(err,results) {
+	if (debug>= 1) console.log("Return values: \n",results);
+	// Delayed bind makes sure all initializations are finished
+	userver.bind(udpPort);
+	logger("Starting Loops");
+	start_loops();
 	logger("Starting Static Webserver");
 	// NOTE: All pathnames are relative to the Node Installation directory
 	app.use(serveStatic(__dirname + '/www')); app.listen(webPort);
-
 }
 
 // --------------------------------------------------------------------------------
 // TIMER LOOP
 // Logging loop with interval of around 30-60 seconds.
-// Prequisites:: The lampi_devices array must be present
+// Prequisites:: The config['devices'] array must be present
 // 1. Re-init the Z-Wave data structure
 // 2. The Timer Array of LamPI will be read every xx seconds and when necessary timers
 // that are ready will be put on the run Queue.
@@ -1854,7 +2425,6 @@ function timer_loop() {
 					minute = start_minute;
 				break
 			}
-			
 			var td = Math.floor(new Date(year, month, day, hour, minute, 0, 0).getTime()/1000) + corr;
 			logger("Timer correction is: "+corr,2);
 			logger("timer_loop:: run   date: "+td,2);
@@ -1880,11 +2450,10 @@ function timer_loop() {
 			// If we are here, at least we knowthat we can start this timer. 
 			logger("timer_loop:: Starting timer name: "+timers[i]['name'],1);
 
-			// Now for every command in the scene make sure that it is put on the queue
-			// This means that ics strings have a time component in the scene array. Make sure
-			// every timer is copied on the queue as well	
+			// Now for every command in the scene make sure that it is put on the queue and its timer is copied on the queue as well	
+			// 
 			var j; var splits;
-			for (j=0; j<scenes.length; j++) {
+			for (j=0; j<config['scenes'].length; j++) {
 				if ( scenes[j]['name'] == timers[i]['scene'] ) {
 					splits = scenes[j]['seq'].split(",");
 					for (var k=0; k< splits.length; k+=2) {
@@ -1906,17 +2475,14 @@ function timer_loop() {
 }
 
 // --------------------------------------------------------------------------------
-// LOGGING LOOP
-//
+// ZWAVE LOGGING LOOP
 // 1. Display log value of Z-Wave devices based on complete init
 // 2. We update values in the Z-Wav and LamPI environment and update database
 // 3. We broadcast values of sensors to connected gui clients
-//
-function log_loop() {
-  logger("Starting log_loop");
+function zwave_loop() {
+  logger("Starting zwave_loop");
   var i=0;
-  var id = setInterval ( function() {
-								  
+  var id = setInterval ( function() {							  
 	// Display Active clients
 	if (debug >= 2) {
 		logger("----------- ACTIVE CLIENTS ------------",1);
@@ -1925,10 +2491,9 @@ function log_loop() {
 			console.log(client.type+" Client: "+client.name);
 		});
 	}
-	
 	logger("----------- ACTIVE ZWAVE DEVICES ------------",1);
-	// Do a complete init of the datasctructure every 60 seconds just to be sure we didnt miss updates
-	zwave_init(function(err,result) {logger("log_loop:: zwave_init: "+result,1); } ); 
+	// Do a complete init of the datastructure every 60 seconds just to be sure we didnt miss updates
+	zwave_init(function(err,result) {logger("zwave_loop:: zwave_init: "+result,1); } ); 
 	var ticks = Math.floor(Date.now()/1000);
 	logger('Loop '+i+", ticks: "+ticks+", devices: "+Object.keys(devices).length,2);
 
@@ -1940,7 +2505,6 @@ function log_loop() {
 			if (debug>2) console.log(classes);
 			Object.keys(classes).forEach(function(cl) {	
 				switch(cl) {
-
 					case '37':									// SWITCH
 					// If not a Battery get the value of the device
 						var val        = classes[cl].data.level.value + 0;
@@ -1972,48 +2536,43 @@ function log_loop() {
 							logger("WARNING:: Device "+cl+" Dead",0);
 							break;
 						}
+						var buf = {				// Actual sensor data is added below when present
+							tcnt: ""+tcnt++,
+							action: "sensor",
+							type: "json",
+							address: key+"",
+							channel: "0"
+						}
 						if( 1 in classes[cl].data) {			// Temperature
 							var val = classes[cl].data[1].val.value + 0;
 							logger("\tCl: "+cl+" Temp             , val "+val,1);
 							var index = addrSensor(key,0);
-							config['weather'][index]['temperature'] = val;
-							//break;
+							config['sensors'][index]['sensor']['temperature']['val'] = val;
+							buf.temperature = val;
 						}
 						if( 3 in classes[cl].data) {			// Luminescense
 							var val = classes[cl].data[3].val.value + 0;
 							logger("\tCl: "+cl+" Lumi             , val "+val,1);
+							var index = addrSensor(key,0);
+							config['sensors'][index]['sensor']['luminescense']['val'] = val;
+							buf.luminescense = val;
 						}
 						if( 5 in classes[cl].data) {			// Humidity
 							val = classes[cl].data[5].val.value + 0;
 							logger("\tCl: "+cl+" Humi             , val "+val,1);
-							// Send to broadcast!
-							// index in devices is 'key' which is channel in weather array.
 							var index = addrSensor(key,0);
-							config['weather'][index]['humidity'] = val;
+							config['sensors'][index]['sensor']['humidity']['val'] = val;
+							buf.humidity = val;
 						}
-						var buf = {
-							tcnt: ""+tcnt++,
-							action: "weather",
-							type: "json",
-							address: key+"",
-							channel: "0",
-							temperature: config['weather'][index]['temperature'],
-							humidity : config['weather'][index]['humidity'],
-							airpressure: "",
-							windspeed: "", 
-							winddirection: "",
-							rainfall: ""
-						}
-						logger("log_loop:: starting weather handler for device: "+key,2);
-						weatherHandler( buf )
-						broadcast(JSON.stringify(buf) ,null);
+						logger("zwave_loop:: starting sensor handler for device: "+key,2);
+						sensorHandler( buf )
 					break;
 					case '67':									// Thermostat
 						if (classes[cl].data.interviewDone.value == false) {
 							logger("WARNING: Thermostat device "+key+" Dead",0);
 							break;
 						}
-						var val = classes[cl].data[1].val.value + 0;
+						var val = classes[cl].data[1].val.value+0;
 						logger("\tCl: "+cl+" Thermostat       , val "+val,1);
 					break;
 					case '112':
@@ -2053,9 +2612,8 @@ function log_loop() {
 
 // --------------------------------------------------------------------------------
 // POLL Loop with interval
-//
 // Ths may not be necessary once we take over the daemon function as well
-// As from that moment on the lampi_devices will be in memory and always available
+// As from that moment on the config['devices'] will be in memory and always available
 //
 function poll_loop() {
   logger("Starting poll_loop");
@@ -2064,13 +2622,13 @@ function poll_loop() {
 	connection.query('SELECT * from devices', function(err, rows, fields) {
 		if (err) throw err;
 		config['devices'] = rows;
-		lampi_devices = config['devices'];			// This is a shortcut to the main config structure
+		config['devices'] = config['devices'];			// This is a shortcut to the main config structure
   		if (debug >= 3) console.log('query devices:: is: \n', rows);
 		// Loop in our list of devices (not sensors) and make sure that for every one we take action
-		for (var i=0; i< lampi_devices.length; i++) {
-			if (lampi_devices[i]['gaddr'] == "868") {				// Is this a Z-Wave device
+		for (var i=0; i< config['devices'].length; i++) {
+			if (config['devices'][i]['gaddr'] == "868") {				// Is this a Z-Wave device
 				// Remember this IS async so do not assume below we have a changed value
-				deviceGet(i,lampi_devices[i]['type']);				// Update the Z-Wave device tree asynchronous
+				deviceGet(i,config['devices'][i]['type']);				// Update the Z-Wave device tree asynchronous
 			}//if 868
 		}//for
 	});
@@ -2078,31 +2636,27 @@ function poll_loop() {
   loops.push(id);
 }
 
-
 // --------------------------------------------------------------------------------
 // ALARM loop with interval
 // 
 // As alarms do not need a polling of the data (the value gets pushed to the Z-Wave controller)
 // we need to make SURE that all data has been read or the function might fail.
-//
 // Also, as the alarm loop has finest timing granularity, we read the ready queue for runnable commands!
-//
-// ??? Maybe start with binding functions to changed values
+// ? Maybe start with binding functions to changed values
 //
 function alarm_loop()
 {
-  logger("Starting alarm_loop");
-  
+  logger("Starting alarm_loop",1);
+  var resilient = 0;
   var id = setInterval ( function() {
 	var	zTime = Math.floor(Date.now()/1000);					// 
 	zwave_upd_options.path = '/ZWaveAPI/Data/'+(zTime - alarm_interval);
 	logger("alarm_loop:: zTime: "+(zTime-alarm_interval),2);
 	
-	// As alarm polling gtakes place most often, the main poll look is in this function too
-	
-	// XXX 			This update data function does not yet work reliable in 2.0.1.rc27!
+	// As alarm polling takes place most often, the main poll look is in this function too!
 	http.request(zwave_upd_options, zwave_upd_cb).end();
-		
+	
+	// XXX Alarm sensors are still too static, need global configuration in database.cfg
 	var alarm1 = devices[9].instances[0].commandClasses[48].data[1].level.value;
 	if (alarm1 === true) {
 		console.log("Fibaro ALARM");
@@ -2113,10 +2667,15 @@ function alarm_loop()
 			scene: "Living on",									// Scene name to be executed
 			message: "Fibaro ALARM"								// Message to popup in the GUI
 		};
-		var ret = broadcast(JSON.stringify(data), null);
-		//var ret = client.write(JSON.stringify(data));
+		if (resilient == 0 ) {
+			resilient = 1;
+			var ret = broadcast(JSON.stringify(data), null);
+			logger("FIBARO ALARM",0);
+			var id2 = setTimeout ( function() { resilient = 0; },240000 );
+		}
 		//devices[9].instances[0].commandClasses[48].data[1].level.value = false;
 	}
+	
 	var alarm2 = devices[11].instances[0].commandClasses[48].data[1].level.value;
 	if (alarm2 === true) {
 		console.log("Aeon ALARM");
@@ -2127,22 +2686,23 @@ function alarm_loop()
 			scene: "",											// Scene name to be executed
 			message: "AEON ALARM"								// Message to popup in the GUI
 		};
-		var ret = broadcast(JSON.stringify(data), null);
-		// This will be overwritten when new data arrives
-		devices[11].instances[0].commandClasses[48].data[1].level.value = false;
+		if (resilient == 0 ) {
+			resilient = 1;
+			var ret = broadcast(JSON.stringify(data), null);
+			logger("AEON ALARM",0);
+			var id2 = setTimeout ( function() { resilient = 0; },240000 );
+		}
+		// Maybe LamPI-node needs to do something itself with the alarm.
+		// Gui's get a broadcast only every 4 minutes
+		logger("AEON ALARM",0);
 		// Switch off the alarm XXX not elegant. Should tell the device to be silent 30 secs after first alarm
 	}
-	
 	logger("----------- QUEUE HANDLER -------------",2);
-	queueHandler();													// Handle the run queue of LamPI commands
+	queueHandler();							// Handle the run queue of LamPI commands
+	
+	logger("----------- RULES HANDLER -------------",2);
+	ruleHandler();
 	
   }, alarm_interval );
   loops.push(id);
 }
-
-// --------------------------------------------------------------------------------
-//
-// CLOSING part
-//
-logger("LamPI-node.js completely parsed");
-//connection.end();

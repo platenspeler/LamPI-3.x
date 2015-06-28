@@ -33,4 +33,8 @@ cd $HOMEDIR/sht21
 make
 sudo make install
 
+echo "Making cmd-sensor"
+cd $HOMEDIR/cmd-sensor
+make
+sudo make install
 

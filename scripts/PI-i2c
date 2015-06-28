@@ -21,9 +21,8 @@ SENSOR="bmp085-sensor"; export SENSOR
 # Load the required module for the 1-wire sensor program
 #
 cat /proc/modules | fgrep i2c > /dev/null
-if [ $? = 0 ]; then
-	echo "Module loaded"
-else
+if [ $? != 0 ]; then
+	echo "Loading i2c modules"
 	sudo modprobe i2c_dev
     sudo modprobe i2c_bcm2708
 fi
@@ -49,6 +48,15 @@ sleep 10
 # SHT21 is a temperature + Humidity Sensor
 #
 SENSOR="sht21-sensor"
+echo "---------------------------------------------------" >> $LOGFILE 2>&1
+echo "`date`:: Starting $SENSOR" >> $LOGFILE 2>&1
+cd $EXEDIR
+nohup ./$SENSOR -d -b -h $HOSTNAME -p $PORTNUMBER >> $LOGFILE 2>&1 &
+
+#
+# LM75A is a temperature Sensor
+#
+SENSOR="lm75a.sh"
 echo "---------------------------------------------------" >> $LOGFILE 2>&1
 echo "`date`:: Starting $SENSOR" >> $LOGFILE 2>&1
 cd $EXEDIR

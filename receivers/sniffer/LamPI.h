@@ -50,10 +50,10 @@ extern "C"
 
 // Definitions for WT440H Weather station wireless sensors
 //
-#define WT440H_MIN_SHORT 750
-#define WT440H_MAX_SHORT 1200
+#define WT440H_MIN_SHORT 700
+#define WT440H_MAX_SHORT 1250
 #define WT440H_MIN_LONG 1700
-#define WT440H_MAX_LONG 2200
+#define WT440H_MAX_LONG 2300
 
 // Definitions for Kaku Devices
 //

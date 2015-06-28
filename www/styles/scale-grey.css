@@ -128,9 +128,10 @@ input#lbl {
   overflow: hidden;
 }
 
+/* The menu is on top with the mobile app */
 #gui_menu {
   position: absolute;
-  /*		left: 0px; */
+
   right: 5px;
   top: 95px;
   bottom: 55px;

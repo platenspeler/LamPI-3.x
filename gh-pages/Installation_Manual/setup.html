@@ -6,13 +6,14 @@
 
 <body>
 
-<h1>LamPI Setup</h1>
-<h5>LamPI is a Home Automation project for switching equipment in the house over 433 MHz senders/transmitters on a RaspberryPI.</h5>
+<h1>LamPI 3.x Setup</h1>
+<p>May 2015</p>
+<h5>LamPI is a Home Automation project for switching equipment in the house over 433 and 868 HMz Z-Wave recevers/transmitters on a RaspberryPI.</h5>
 <p><img src="../UserGuide/screenshots/room_screen_grey.JPG" width="899" height="582" /></p>
 <p>As you see, the GUI interface is designed to operate (and manage) all tasks for the connected devices and minimize the need for manual changing of configuration files etc. let alone making configuration changes at compile time.</p>
 <p>In case I missed something, please send me an email or make a note on this page. For the moment I'm the only author of LamPI so it can take a few days before I answer....</p>
-<h1>Prerequisites ... what do you need</h1>
-<p>Before you install LamPI it is good to know that LamPI makes use of oether software packages. Although it is sometimes possible to bundle this software with my release I prefer not to do so. LamPI will wotk with the latest version of this software and you can download yourself. When in doubt, you can install the release mentioned in this documentation as it is tested by me ... </p>
+<h1>Shopping List ... what do you need</h1>
+<p>Before you install LamPI it is good to know that LamPI makes use of other software packages. Although it is sometimes possible to bundle this software with my release I prefer not to do so. LamPI will wotk with the latest version of this software and you can download yourself. When in doubt, you can install the release mentioned in this documentation as it is tested by me ... </p>
 <p>LamPI needs several other packages in order to be installed on a RaspberryPI successfully. </p>
 <p>For your Linux installation you need amongst others:</p>
 <ul>
@@ -27,7 +28,7 @@
 </ul>
 <p>For the software to work you also need:</p>
 <ul>
-  <li>Install a jQuery 1.10.3 library in your webroot (~/.www in my case) or use the one that I shipped on github</li>
+  <li>Install a jQuery 1.11.2 library in your webroot (~/www in my case) or use the one that I included on github</li>
   <li>Of install jQuery Mobile if you plan to run on an Android or othe rmobile device</li>
 </ul>
 <p>&nbsp;</p>
@@ -49,7 +50,7 @@
 <p>&nbsp;</p>
 <h1>LamPI Installation</h1>
 <p>Of course we all like to use our RaspberryPI for multiple tasks. Reality is: If you need to rely on the Raspberry + LamPI combo to switch your lighting and other devices reliably, then you must seriously consider reserving a RaspberryPI device for JUST DOING THAT and nothing else.</p>
-<p>Therefore, I decided to make the configuration and installation locations for LamPI really simple: Put everything in the LamPI homedirectory or one of its subdirectories. Of course it is quite good possible to use other locations, but I must warn you, unless you are an experienced user it will be difficult to get everything up and running so why not use the pi homedirectory and its subdirectories ~/www, ~/scripts, ~/exe and ~/receivers?</p>
+<p>Therefore, I decided to make the configuration and installation locations for LamPI really simple: Put everything in the LamPI homedirectory or one of its subdirectories. Of course it is quite good possible to use other locations, but I must warn you, unless you are an experienced user it will be difficult to get everything up and running so why not use the pi homedirectory and its subdirectories ~/www, ~/config, ~/scripts, ~/exe and ~/receivers?</p>
 <h1>Starting the System</h1>
 <p>This short chapter describes the basic and minimal steps to take to get LamPI up and running. </p>
 <ul>
@@ -62,23 +63,23 @@
 <p>The ~/config/backend_cfg.php file contains the settings for the network communication, contains database data (including password) and some othe rconfiguration settings. You probably have to configure the network setting as these differ for every home situation.</p>
 <h2>2. Configure the database.cfg file</h2>
 <p>Most of the configuration of LamPI can be done from the user interface application. This includes making/deleting of rooms, scenes and timers. Also, assigning devices to rooms, with the correct type and address is cometihing that can be done from the user interface. Should for whatever reason the LamPI configuration not work as expected or desired than it's good to know that there is a main configuration file for the LamPI operation that is read upon startup and that would contain the correct information.</p>
-<p>As shipped, your LamPI system contains the standard database.cfg file, which is mine and probably not useful for others. Therefore edit the ~/www/config/database.cfg file</p>
-<p><code><em><strong>vi ~/www/config/database.cfg</strong></em></code></p>
-<p>The database.cfg file contains a readable jSon description of the LamPI configuration. It is possible to change database.cfg with a simple text editor (and unfortunately for some complex settings you must) and its content is used to initialize the MySQL database which is queried upon program setup. In the &quot;Config&quot; menu of the application you can set several parameters and you can make backups and do restores from xxxxxx.cfg files in the ~/www/config directory.</p>
+<p>As shipped, your LamPI system contains the standard database.cfg file, which is mine and probably not useful for others. Therefore edit the ~/config/database.cfg file</p>
+<p><code><em><strong>vi ~/config/database.cfg</strong></em></code></p>
+<p>The database.cfg file contains a readable jSon description of the LamPI configuration. It is possible to change database.cfg with a simple text editor (and unfortunately for some complex settings you must) and its content is used to initialize the MySQL database which is queried upon program setup. In the &quot;Config&quot; menu of the application you can set several parameters and you can make backups and do restores from xxxxxx.cfg files in the ~/config directory.</p>
 <p>This way, you can make a backup of YOUR database.cfg file and do restores as well if you messed up for whatever reason.</p>
 <h2>3. Start the daemon</h2>
 <p>Wthou the daemon running, LamPI will not have a database and will not run correctly. Start the ~/daemon/LamPI-daemon.php with the following command:</p>
-<p><code><em><strong>cd  ~/scripts; ./PI-run -i</strong></em></code></p>
+<p><code><em><strong>cd  ~/scripts; ./PI-node -i</strong></em></code></p>
 <p>Check whether LamPI will start correctly now and read the database. At anytime you can see the output of the LamPI-daemon.php process by inspecting the log-file. A good way to do this is with the following command:</p>
-<p><code><em><strong>tail -f ~/log/LamPI-daemon.log</strong></em></code></p>
+<p><code><em><strong>tail -f ~/log/LamPI-node.log</strong></em></code></p>
 <h2>&nbsp;</h2>
 <h2>4. Loading a new configuration file</h2>
 <p>If you mess up or add new devices to your system, then it is of-course possible to add devices to the system with the GUI. But if you made a regular backup of your database.cfg file, it is easier to just restore the system should for whatever reason your database fail.</p>
 <p>You can load a configuration file on more than one way:</p>
 <ol>
   <li>Use the GUI, go to the &quot;Config&quot; menu and select the &quot;Backup&quot; button. In the backup/restore screen do a restore of the &quot;database.cfg&quot; file or another file where you saved your active configuration</li>
-  <li>Initialize the database from the commandline. This is the ultimate survivors kit, if everything fails this will probably work. Make sure that a working version of your database.cfg file is in the ~/www/config directory, and type in firefox or IE:<br>
-  http://192.168.xx.yy/backend_set.php?load which will load the database.cfg through the backend_set.php file. This method will work excellent even when the GUI does not work (if you messed up).</li>
+  <li>Initialize the database from the commandline. This is the ultimate survivors kit, if everything fails this will probably work. Make sure that a working version of your database.cfg file is in the ~/config directory, and type in firefox or IE:<br>
+  http://192.168.xx.yy/frontend_set.php?load which will load the database.cfg through the frontend_set.php file. This method will work excellent even when the GUI does not work (if you messed up).</li>
 </ol>
 <p><br>
 </p>

@@ -1,0 +1,36 @@
+<html>
+<head>
+    <meta charset='utf-8'>
+    <link href="/jquery-ui-1.11.2/jquery-ui.css" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/scale-grey.css">
+    <script src="/jquery-1.11.2.js"></script>
+    <script src="/jquery-ui-1.11.2/jquery-ui.js"></script>
+    <script src="/blockly/blockly_compressed.js"></script>
+    <script src="/blockly/javascript_compressed.js"></script>
+	<script src="/blockly/blocks_compressed.js"></script>
+    <script src="/rules/myBlocks.js"></script>
+    <script src="/rules/rules.js"></script>
+    <script src="/blockly/msg/js/en.js"></script>
+</head>
+
+<body> 
+<div id="wrapper">
+<!-- This is the top area with the room tabs --> 
+    <div id="gui_header"></div>
+<!-- This is the menu area with the choice  buttons --> 
+    <div id="gui_menu"></div> 
+	<div id="gui_content">
+<!--    	<div id="blocklyDiv" style="height: 480px; width: 600px;"></div> -->
+        <div id="blocklyDiv" style="position=absolute; height: 99%; overflow-y:scroll; width: 99%;"></div>
+	</div>   
+<!-- This is the message/comment area -->                         
+    <div id="gui_messages"></div>
+</div>
+
+<script>
+	// Start the main js file
+	start_Rules();
+</script>
+
+</body>
+</html>
