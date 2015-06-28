@@ -6,8 +6,8 @@
 <body>
 <h1>Weather Sensor Message Format</h1>
 <p>Sensors are activated by the cron system or they run as part of a daemon process. Sensor values that are collected are sent to the LamPI-daemon process for further processing. In order for the daemon to correctly recognize all messages coming in, a standard message format is defined that all sensors should use in order to assure correct interpretation.</p>
-<p>Messages are sent to LamPI-daemon as a text buffer over UDP port 5001 (default).</p>
-<p>The message format is in jSon and is defined as follows: </p>
+<p>Messages are broadcasted to LamPI-daemon as a text buffer over UDP port 5001 (default).</p>
+<p>The message format is in JSON and is defined as follows: </p>
 <p>message: {&quot;tcnt&quot;:&quot;&lt;transaction_id&gt;&quot;,&quot;action&quot;:&quot;weather&quot;,&quot;brand&quot;:&quot;&lt;your_brand&gt;&quot;,&quot;type&quot;:&quot;json&quot;,&quot;address&quot;:&quot;&lt;address&gt;&quot;,&quot;channel&quot;:&quot;&lt;channel&gt;&quot;,[&quot;&lt;sensor_id&gt;&quot;:&quot;&lt;sensor_value&gt;&quot;],..}</p>
 <p>The first part of every message is standard and all fields should be present. Their definitions are as follows:</p>
 <ul>
@@ -45,6 +45,14 @@
 </ul>
 <h3>Example:</h3>
 <p>{&quot;tcnt&quot;:&quot;529&quot;,&quot;action&quot;:&quot;weather&quot;,&quot;brand&quot;:&quot;wt440h&quot;,&quot;type&quot;:&quot;json&quot;,&quot;address&quot;:&quot;1&quot;,&quot;channel&quot;:&quot;0&quot;,&quot;temperature&quot;:&quot;27.5&quot;,&quot;humidity&quot;:&quot;47&quot;,&quot;windspeed&quot;:&quot;&quot;,&quot;winddirection&quot;:&quot;&quot;,&quot;rainfall&quot;:&quot;&quot;}</p>
+<h2>LM75a messages</h2>
+<p>The LM75a has 3 address bits, corresponding to the data connections A2, A1 and A0 on the chip. By connecting these address lines to either Vcc for a 1 and to GND for a 0 encoding, we can select 8 devices on the bus.</p>
+<p>&nbsp;</p>
+<h2>BMP085 and BMP180 messages</h2>
+<p>The BMP085 and BMP180 sensors do not have the possibility to use a subaddress which is coded in the hardware setup. And as LamPI-node process only looks at the address / channel combination to identify the sensor uniquely, we should add a unique channel for each sensor we have on the system. And as the system in its current setup will only allow one BMP085 or BMP180 sensor on the bus, it would be safe to use the last byte fo the IP address for this unique recognition.</p>
+<p>The reason why this makes sense is: In the sensor code we do NOT have access to the database in order to check other sensor characteristics so we need something simple that can be generated on the client sensor in a fast, lightweight and easy way.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 </body>

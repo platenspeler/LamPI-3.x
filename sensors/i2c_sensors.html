@@ -4,205 +4,8 @@
 <title>Wired Sensors</title>
 </head>
 <body>
-<h1>Wired Sensors</h1>
-<p>This part of the documentation describes the sensors interface. With sensors
-  we mean devices that are physically connected/attached to the Raspberry&nbsp; to one
-  of the GPIO pins. So they are connected with a physical wire. Sensors typically
-  are temperature/humidity interfaces or energy sensors.</p>
-<p>What makes sensors different from the &quot;normal&quot; receivers: The
-  latter operate asynchronously and begin to send as they like it. The connected
-  wire sensors will only start once they receive a command over the line from the
-  MCU (Micro Controlling Unit aka Raspberry).</p>
-<p>For the sake of simplicity, I like to categorize wired sensors in the
-  following groups:</p>
-<ol>
-  <li><a href="#nobus">Sensors without a bus mechanism, so every sensor might have its own
-    protocol and will be connected to a free GPIO pin</a>.</li>
-  <li><a href="#dallas">Single- or One-Wire sensors with Dallas bus protocol</a></li>
-  <li><a href="../i2c">Two-wire sensors on the I2C bus</a></li>
-  <li><a href="#energy">Energy sensors, connected to the  P1 bus of your Smart Meter</a></li>
-</ol>
-<h1><a name="nobus"></a>1. Wired Sensors, no bus</h1>
-<p>The first catagory to describe is the group of sensors that do not use a bus system to connect to the Raspberry PI (so have multiple sensors in series connected to the same wire). Instead every sensor will need to be connected separately to VCC and GND as well as be assigned its own exclusive GPIO pin.</p>
-<p>This may or may not be sufficient for your use, but there is an advantage to this approach: These sensors in general are cheap and contain good value. There is however a drawback when using these devices (as will be explained in further details below): If we connect these sensors to a busy system the timing of the system might not be good enough to support the critical timing (in 20uSec) that these devices need.</p>
-<h4>What Sensors are supported:</h4>
-<ul>
-  <li>DHT11
-    (1 &ordm;C accuracy) </li>
-  <li>DHT22
-    sensors (0.1 &ordm;C accuracy)</li>
-</ul>
-
-<h2>1.1 The DHT11 temperature and humidity sensor</h2>
-<p>The DHT11 temperature/humidity sensor is a typical example of such a sensor
-  device. It has 3 outside connector pins: GND, VCC and Data. Of course the
-  latter will be the most important pin to work with. In case of the DHT11 we
-  need to send a start pulse to the data pin, wait a predefined number of micro
-  seconds and then we will receive the 40-bit (5 bytes) sensor reading from the
-  device as 2 bytes humidity reading, 2 bytes temperature reading. And 1 byte for
-  parity check.</p>
-<p>Connecting the DHT11 is easy, it is low cost and easy to connect. However,
-  you are advised to buy the slightly more expensive DHT22 model instead. The
-  DHT11 does not output decimal parts of the temperature and humidity (decimal
-  part of the output bytes are always 0). The DHT22 is fully compatible with the
-  DHT11 but will provide temperature readings with 0.1 degree Celsius precision. </p>
-<p>&nbsp;<img src="No Bus/DHT11/88dht11.jpg" alt="" width=400 height=400></p>
-<p>The DHT11 is not compatible with the Dallas 1-wire bus protocol (see below)
-  which makes it a less flexible choice, even with its low pricetag.</p>
-<p>&nbsp;</p>
-<h2>1.2 The DHT22 temperature and humidity sensor</h2>
-<p>After using the DHT11 for a few days I decided to buy a DHT22 sensor. The reason was that I cannot use a sensor with a 1 degree temperature resolutions. Both are pin compatible, yet the DHT22 is more accurate. My DHT22 came with 4 pins instead of 3. The difference here is that since only 3 pins are really used that some DHT11 and DHT22 devices come with a supporting 2.54mm pin interface and are already soldered on a supporting board. If you receive a 4-pin version keep in mind that pin 3 is nc (not connected).</p>
-<p><img src="No Bus/DHT22/DHT22-temperature-humidity-sensor.png" width="400" height="307"></p>
-<p><img src="No Bus/DHT22/dht22_annotated.jpg" width="289" height="338"></p>
-<p>&nbsp;</p>
-  
-<h2>1.3 Software Design Considerations</h2>
-<p>Writing a software program to read the temperature and humidity values from
-  a sensor is a relatively simple task. In case of the DHT11 one needs to send a
-  pulse sequence over the data pin which tells the sensor to send its data, wait
-  a predefined number of microseconds and the sensor will take over the data line
-  and starts sending its 40 bits of data.</p>
-<p>In principle, all you have to do is read the status of the data line in uSec
-  time intervals and as soon as the data line switches from high to low, or vice
-  versa, note the pulse time. Every bit transmitted starts with 50uSecs High
-  value followed by a pulse of 25 uSec means a 0 value or a pulse of around 70
-  uSecs which means a logical 1.</p>
-<p>There are a few methods for reading one-wire sensors:</p>
-<ol>
-  <li>Write the sensor command to the data pin and when the sensor responds
-    read its value (HIGH or LOW) in a loop. Record the time between HI-LO or LO-HI&nbsp;
-    transitions.</li>
-  <li>Write the sensor command to the data pin, and use an interrupt handler
-    that is activated on either a rising or falling edge (HI-LO and LO-HI) and record the time
-    intervals between the transitions.</li>
-  <li>Make use of the readRHT03 function in the dev library in wiringPI. There is support for RHT03 (and DHT11, DHT22). </li>
-</ol>
-<p>The first method described above is a brute-force method: we read the
-  value/level of the data pin every uSec in loop and as soon as the sensor
-  changes state/value we record the time interval since the last state change.
-  This might consume an undesired amount of CPU resources. But there is a more
-  important reason why the simple read might not work: If you use other sensors
-  or wireless devices that use interrupt handlers to read incoming messages, your
-  reads will not be timed correctly as these interrupts are handled with a higher
-  priority than other running processes.</p>
-<p>As an alternative, it is possible to use an interrupt handler to measure
-  and time signal transitions on the data pin. The time difference between 2
-  transitions will be an indicator of &ldquo;0&rdquo; or &ldquo;1&rdquo; values. My experience with the
-  last method is mixed: The method works much better when there is a lot of other
-  data to read. But the timing of the data line is still critical and the sensor
-  pulses are really short, even for the RaspberryPI. Especially when other
-  interrupts arrive (433 MHz data for example) it is possible that a transition
-  is not noticed and timing of two pulses is combined (and there is one pulse
-  time less in the buffer).</p>
-<p>Of course it is possible to NOT connect any 433MHz receivers to the
-  Raspberry, in which case a single sensor can be read quite reliably. However,
-  in our Home Automation application 433MHz receivers are key. And sad-but-true,
-  there is a HUGE amount of 433 MHz noise in and around the home which causes
-  lots of meaningless interrupts to the application. There are good and better
-  (more selective) receivers, and some have developed a low-pass filter for
-  433MHz receivers. However, when weather station start with theirs 60-second
-  data bursts the amount of interrupts on the receiver pin is enormous (leading
-  to 20-30% cpu usage).</p>
-<p>The third method is easy on the programmer. There are two functions available in the wiringPI dev library that support the Max functions: readRHT03() and maxDetectRead(). In some situations I found these functions to lock-up the Raspberry system (looking into this), whereas in other situations they work very reliable.</p>
-<h2>1.4 Test of DHT11</h2>
-<p>I did some tests with my DHT11 sensor to measure the performance of the three methods. I tested method 2 and 3 in two ways: (a) Without any other (major) load on the RPI, and (b) with the LamPI-receiver process running, so that all other 433MHz receiver interrupts needed to be dealt with as well.</p>
-<p>For every method tested I made sure that we raised the interrupt priority prior to reading a value, and dropped it to 0 again after an successful read. This is done as reading a sensor is a synchronous operation (as seen by the initiating LamPI daemon) and we wait it to be successful and as short as possible (time). Compared to 433MHz interrupts that are generated by the receiver as a result of a remote sending a value. These asynchronous and autonome transmissions are handled by the daemon and if we miss one of those we'll pick up the next transmission.</p>
-<h4>method 1a:</h4>
-<p><img src="No Bus/DHT11/screenshot_force_a.JPG" width="587" height="323"></p>
-<h4>Method 1b: </h4>
-<p><img src="No Bus/DHT11/screenshot_force_b.JPG" width="568" height="327"></p>
-<h4>method 2a: Use an interrupt function to measure temperature (no load)</h4>
-<p><img src="No Bus/DHT11/screenshot_interrupt_a.JPG" width="608" height="323"></p>
-<p>As you can see in the results above, an average successful read in a system without load takes about 3 seconds (including a 500 ms start delay between read attempts and some other short wait times)</p>
-<h4>method 2b: Use an interrupt function to measure temperature (under load)</h4>
-<p><img src="No Bus/DHT11/screenshot_interrupt_b.JPG" width="594" height="324"></p>
-<p>The figure above tells us that for reading 10 successful values we have a total elapsed time of 1 minute and 17 seconds, which means that a successful read  takes 7.7 second on average. Still this figure is a little misleading: Not every read attempt is successful, and in the program we wait 500 milliseconds between attempts. This is because the datasheet mentions a mandatory time delay of about 1 second between read attempts. It is possible to leave out his wait, this will cause no major problems, other than that reads become less accurate (probably because the sensor cannot auto adjust between read attempts).</p>
-<h4>method 3a: Use the built-in wiringPI function:</h4>
-<p><img src="No Bus/DHT11/screenshot_devlib_a.JPG" width="605" height="326"></p>
-<p>As you can see, the built-in function in the wiringPi library is highly efficient in an unloaded sitution.</p>
-<h4>method 3b: Measuring under load</h4>
-<p><img src="No Bus/DHT11/screenshot_devlib_b.JPG" width="605" height="325"></p>
-<p>And the built-in function is very much inefficient if the system is handling regular 433MHz receiver interrupts. Also errors are introduced (even with checksum) that make its results unreliable. In practice this means that the wiringPi library function has to redo an enormous amount of read attempts that did not pass the checksum test.</p>
-<p>&nbsp;</p>
-  
-<h2>1.5 Conclusion</h2>
-<p>For reasons described above, a non-bus interface may not always be the best
-  solution for connecting sensors. Timing issues are already an issue when having
-  one sensor connected to one GPIO pin, let alone when we would like to have
-  multiple sensors connected to our Raspberry. </p>
-<p>Therefore, I will further experiment with other 1-wire (Dallas) and 2-wire sensor (I2C) bus
-  interconnects. Read more below.</p>
-<p>&nbsp;</p>
-<h1><a name="dallas"></a>2. MicroLAN or Dallas OneWire sensors</h1>
-<p>The third method described uses a 1-wire module interface to retrieve the values
-  from a slave device. This interface is called MicroLAN and has been defined by
-  Dallas Semiconductors. Users can access sensor values by reading the value of
-  the slave device in the /sys/bus/w1/device directory. Standard modules w1-gpio
-  and w1-therm then will control the low-level details of the communication. And
-  we can open a device in the /sys/bus/w1/device directory and read the values
-  from there. The DS18B20 temperature sensor is an example of a 1-wire capable
-  sensor device compatible with the Dallas/MicroLAN specification.</p>
-<p>The MicroLAN bus is slower than the 2-wire I2C bus, but as a result it can
-  be (much) longer. Sources on internet specify a length of 100 meters or more
-  (over CAT 5e Ethernet cable).</p>
-<ul>
-  <li>DS18B20
-    temperature sensor (1-wire Dallas compatible)</li>
-</ul>
-<p>After playing around with the Dallas bus for the Raspberry I found it to be the easiest bus to work with. It is fast enough for my purpose and setup is a breeze. The main disadvantage is that there are almost NO Dallas bus compatible sensors available, which is just too bad. </p>
-<p>&nbsp;</p>
-<h2>2.1 The 18B20 temperature sensor</h2>
-<p><img
-src="1-Wire/DS18B20/18b20_1.jpg" alt="" width=338 height=327 hspace="20" vspace="20" align="left" id="Picture 7">I bought 5 DS18B20 temperature sensors on eBay for LamPI environment with the plan to
-  make a small MicroLAN network with these sensors. Connecting 3 pieces 18B20 sensors in parallel works easy. And as wiring can be longer than with the I2C bus, you can connect almost as many Dallas sensors to my Raspberry as you want. Of course, a wireless sensor is even more convenient, but as the amount of wireless communication in my house grows, I'm afraid that at some moment a device will block certain frequency bands (some 433 transmitters do already) if they are not properly connected or are in error.</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>The TO-92 version that I ordered  looks just like a transistor which makes them relatively easy
-  to work with. In the picture you see the cheap standard version of the 18B20. High
-  temperature and water resistant versions are available as well. In order to test the Dallas bus I ordered 5 of the cheap standard sensors and 2 water resistant sensors.</p>
-<p>The water resistant sensors have a lead wire of approximately 1 meter which is for our purpose long enough to have a Raspberry near the area where I like to measure the temperature of. Apart from using this sensor outside the house, another area of application would be to measure temperatuer of central heating pipes etc. </p>
-<p><img src="1-Wire/DS18B20/18b20_2.jpg" width="463" height="452"></p>
-<p>&nbsp;</p>
-<h2>2.2 Resources</h2>
-<ul>
-  <li>w1-gpio
-    module (sudo modprobe w1-gpio to load)
-    </p>
-  </li>
-  <li>w1-therm
-    module</li>
-</ul>
-<p>Load both modules with the modprobe command:</p>
-<p><img src="1-Wire/DS18B20/code_1.JPG" width="425" height="45"></p>
-<p>These commands must be loaded after every reboot of the Raspberry. If you want to load modules automatically then add two lines with the words w1-gpio and w1-therm to the /etc/modules file.</p>
-<p>After the modules are loaded it is easy to read the value of the sensors. Go to the /sys/bus/w1/devices directory and list the directories and files. Apart from the w1_bus_master command there will be one or more other directories, one for every device on the bus.</p>
-<p>For the ds18b20 sensor, the directory name will start with 28-xxxxxx . Go to one of the ds18b20 directorys and use the following command to read the current termperature at the sensor:</p>
-<p><img src="1-Wire/DS18B20/code_2.JPG" width="664" height="180"></p>
-<p>Both modules w1-therm and w1-gpio need to be loaded prior to their usage. By
-  default, GPIO pin 4 (P1 connector 7) is used. </p>
-<h3>2.3 Software</h3>
-<p>The small C software program can be found in the sensors/ds18b20 directory. The software program is very simple in design, as all low-level synchronization and interrupt handling is done completely in the module. As a result, the bus softwar eis very (I mean VERY) reliable compared to the DS11, especially when the system is serving a lot of other interrupts, socket messages and user interaction.</p>
-<p>My situations is the same as in the picture below (found it on the web somewhere). I have three sensors connnected to my RPI and read them with a small program..</p>
-<p><img src="1-Wire/DS18B20/ds1820connect.png" width="345" height="285"></p>
-<p>Maybe a restart is required to have your RPI recognized the modules, but after that  the device &quot;files&quot; w1_slave in the /sys/but/w1/device/28*/ directories can be read and will contain the lines we're loooking for ..</p>
-<p><img src="1-Wire/DS18B20/code_3.JPG" alt="" width="837" height="525"></p>
-<p>In the picture above you see a real-world example of my RaspberriPI that contains 3 Maxim sensors (w1). Clearly you can see that listing the /sys/bus/devices directory shows 3 connected sensors and the master node (skip that one).</p>
-<p>After changing directory to one of the sensor dirs (starting with 28-) , reading the w1_slave file will result in 2 lines being read. The first line contains the data followed by a checksum. Only when the checksum is Ok (YES) then we know that the sensor can be read successfully. The second line read contains the data as well as the temperature (* 1000). You get the actual temperature by dividing the value by 1000, so in this case the measured temperature is 22.125 degrees C. </p>
-<p>A quick test of the CRC function can be done by removing one of the sensors, which will for a while result in a checksum error and data errors (obviously). Note that after a while the third sensor completely disappeared from my system so the system has some self-healing properties. Luckily, installing the sensor again (in a live system) is possible and will immediately result in that sensor being available again.</p>
-<p>There are several examples on the net how to read the device files, most however are written in script language. As I wanted to post successful temperature readings to the LamPI-daemon for further processing, I made a little program in C that opens a socket and reads all sensors and sends the output to the LamPI-daemon. The source code can be found on ~/sensors/ds18b20, and after a successful 'sudo make install' the executable is put in the ~/exe directory</p>
-<h3>2.4 Conclusion</h3>
-<p>The dallas 1-wire bus works VERY well, and the devices/bus is well supported by the RPI. Only drawback is that there are only a small amount of sensors available for Dallas. But the ds18b20 temperature sensors is a very good example of sensors that work very well and that are worth every penny and second of your time if temperature sensors is your main interest.</p>
-<h3>2.5 Links</h3>
-<ul>
-  <li><a href="http://kopfkino.irosaurus.com">http://kopfkino.irosaurus.com</a> (German site)</li>
-  <li>http://www.sbprojects.com/projects/raspberrypi/temperature.php</li>
-  <li><a
-href="http://www.1wire.org/Files/Articles/1-Wire-Design%20Guide%20v1.0.pdf">http://www.1wire.org/Files/Articles/1-Wire-Design%20Guide%20v1.0.pdf</a></li>
-  <li><a
-href="http://learn.adafruit.com/downloads/pdf/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing.pdf">http://learn.adafruit.com/downloads/pdf/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing.pdf</a></li>
-</ul>
-<p>&nbsp;</p>
-<h1><a name="i2c"></a>3. I2C Bus Sensors</h1>
+<h1>Ch 3: I2C Bus Sensors</h1>
+<h2>Introduction</h2>
 <p>A completely different way of connecting temperature, humidity and lots of
   other sensors to the Raspberry PI is by using I2C compatible sensors like the
   AM2321. I2C is a software/hardware bus to connect several devices to the same
@@ -228,9 +31,10 @@ href="http://learn.adafruit.com/downloads/pdf/adafruits-raspberry-pi-lesson-11-d
   LamPI system.</p>
 <ul>
   <li>LM75,
-  Temperature Sensor</li>
+  Temperature Sensor (made by NXP and others)</li>
   <li>BMP085 (or GY-65),
-    I2C Digital Barometric Pressure Sensor board Barometer sensor module. This module has been replaced by Bosch by the pi compatible BMP180.</li>
+    Digital Barometric Pressure Sensor board Barometer sensor module. </li>
+  <li>BMP180, This module replaces the BMP085 (according to Bosch it is pi compatible).</li>
   <li>SHT21 (or GY-21), Humidity and Temperature Sensor</li>
   <li>HMC5883 (or GY-273),
     3-axis digital compass</li>
@@ -259,7 +63,23 @@ src="I2C/LM75/lm75.jpg" alt="" width=500 height=400 border=0 id="Picture 6"></td
     <td><h5>As you can see in the picture, soldering these small IC&rsquo;s is a challenge.</h5></td>
   </tr>
 </table>
+<p>After some time I decided to solder these tiny &quot;ticks&quot; to the converter boards and include the devices in the setup. The LM75a device shows up on the I2c bus at address 0x48 to 0x4f. With the pins A2, A1, A2 there can be 8 devices defined on the bus by connecting these pins to GND or VCC (making them 0 or 1).</p>
+<p><a href="I2C/LM75/lm75a-finger.jpg"><img src="I2C/LM75/lm75a-finger.jpg" width="400" height="300"></a> At my age, I need glasses, go outside and look under a certain angle in order read the text on the chip.Fortunately my small digital camera is a MUCH better device to read such small texts and so I took the picture above (you can click on it to magnify).</p>
+<p><a href="I2C/LM75/lm75a-reel.jpg"><img src="I2C/LM75/lm75a-reel.jpg" width="400" height="300"></a></p>
+<p><a href="I2C/LM75/lm75a-board_2.jpg"><img src="I2C/LM75/lm75a-board_2.jpg" width="400" height="300"></a></p>
 <p>&nbsp;</p>
+<p><a href="I2C/LM75/lm75a-board_1.jpg"><img src="I2C/LM75/lm75a-board_1.jpg" width="400" height="300"></a></p>
+<p>The pin-out of the LM75a is as follows:</p>
+<ul>
+  <li>pin 1: SDA</li>
+  <li>pin 2: SCL</li>
+  <li>pin 3: OS</li>
+  <li>pin 4: GND</li>
+  <li>pin 5: A2</li>
+  <li>pin 6: A1</li>
+  <li>pin 7: A0</li>
+  <li>pin 8: Vcc</li>
+</ul>
 <p>&nbsp;</p>
 <h2>3.3 Barometric Pressure Sensor BMP085</h2>
 <p>Another interesting sensors available on the I2C bus is the barometric
@@ -267,18 +87,31 @@ src="I2C/LM75/lm75.jpg" alt="" width=500 height=400 border=0 id="Picture 6"></td
 <p><img
 src="I2C/BMP085/BMP085_LRG.jpg" alt="" width=600 height=461 border=1 id="Picture 22"></p>
 <p>In order to make this sensor work you only need to connect 4 of the pins: Vcc (to header pin 1), SCL (header 3), SDA (header pin 5) and GND (pin 9).</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
 <h2>3.4 SHT21 (or GY-21), Humidity and Temperature Sensor</h2>
 <p>These 4-pin sensors are inexpensive and available on eBay.</p>
-<p><img src="I2C/SHT21/GY-21.jpg" width="405" height="328"></p>
+<p><a href="I2C/SHT21/GY-21.jpg"><img src="I2C/SHT21/GY-21.jpg" width="405" height="328" hspace="5" vspace="5"></a><a href="I2C/SHT21/GY-21_2.jpg"><img src="I2C/SHT21/GY-21_2.jpg" width="400" height="308" hspace="5" vspace="5"></a></p>
 <p>Hardware installation of this sensor is as easy as can be on the i2c bus. Just connect the clearly marked soldering terminals to the corresponding pins on the Raspberry connector. After booting give the command: &quot;i2cdetect -y 1&quot; and you will probably see the following output:</p>
 <p><img src="I2C/GY-21/i2cdetect_1.JPG" width="473" height="180"></p>
 <p>My sensor shows up on address 40 Hex.</p>
+<p>&nbsp;</p>
 <h2>3.5 HMC5883 3-Axis Compass modules</h2>
 <p>I ordered one of these cheap compass modules on eBay for around 2$ a piece (including shipping).</p>
 <p>&nbsp;</p>
 <h2>3.6 AM2321 Sensor</h2>
-<p>This little IC again has a pin spacing of around 1.27mm which makes it difficult to work with. I have this sensor for a while now but because of teh pin spacing did not yet include it in my setup (it looks like a mini DHT22)</p>
-<p>&nbsp;</p>
+<p>This little IC again has a pin spacing of around 1.27mm which makes it difficult to work with. I have this sensor for a while now but because of the pin spacing did not yet include it in my setup (it looks like a micro DHT22)</p>
+<p>I ended up soldering the small module to the same type of conversion board I also used for the LM75a temperature sensor, making use of pin 1 to 4 of the small board only.</p>
+<p>The pin-out of the AM2321 is as follows:</p>
+<ul>
+  <li>Pin 1: VCC</li>
+  <li>Pin 2: SDA</li>
+  <li>Pin 3: GND</li>
+  <li>Pin 4: SCL</li>
+</ul>
+<p>Unfortunately I did connect them the other way to the small conversion board, but that's no major issue provided that I keep that in mind when soldering the board to one of the Raspberries' breakout boards.</p>
 <h2>3.7 HTU21D Temperature and Humidity Sensor</h2>
 <p><img src="I2C/HTU21D/HTU21D.jpg" alt="" width="400" height="338"></p>
 <p>I ordered two of these HTU21D modules on eBay for round 5$ a piece (including shipping). </p>
@@ -287,13 +120,14 @@ src="I2C/BMP085/BMP085_LRG.jpg" alt="" width=600 height=461 border=1 id="Picture
 <p>By default, the I2C bus module is blacklisted on the RPI. Edit the /etc/modprobe.d/raspi-blacklist.conf file and uncomment the module (put a # character as first character of the line i2c-bcm2708). After this, probably rebooting the system is the best way to get everything initialised correctly.</p>
 <p>Now load the module with the command 'modprobe -i2c-dev', or more permanently put 'i2c-dev' on a separate line in /etc/modules. </p>
 <p>Load the package i2c-tools with the command 'sudo apt-get install i2c-tools'. Then use 'i2cdetect -l' to list the addresses where we can find the devices/sensors attached. With i2cdetect -y 1 (or 0 if you have the Raspberry model A) it is possible to get more information whether there are modules activated. Look for numbers (UU means cannot read)..</p>
-<p>Unfortunately, we will have to do programming for each and every sensor in order to make it output sensible information and usable by our LamPI system.</p>
+<p>Unfortunately, we will have to do some programming for each and every sensor in order to make it output sensible information and usable by our LamPI system.</p>
 <h3>Strategy</h3>
 <p>&nbsp;</p>
 <h3>Python</h3>
 <p>For a few of the I2C sensors, Adafruit made a Python interface which is quite helpful. Especially the Adafruit BMP library makes it simple to get started with I2C sensors.</p>
 <h3>C</h3>
-<p>In the LamPI system, wired sensors will normally be read by a small C program that either functions as a deamon, or is activated by the crontab (see crontab -l). After reading the sensor value, the program will activate an UDP socket on address 5001 (default value) and report the value read to the LamPI-daemon process.</p>
+<p>In the LamPI system, wired sensors will normally be read by a small C program that either functions as a deamon, or is activated by the crontab (see crontab -l). After reading the sensor value, the program will activate an UDP socket on address 5001 (default value) and report the value read to the LamPI-node process.</p>
+<p>Some modules are written in C/C++ and they will use the socket send modules that I developed for all sensors. Others can be read from the shell in which case they make use of the cmd-sensor modules which allows shell programs to broadcast sensor readings to the LamPI-node.js process (and other interested network parties).</p>
 <p>For rrdtool there might be other options, it would be possible for example to store all sensor values on the local Raspberry (where the sensors are physically attached to) and move over rrd database values during certain time intervals. As rrdtool processing seems to be a cpu-intensive process, it makes senso to limit server processing of large amounts of data and do numbercrunching of historical data in the background (at night).</p>
 <h2>3.9 Links</h2>
 <ul>
@@ -303,24 +137,5 @@ href="http://www.keesmoerman.nl/rasp_hw.html#mozTocId335084">http://www.keesmoer
 </ul>
 
 <h2>&nbsp;</h2>
-<h1><a name="energy"></a>4. Energy Sensors</h1>
-<p>This section is dedicated to reading energy sensors either on your central heating system or </p>
-<h2>4.1 Reading a SMART meter</h2>
-<p>By the year 2018, all Dutch homes will have a &quot;smart&quot; meter for electricity
-  and heating with natural gas. The so-called P1 port on the electricity meter
-  offers access to the electricity and gas consumption over its serial line interface. The P1 port is accessible by home owners and allows them to read power usage
-  and natural gas usage on a permanent basis.</p>
-<p>The P1 port is a small RJ-11 port on the electricity meter of your house. Most of the time, the Natural Gas meter is also digital (or SMART) but it is connected to the electricity meter through a small cable. This is because the utility company can access such a small computer in the meter through the electricity network (and not though the gas distribution system obviously).</p>
-<p>SO what do you need:</p>
-<ol>
-  <li>A connecting cable from your smart meter (RJ-11) going to a distribution network in you houase (RJ-45 based) or directly connecting to ...</li>
-  <li>Conversion from RJ-11 or RJ-45 (see previous point) to a serial RS-232 9-point interface</li>
-  <li>Convertor from RS-232 to USB on the Raspberry.</li>
-</ol>
-<p>Strange enough there does not seems to be a direct converter from RJ-11 to USB, and therefore an intermediate step with the 9-pin RS-232 connector is needed.</p>
-<h2>4.2 Reading the temperature of your central heating system</h2>
-<p>*** This section is identical to the temperature sensor section in the weather section in chapter 2 and 3</p>
-<p>&nbsp;</p>
-
 </body>
 </html>
