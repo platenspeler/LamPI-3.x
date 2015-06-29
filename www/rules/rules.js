@@ -64,6 +64,7 @@ var persist = "1";										// Set default to relaxed
 var mysql = "1";										// Default is using mySQL
 var cntrl = "1";										// ICS-1000== 0 and Raspberry == 1
 var healthcount = 5;									// Needs to be above 0 to show activity
+var loginprocess=false;									// Is there a login process going on?
 
 // ----------------------------------------------------------------------------
 // s_STATE variables. They keep track of current room, scene and setting
@@ -404,7 +405,6 @@ function init_blockly() {
 	toolbox += '</category>';
 	
 	toolbox += "<category name='sensors'>";
-		toolbox += '<block type="sensors_alarm"></block>';
 		toolbox += '<block type="sensors_temperature"></block>';
 		toolbox += '<block type="sensors_humidity"></block>'; 
 	toolbox += '</category>';
@@ -505,7 +505,7 @@ function logger(txt,lvl)
 		lvl = debug ;
 	}
 	if (lvl <= debug) {
-		console.log(txt);	
+		console.log(txt);
 	}
 }
 

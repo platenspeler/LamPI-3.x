@@ -5446,7 +5446,7 @@ function activate_setting(sid)
 					message("debug level set to "+ debug);
 				})
 			}
-		break;
+		break; //0
 			
 		// LAYOUT SETTING
 		// Select whether you want to use the ICS controller or the do-it-yourself of Raspberry PI
@@ -5526,7 +5526,7 @@ function activate_setting(sid)
 					message("The LamPI Layout mode has been set to "+ settings[1]['val']+"<br>");
 				})
 			}
-		break;
+		break; //1
 
 		// 2 USERS SETTING, Since May 2015 this entry is used for 'users' !!!
 		case "2":
@@ -5602,7 +5602,7 @@ function activate_setting(sid)
 						myAlert("Unknown option for Users Setting: "+bak);
 				}
 			})
-		break;	
+		break; //2
 		
 		// ALARM 3
 		case "3":
@@ -5646,7 +5646,7 @@ function activate_setting(sid)
 					send2daemon("dbase","store_setting", settings[3]);
 			});
 			// Init the current value of the button
-		break;
+		break; //3
 		
 		// 4 SKIN
 		case "4":
@@ -5770,7 +5770,7 @@ function activate_setting(sid)
 			})
 			// XXX make sure we write this to the mysql backend too!
 	
-		break;	
+		break; //4	
 		// Backup and Restore
 		//
 		case "5": 
@@ -6004,12 +6004,14 @@ function activate_setting(sid)
 			})// on-click handler XXX can be moved to document.ready part of the program
 			
 		break; //6
+		//
 		// rules
+		//
 		case '7':
-			logger("activate_setting:: rules selected",2);
-			//var win=window.open('http://'+w_url+'/rules/index.html', '_parent');
+			logger("activate_setting:: rules selected for w_url: "+w_url,2);
+			var win=window.open('http://'+w_url+'/rules/index.html', '_parent');
 
-		break;
+		break; //7
 		default:
 			myAlert("Config encountered internal error: unknown button "+sid);
 		break;

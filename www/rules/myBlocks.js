@@ -64,21 +64,6 @@ Blockly.JavaScript['controls_when'] = function(block) {
 // ----------------------------------------------------------------------------
 
 // ------------------------------------------------------------
-// 1. alarm
-Blockly.Blocks['sensors_alarm'] = {
-  init: function() {
-    this.setHelpUrl('http://www.w3schools.com/jsref/jsref_length_string.asp');
-    this.setColour(210);
-    this.appendValueInput('VALUE')
-        .setCheck('String')
-        .appendField('length of');
-    this.setOutput(true, 'Number');
-    this.setTooltip('Returns number of letters in the provided text.');
-	//this.data('16dcb3a4-bd39-11e4-8dfc-aa07a5b093db');
-  }
-};
-
-// ------------------------------------------------------------
 // 1. value (screen side works)
 Blockly.Blocks['sensors_temperature'] = {
   init: function() {
@@ -270,7 +255,7 @@ Blockly.JavaScript['times_sunrise'] = function(block) {
 Blockly.Blocks['times_sunset'] = {
   init: function() {
     this.setHelpUrl('http://www.westenberg.org/');
-    this.setColour(80);
+    this.setColour(20);
 	var str = [];
 	for (var i=0; i<devices.length;i++) {
 		if (devices[i].type == "switch")
@@ -295,7 +280,7 @@ Blockly.JavaScript['times_sunset'] = function(block) {
 Blockly.Blocks['times_offset'] = {
   init: function() {
     this.setHelpUrl('http://www.example.com/');
-    this.setColour(285);
+    this.setColour(20);
     this.appendDummyInput()
         .appendField(new Blockly.FieldTextInput("hh"), "h_adj")
         .appendField(":")
