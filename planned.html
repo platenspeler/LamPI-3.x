@@ -9,6 +9,7 @@
 <h1>Planned Functions</h1>
 <p>Of course I'm always thinking about new functions, as long as I do not have to put the current system up-side-down too much. After all, I do have other day-time work to do and it has to make sense for me to spend additional time. Therefore, you are welcome to ask for new functions, but if it will cost me days to implement them and I will not benefit from them in any way I will probably give priority to other changes.</p>
 <ul>
+  <li>As LamPI-xx.yy.js , sensor.js , energy.js and rules.js all work on the same sort of client definitions, we probably need to make a library of those common (socket-based) functions so we do not need to worry about inconsistencies</li>
   <li>Receive alarms from the LamPI-gate Z-Wave gateway and deal with them. At the moment the gateway reports back changed device values to LamPI but we need to handle alarms and temperature sensors as well.</li>
   <li>Add support for Android phones. This is in beta at the moment and I use PhoneGap technology of Adobe to make such version. All Javascript/jQueryMobile code is already in the LamPI-x.y.js file, the index.html file will determine what libraries to load. I will probably publish a separate branch for Android with the same version number as its web equivalent.</li>
   <li>Add full support for Z-Wave (or Zigbee). As the LamPI-daemon is quite universal in its setup adding transmitter/receivers for these technologies is relatively easy. At the moment ZWave support is implemented through a Z-Way gateway running on a dedicated RaspberryPI</li>
@@ -18,16 +19,11 @@
 <h1>Known Issues, Bugs etc.</h1>
 <p>Both architectual and GUI related</p>
 <ul>
-  <li>Sometimes when putting one of the GUI (laptops, tablets) in standby the LamPI-daemon is frozen for several minutes (healt-meter becomes red). Apparently the (web)socket connection does not work and will not accept communication. Not specifying a password (not pressing OK or cancel) for an untrusted connection gives the same problem. <br>
-  To avoid such situations effectively hanging the system for a while need to investigate. (keywords: login screen, standby).</li>
   <li>The scale- sccs templates should work on screens with different resolutions. However, need to have dynamic changes between sccs look-and-feel sets once the screen gets too narrow and we know we need to switch to a mobile phone screen.</li>
   <li>Sortable (shuffling rows in room or scene view) works OK as far as GUI is concerned, but the background sync to mySql does not. Sortable is not 100% reliable.</li>
   <li>Sortable does not work for jqmobile yet, only for normal browser. Not sue if sorting rows makes sense for mobiles</li>
   <li>If possible we shoud merge jqmobile and jqueryUI so that all handling of screen buttons etc is uniform between the 2. Since mobile devices get a larger market share by the day, LamPI may shift to primary support for jqmobile in the future</li>
-  <li>The current way of sending scene commands in LamPIxx.js is implemented as an ajax function message_device(&quot;scene&quot;,&quot;commandxxx). For ICS-1000 this is the only possibility, but for Raspberry we have implemented this function with webservices instead. As I stopped to use the ICS-1000 for some time ago, we must cleanup the code.</li>
-  <li>As the backend server is running in batch, but not as a backend web server, we cannot ask the webserver to give us details about the IP address and many more $SERVER related parameters. This means that the client must know upfront to which server IP to connect. We can perhaps implement a UDP server that listens to client broadcasts coming in and responding with the IP address of the server. For GUI/Browser clients this not an issue since we must have an url to connect to anyway and for the moment we could assume that the webserver is running the daemon as well. However for commuication between sensors and the daemon it is necessary</li>
   <li>Adding new handsets at this moment still requires manual editing of the database.cfg file. I like to add more options to the OPTIONS screen for setup of new switch types and handset types, so that adding such switches and handsets at runtime is a lot easier.</li>
-  <li>LamPI-gate.php, the gateway for controlling z-wave devices is written in PHP. It should change to javascript/node.js pretty soon for more reliability and especially for less overhead.</li>
   <li>Z-Wave alarms and sensors should be integrated into LamPI. May use database.cfg file for that</li>
   <li>Username and Password combinations should be stored in the MySQL database securely</li>
 </ul>

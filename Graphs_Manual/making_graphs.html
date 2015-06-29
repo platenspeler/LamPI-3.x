@@ -5,9 +5,10 @@
 </head>
 <body>
 <h1> Making Sensors Graphs</h1>
-<p>All the sensor data that we collect can be used to show real-time sensor information on the screen. However, apart from showing this real-time info in gauges, sliders or other graphics, often sensor data makes most sense if users see trend lines over time.</p>
+<p>All the sensor data that we collect can be used to show real-time sensor information on the screen. However, apart from showing this real-time info in gauges, sliders or other graphics, often sensor data makes most sense if users see trend lines over time. The rrdtool program enables making of nice graphs. RRDtool is written by Tobias Oetiker &lt;tobi@oetiker.ch&gt; with contributions from many people all around the world.</p>
 <p>For this purpose, I included the rrdtool library into LamPI.</p>
-<p>&nbsp;</p>
+<p><img src="graphs/temperature_1.JPG" alt="" width="1065" height="665" border="0"></p>
+<p>The screen print above shows 4 sensors during one day (June 28, 2015 aroun 22.30 hrs) and enables the used to compare the temperature readings of these ensors over the period of one day.</p>
 <h1>Installing rrdtool</h1>
 <p>Before being able to define or even show sensor data in graphs, rrdtool and driver software needs to be loaded to the system.</p>
 <p> sudo apt-get -y install python-smbus<br>
