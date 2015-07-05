@@ -16,6 +16,7 @@
 // Version 2.6, Jan 25, 2015 New .css  template design, several bug fixes in LamPI-x.x.js
 // Version 3.0, Mar 01, 2015 Use JS and Websockets, remove "old" ajax where possible
 // Version 3.2, Jun 21, 2015 Change weather to sensors and use more JSON
+// Version 3.3, Jul 01, 2015 Start using LamPIlib functions to limit code duplication between pages
 //
 // This is the code to animate the front-end of the application. The main screen is divided in 3 regions:
 // #gui_header: Here are the buttons for selecting the active rooms 
@@ -26,14 +27,15 @@
 //		main activities: <home> <rooms> <scenes> <timers> <settings>
 -->
 
-	<title>LamPI 3.2</title>
+	<title>LamPI 3.3</title>
 	<link href="jquery-ui-1.11.2/jquery-ui.css" rel="stylesheet">
-    <link href="styles/classic-grey.css" rel="stylesheet" type="text/css">
+    <link href="styles/scale-grey.css" rel="stylesheet" type="text/css">
     <link rel="icon" type="image/png" href="favicon.png">
 	<script src="jquery-1.11.2.js"></script>
 	<script src="jquery-ui-1.11.2/jquery-ui.js"></script>
     <script src="steel/tween-min.js"></script>
-    <script src="LamPI-3.2.js"></script> 
+    <script src="LamPIlib-3.3.js"></script>
+    <script src="LamPI-3.3.js"></script> 
 
 <style type="text/css">	
 	/* All style settings moved to a dedicated .css file */

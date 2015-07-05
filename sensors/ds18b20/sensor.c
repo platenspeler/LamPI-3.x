@@ -224,7 +224,7 @@ int main(int argc, char **argv)
 	// MAIN LOOP
 	// 
 
-	delay(1000);											// Wait some time so that not every sensor fires ate same time
+	delay(1000);										// Wait some time so that not every sensor fires ate same time
 	
 	if (verbose) printf("\nRepeats: %d::\n",repeats);
 	for (i=0; i<repeats; i++)  
@@ -258,7 +258,7 @@ int main(int argc, char **argv)
 								exit(1);
 							}
 							seconds = get_time(t);
-							sprintf(snd_buf, "{\"tcnt\":\"%d\",\"action\":\"weather\",\"brand\":\"ds18b20\",\"type\":\"json\",\"address\":\"%s\",\"channel\":\"%u\",\"temperature\":\"%s\"}", 
+							sprintf(snd_buf, "{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"ds18b20\",\"type\":\"json\",\"address\":\"%s\",\"channel\":\"%u\",\"temperature\":\"%s\"}", 
 							seconds,							// Nr of seconds as a message reference
 							ent->d_name,						// address
 							0,									// channel

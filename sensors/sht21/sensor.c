@@ -129,7 +129,7 @@ int main(int argc, char **argv)
 	sockfd = socket_open(hostname, port, mode);
 	
 	// Make a jSon message to send to the server
-		sprintf(buf,"{\"tcnt\":\"21\",\"action\":\"weather\",\"brand\":\"sht21\",\"type\":\"json\",\"address\":\"40\",\"channel\":\"1\",\"temperature\":\"%2.1f\",\"humidity\":\"%d\"}", (float)(Temperature)/10, Humidity );
+		sprintf(buf,"{\"tcnt\":\"21\",\"action\":\"sensor\",\"brand\":\"sht21\",\"type\":\"json\",\"address\":\"40\",\"channel\":\"1\",\"temperature\":\"%2.1f\",\"humidity\":\"%d\"}", (float)(Temperature)/10, Humidity );
 	
 	buf_2_server(sockfd, 
 				hostname,			// HostIP, eg 255.255.255.255

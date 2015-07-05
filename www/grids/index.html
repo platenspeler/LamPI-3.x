@@ -1,0 +1,54 @@
+<html>
+<head>
+    <meta charset='utf-8'>
+    <link href="/jquery-ui-1.11.2/jquery-ui.css" rel="stylesheet">
+    <link href="/grids/jquery.gridster.css" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/scale-grey.css">
+    <script src="/jquery-1.11.2.js"></script>
+    <script src="/jquery-ui-1.11.2/jquery-ui.js"></script>
+    <script src="/grids/jquery.gridster.js"></script>
+    <script src="/LamPIlib-3.3.js"></script>
+    <script src="/grids/grids.js"></script>
+</head>
+
+<body> 
+<div id="wrapper">
+<!-- This is the top area with the room tabs --> 
+    <div id="gui_header"></div>
+<!-- This is the menu area with the choice  buttons --> 
+    <div id="gui_menu"></div> 
+	<div id="gui_content">
+    
+		<div class="gridster">
+		<ul>
+			<li data-row="1" data-col="1" data-sizex="1" data-sizey="1"></li>
+			<li data-row="2" data-col="1" data-sizex="1" data-sizey="1"></li>
+			<li data-row="3" data-col="1" data-sizex="1" data-sizey="1"></li>
+ 
+			<li data-row="1" data-col="2" data-sizex="2" data-sizey="1"></li>
+			<li data-row="2" data-col="2" data-sizex="2" data-sizey="2"></li>
+ 
+			<li data-row="1" data-col="4" data-sizex="1" data-sizey="1"></li>
+			<li data-row="2" data-col="4" data-sizex="2" data-sizey="1"></li>
+			<li data-row="3" data-col="4" data-sizex="1" data-sizey="1"></li>
+ 
+			<li data-row="1" data-col="5" data-sizex="1" data-sizey="1"></li>
+			<li data-row="3" data-col="5" data-sizex="1" data-sizey="1"></li>
+ 
+			<li data-row="1" data-col="6" data-sizex="1" data-sizey="1"></li>
+			<li data-row="2" data-col="6" data-sizex="1" data-sizey="2"></li>
+		</ul>
+		</div>
+
+	</div>   
+<!-- This is the message/comment area -->                         
+    <div id="gui_messages"></div>
+</div>
+
+<script>
+	// Start the main js file
+	start_Grids();
+</script>
+
+</body>
+</html>

@@ -276,7 +276,7 @@ int send_2_server(int sockfd, float humidity, float temperature)
 	}
 	
 	// Daemon, output to socket
-	sprintf(snd_buf, "{\"tcnt\":\"%d\",\"action\":\"weather\",\"brand\":\"dht22\",\"type\":\"json\",\"address\":\"%s\",\"channel\":\"%s\",\"temperature\":\"%3.1f\",\"humidity\":\"%2.1f\",\"windspeed\":\"\"}", 
+	sprintf(snd_buf, "{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"dht22\",\"type\":\"json\",\"address\":\"%s\",\"channel\":\"%s\",\"temperature\":\"%3.1f\",\"humidity\":\"%2.1f\",\"windspeed\":\"\"}", 
 				socktcnt%1000,
 				"0",								// address
 				"0",								// channel

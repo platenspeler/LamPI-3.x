@@ -48,7 +48,7 @@ body {
     margin-right: 20px;
     height: 35px;
     display: inline-block;
-    background: url(../../tilesjs-master/demos/dev-tiles-sprite.png) no-repeat;
+    background: url(../../tilesjs/demos/dev-tiles-sprite.png) no-repeat;
     cursor: pointer;
 }
 

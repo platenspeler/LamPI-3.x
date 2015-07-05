@@ -51,14 +51,12 @@ var serveStatic= require('serve-static'); console.log("erve-static loaded");
 var WebSocketServer = require('ws').Server; console.log ("ws loaded");
 
 // External apps
-console.log("Loading required external modules");
-var SunCalc = require('suncalc');
-var strip = require("strip-json-comments");
+var SunCalc = require('suncalc'); console.log("suncalc loaded");
+var strip = require("strip-json-comments"); console.log("strip-json-comments loaded");
 
 // Own Local modules
-console.log("Loadinglocal/own modules");
-var alarmRouter = require('./modules/alarmRouter');
-var woonveilig = require('./modules/woonveilig');
+var alarmRouter = require('./modules/alarmRouter'); console.log("alarmRouter loaded");
+var woonveilig = require('./modules/woonveilig'); console.log("woonveilig loaded");
 
 console.log("All required modules loaded");
 
@@ -339,7 +337,7 @@ var zwave_upd_cb = function(response) {
 					pe = pe_arr[i];				// Only when not using for in loop (en that uses 1 additional loop)
                 	pobj = pobj[pe_arr[pe]];
             };
-			if (pobj === undefined ) logger("pobj is null line 347, "+pe_arr.slice(-1),1);
+			if (pobj === undefined ) logger("pobj is null line 340, "+pe_arr.slice(-1),1);
 			pobj[pe_arr.slice(-1)] = js[key];
 		});
 		logger("Successfully read the Z-Wave Data stucture, Read "+ Object.keys(js).length +" records",2);
@@ -943,6 +941,7 @@ function deviceSet (ldev, val) {
 			logger("deviceSet ERROR Updating dev: "+zdev+"", 1);
   		});
 	}
+	logger("deviceSet:: setting zdev: "+zdev+" to "+val,1);
 	switch (type) {
 		case "dimmer":
 			opt4set.path = '/ZWaveAPI/Run/devices['+zdev+'].instances[0].commandClasses[38].Set('+zval+')';
@@ -957,9 +956,11 @@ function deviceSet (ldev, val) {
 			logger("deviceSet:: Unknown type "+type);
 		break
 	}
+	// Update the admin
+	//lampi_admin[zdev]['val'] = val;								// Update the admin array asap
+
 	// Call the function
 	http.request(opt4set, callSet).end();
-	lampi_admin[zdev]['val'] = val;								// Update the admin array asap
 }
 
 // --------------------------------------------------------------------------------
@@ -1037,28 +1038,28 @@ function deviceGet(ldev,ltype) {
 				lampi_admin[dev]['val'] = newVal;				
 				// XXX Do we need to update the LamPI database?
 			}
+			// Gui Action
 			// The LamPI gui value lVal is different from the administrative value and Z-Wave measured value newVal
-			else if (( newVal != lVal ) && ( aVal == newVal )) { 
+			else if (( lVal != newVal ) && ( aVal == newVal )) { 
 				logger("Y X X, The gui valui of "+dev+" has changed",1);
-				config['devices'][ldev]['val'] = newVal;						// Change value in working array
-				updDevDb("devices", config['devices'][ldev], function(cbk) { 
+				config['devices'][ldev]['val'] = lVal;							// Change value in working array
+				updDevDb("devices", config['devices'][ldev], function(cbk) { 	// Store in MySQL
 						logger("deviceGet:: store_device "+dev+" finished OK",1); });
 				// prepare a broadcast message for all connected gui's
 				var ics = "!R"+config['devices'][ldev]['room']+"D"+dev+"F";
-				if (newVal == 0) ics = ics+"0";
-				else ics = ics + "dP" + newVal;
+				if (lVal == 0) ics = ics+"0"; else ics = ics + "dP" + lVal;
 				var data = {
 					tcnt: ""+tcnt++ ,
-					type: "json",
+					type: "raw",				// Json not fully implemented
 					action: "gui",				// actually the class of the action
 					cmd: "zwave",
 					gaddr: "868",
 					uaddr: ""+dev,
-					val: ""+newVal,
+					val: ""+lVal,
 					message: ics	
 				};
-				logger("deviceGet:: to broadcast: "+JSON.stringify(data),1);
-				var ret = broadcast(JSON.stringify(data), null);	
+				logger("deviceGet:: to icsHandler: "+JSON.stringify(data),1);
+				var ret = icsHandler(data, null);	
 			}
 			// The Z-Wave value newVal has changed (human touch) and the LamPI lVal and administrative value
 			// need updating to this change
@@ -1086,10 +1087,10 @@ function deviceGet(ldev,ltype) {
 						logger("No Manual Update Action defined");
 					break;
 				}//switch
-				logger("Sending data to broadcast: "+JSON.stringify(data),2);
-				var ret = broadcast(JSON.stringify(data), null );
-				lampi_admin[dev]['val'] = newVal;
-				logger("Updated dimmer to "+newVal+", cmd string: "+data.message);
+				logger("Sending data to icsHandler: "+JSON.stringify(data),1);
+				var ret = icsHandler(data, null );
+				//lampi_admin[dev]['val'] = newVal;
+				logger("Updated device to "+newVal+", cmd string: "+data.message,1);
 			}//if laval != zval
 			else {
 				logger("Y X Z, reset admin for device "+dev+" to lampi defined value "+lVal,1);
@@ -1272,7 +1273,7 @@ function allOff(room, socket) {
 	var series =[];
 	var str=[];
 	for (var i=0; i<config['devices'].length; i++) {
-		if (config['devices'][i]['room'] == room) {
+		if ((config['devices'][i]['room'] == room) && (config['devices'][i]['type'] != "thermostat")) {
 			var brandi = config['devices'][i]['brand'];
 			var data = {
 				tcnt: ""+tcnt++ ,
@@ -1567,7 +1568,6 @@ function dbaseHandler(cmd, args, socket) {
 function createEnergyDb (db, buf, socket) {
 	var str=[];
 	logger("createEnergyDb:: ",1);
-	
 	str += ((buf['kw_hi_use']  !== undefined) ? "DS:kw_hi_use:COUNTER:600:0:999999999 " : "");
 	str += ((buf['kw_lo_use']  !== undefined) ? "DS:kw_lo_use:COUNTER:600:0:999999999 " : "");
 	str += ((buf['kw_hi_ret']  !== undefined) ? "DS:kw_hi_ret:COUNTER:600:0:999999999 " : "");
@@ -1583,11 +1583,11 @@ function createEnergyDb (db, buf, socket) {
 	str += "RRA:AVERAGE:0.5:30:288 ";		// Day: every 10 secs sample, consolidate 30 (5min) -> 12 per hour, 12*24= 288 a day
 	str += "RRA:AVERAGE:0.5:90:672 ";		// Week: 10 sec sample, consolidate 90 (= 15 min);  4 * 24 hrs * 7 day
 	str += "RRA:AVERAGE:0.5:360:744 ";		// Month: 10 sec sample consolidate 360 samples (1 hr) -> 24 pday * 31 a month
-	str += "RRA:AVERAGE:0.5:216:1460 ";		// Year: 10 sec sample * 360 (=hour) * 24 = consolidate 4 per day. Do 365 days a year
+	str += "RRA:AVERAGE:0.5:216:1460 ";		// Year: 10 sec sample * 360 (=hour) * 24 = consolidate 4 per day. 365 days a year
 	// Week low and high values (hourly sample)
 	str += "RRA:MIN:0.5:90:672 ";			// MIN: 10 sec sample, consolidate 90 (= 15 min);  4 * 24 hrs * 7 day
 	str += "RRA:MAX:0.5:90:672 ";			// MAX
-	// str += "RRA:AVERAGE:0.5:360:720 ";		// AVG
+	// str += "RRA:AVERAGE:0.5:360:720 ";	// AVG
 	
 	var execStr = "rrdtool create "+db+" --step 20 "+str;
 	logger("createEnergyDb:: execStr: "+execStr,1);
@@ -1601,6 +1601,8 @@ function createEnergyDb (db, buf, socket) {
 	});		
 }
 
+// --------------------------------------------------------------------------------
+// ENERGY HANDLER
 function energyHandler(buf, socket) {
 	var db = rrdDir + "/db/" +"e350.rrd";
 	
@@ -1611,7 +1613,6 @@ function energyHandler(buf, socket) {
 		logger("energyHandler:: rrdtool db "+db+" does not exist ... creating",1);
 		createEnergyDb(db,buf);
 	}
-	//if (array_key_exists('kw_hi_use',$sensor))		$values .= ":".intval($sensor['kw_hi_use']*1000,10);
 	str += ":" + Math.floor(Number(buf['kw_hi_use'])*1000);
 	str += ":" + Math.floor(Number(buf['kw_lo_use'])*1000);
 	str += ":" + Math.floor(Number(buf['kw_hi_ret'])*1000);
@@ -1653,29 +1654,19 @@ function graphHandler(buf,socket) {
 	var graphColor = ["ff0000","111111","00ff00","0000ff","ff00ff","666666","00ffff","ff3399","ffff00"];
 	
 	logger("graphHandler:: Starting for "+gcmd+":"+gtype+":"+gperiod+":"+gsensors);
+	if (gsensors == undefined) { 
+		logger("graphHandler:: No sensors defined",1);
+		gsensors = [];
+		//return;
+	}
 	switch(gcmd) {
 		// Energy specific rrd stuff
 	  case 'energy':
 	  	switch(gtype) {
-		case 'E_GAS':
-			sensorType="gas_use";
-			graphName="gas_use";
-			valUnit="M3";
-		break;
-		case 'E_ACT':
-			sensorType="pwr act";
-			graphName="pwr_act";
-			valUnit="kWhr";
-		break;
-		case 'E_USE':
-			sensorType="pwr use";
-			graphName="pwr_use";
-			valUnit="kWhr";
-		break;
-		case 'E_PHA':
-			sensorType="phase use";
-			graphName="pwr_pha";
-			valUnit="kWhr";
+		case 'E_GAS': sensorType="gas_use"; graphName="gas_use"; valUnit="M3"; 		break;
+		case 'E_ACT': sensorType="pwr act"; graphName="pwr_act"; valUnit="kWhr"; break;
+		case 'E_USE': sensorType="pwr use"; graphName="pwr_use"; valUnit="kWhr"; break;
+		case 'E_PHA': sensorType="phase use"; graphName="pwr_pha"; valUnit="kWhr";
 		break;
 		}
 
@@ -1684,21 +1675,9 @@ function graphHandler(buf,socket) {
 	  case 'weather':
 	  case 'sensors':
 		switch (gtype) {
-		case 'T':
-			sensorType='temperature';
-			graphName='all_temp';
-			valUnit="C";
-		break;
-		case 'H':
-			sensorType="humidity";
-			graphName="all_humi";
-			valUnit="\\%";
-		break;
-		case 'P':
-			sensorType="airpressure";
-			graphName="all_press";
-			valUnit="hPa";
-		break;
+		case 'T': sensorType='temperature'; graphName='all_temp'; valUnit="C"; break;
+		case 'H': sensorType="humidity"; graphName="all_humi"; valUnit=" %%"; break;
+		case 'P': sensorType="airpressure"; graphName="all_press"; valUnit="hPa"; break;
 		}
 	  break;
 	}
@@ -1786,7 +1765,7 @@ function icsHandler(buf, socket) {
 	var type =   buf.type;
 	var action = buf.action;
 	var ldev = config['devices'];
-	
+	//if (buf.message == undefined) logger("icsHandler ERROR:: receiver message ics",1);
 	var r = /\d+/;
 	///\d+\.?\d*/g
 	switch (ics.substr(0,2)) {
@@ -1821,24 +1800,25 @@ function icsHandler(buf, socket) {
 				logger("icsHandler:: ERROR for index: "+index+", #devices: "+config['devices'].length+" room: "+room+", uaddr: "+uaddr+", ics: "+ics,1);
 				return;
 			}
-			var gaddr = config['devices'][index]['gaddr'];		// which gaddr is ok (send to correct 433 or 868 device handler)
-			var brand = config['brands'][ config['devices'][index]['brand'] ]['fname'];
-			if (gaddr == "868" ) deviceSet(index, value);	// zwave only 
+			var gaddr = config['devices'][index]['gaddr'];	// which gaddr is ok (send to correct 433 or 868 device handler)
+			var brand = config['brands'][ config['devices'][index]['brand'] ]['fname']; 
 			var data = {
 				tcnt: ""+tcnt++,
 				type: "raw",
-				action: "gui",							// actually the class of the action
-				cmd: brand,								// Contains the brandname for the device!!
+				action: "gui",								// actually the class of the action
+				cmd: brand,									// Contains the brandname for the device!!
 				gaddr: ""+gaddr,
 				uaddr: ""+uaddr,
-				val: ""+val,
+				val: ""+val,								// Val is for sending to device: 0-32, on and off
 				message: ics	
 			};
 			config['devices'][index]['val']=value;			// Set the value in the config object
-			updDevDb("devices", config['devices'][index], function(result) { 
-				logger("icsHandler:: updDevDb ics "+ics+" finished OK",1); }); // only for PI-node restart	
+			if (gaddr == "868" ) deviceSet(index, value);	// zwave only
+			updDevDb("devices", config['devices'][index], function(result) { 	// Mysql
+				logger("icsHandler:: updDevDb ics "+ics+" finished OK",1); });	// only for PI-node restart	
 			logger("icsHandler:: to broadcast: "+JSON.stringify(data),2);
-			var ret = broadcast(JSON.stringify(data), socket);	// Send to the connected sockets (GUI's and Sensors)
+			// Send to the LamPI-receiver and connected sockets GUI's and Sensors
+			var ret = broadcast(JSON.stringify(data), socket);
 		break
 		case '!F': // Scene commands
 			// !FcP"scene name" ; Stop a scene
@@ -1937,7 +1917,7 @@ function loginHandler(buf, socket) {
 			console.log('queryDbase:: err: '+err+', query: <'+query.sql+">");
 		}
   	});
-}
+}// loginHandler
 
 // --------------------------------------------------------------------------------
 // New function to handle incoming sensor data with teh new sensor structure
@@ -1949,7 +1929,7 @@ function sensorHandler(buf, socket) {
 		logger("sensorHandler:: ERROR unknown index for sensor: "+buf.address+":"+buf.channel,1);
 		return;
 	} else {
-		logger("sensorHandler index: "+index+" name: "+config['sensors'][index]['name'],1);
+		logger("sensorHandler index: "+index+" name: "+config['sensors'][index]['name'],2);
 	}
 
 	var name = config['sensors'][index]['name'];
@@ -1957,21 +1937,23 @@ function sensorHandler(buf, socket) {
 	// Make sure that sensor updates are stored in config array and ready for gui clients
 	// For the moment, the order of the sensor types is significant.
 	if (( buf['temperature'] !== undefined)	&& (config['sensors'][index]['sensor'].hasOwnProperty('temperature')) )
-							config['sensors'][index]['sensor']['temperature']['val'] = buf['temperature'];
+		config['sensors'][index]['sensor']['temperature']['val'] = buf['temperature'];
 	if ( (buf['humidity'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('humidity')) )
-							config['sensors'][index]['sensor']['humidity']['val'] = buf['humidity'];
-	if (buf['airpressure'] !== undefined)	config['sensors'][index]['sensor']['airpressure']['val'] = buf['airpressure'];
+		config['sensors'][index]['sensor']['humidity']['val'] = buf['humidity'];
+	if ( (buf['airpressure'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('airpressure')) )
+		config['sensors'][index]['sensor']['airpressure']['val'] = buf['airpressure'];
 	if (buf['altitude'] !== undefined)		config['sensors'][index]['sensor']['altitude']['val'] = buf['altitude'];
 	if (buf['windspeed'] !== undefined)		config['sensors'][index]['sensor']['windspeed']['val'] = buf['windspeed'];
 	if (buf['winddirection'] !== undefined) config['sensors'][index]['sensor']['winddirection']['val'] = buf['winddirection'];
 	if (buf['rainfall'] !== undefined)		config['sensors'][index]['sensor']['rainfall']['val'] = buf['rainfall'];
-	if (buf['luminescense'] !== undefined)	config['sensors'][index]['sensor']['luminescense']['val'] = buf['luminescense'];
+	if ( (buf['luminescense'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('liminescense')) )
+		config['sensors'][index]['sensor']['luminescense']['val'] = buf['luminescense'];
 
 	// XXX Other and new sensors come here!
 	var db = rrdDir + "/db/"+name+".rrd";
 	var str=[]; var sname;
 	if ((socket !== undefined) && (socket !== null)) sname = socket.name; else sname = "datagram";
-	logger("sensorHandler:: from: "+sname+", name: "+ name+", addr: "+buf.address+", chan: "+buf.channel+", temp: "+buf.temperature,1);
+	logger("sensorHandler:: index: "+index+", from: "+sname+", name: "+ name+", addr: "+buf.address+", chan: "+buf.channel+", temp: "+buf.temperature,1);
 	
 	if (!fs.existsSync(db)) {
 		logger("sensorHandler:: rrdtool db "+db+" does not exist ... creating",1);
@@ -1993,11 +1975,13 @@ function sensorHandler(buf, socket) {
 		if (error === null) {
 			logger("sensorHandler:: stdout: "+ stdout + "; stderr: " + stderr , 2); 
 		}
-		else  { logger("sensorHandler:: ERROR: "+ error  + "; stderr: " + stderr ,0); 
+		else  { 
+			logger("sensorHandler:: ERROR: for rrd str: "+str+"\n Rrd Error: "+ error  + "; stderr: " + stderr ,0);
+			console.log("sensorHandler:: string: ",buf);
 		}
 	});
 	broadcast(JSON.stringify(buf) ,socket, "raw");			// Send only to websockets, mask all raw sockets
-}
+}// sensorHandler
 
 // --------------------------------------------------------------------------------
 // WEATHER Handlers with RRDTOOL
@@ -2014,10 +1998,12 @@ function createSensorDb(db,buf,socket) {
 	str += ((buf['windspeed'] !== undefined) ? "DS:windspeed:GAUGE:600:0:200 " : "");
 	str += ((buf['winddirection'] !== undefined) ? "DS:winddirection:GAUGE:600:0:359 " : "");
 	str += ((buf['rainfall'] !== undefined) ? "DS:rainfall:GAUGE:600:0:25 " : "");
-	str += "RRA:AVERAGE:0.5:1:480 ";			// Day: every 3 min sample counts, 20 per hour, 20*24=480 a day
-	str += "RRA:AVERAGE:0.5:5:672 ";			// Week: 3 min sample, consolidate 5 (=15 min); thus 4 per hour * 24 hrs * 7 day
-	str += "RRA:AVERAGE:0.5:20:744 ";			// Month: Every 3 minutes -> 20 samples per hour, * 24 hrs * 31 days
-	str += "RRA:AVERAGE:0.5:480:365 ";			// Year: 3 min sample * 20 (=hour) * 24 = consolidate per day. Do 365 days a year
+	str += ((buf['luminescense'] !== undefined) ? "DS:luminescense:GAUGE:600:0:400 " : "");
+	
+	str += "RRA:AVERAGE:0.5:1:480 ";		// Day: every 3 min sample counts, 20 per hour, 20*24=480 a day
+	str += "RRA:AVERAGE:0.5:5:672 ";		// Week: 3 min sample, consolidate 5 (=15 min); thus 4 per hour * 24 hrs * 7 day
+	str += "RRA:AVERAGE:0.5:20:744 ";		// Month: Every 3 minutes -> 20 samples per hour, * 24 hrs * 31 days
+	str += "RRA:AVERAGE:0.5:480:365 ";		// Year: 3 min sample * 20 (=hour) * 24 = consolidate per day. Do 365 days a year
 	str += "RRA:MIN:0.5:20:720 ";		
 	str += "RRA:MAX:0.5:20:720 ";				
 	str += "RRA:AVERAGE:0.5:20:720 ";	
@@ -2050,7 +2036,7 @@ function settingHandler(buf, socket) {
 			logger("settingHandler:: list_config database name selected",1);
 		break;
 	}
-}
+}// settingHandler
 
 // -------------------------------------------------------------------------------
 // SOCKET HANDLER: Handle incoming messages over the socket
@@ -2159,7 +2145,7 @@ function socketHandler(data,socket) {
 			logger("socketHandler:: user received",2);
 		break;
 		case 'weather':
-			logger("socketHandler:: weather received",1);
+			logger("socketHandler:: weather received, type: "+buf.type+", addr:chan: "+buf.address+":"+buf.channel,1);
 			buf.action = 'sensor';
 		case 'sensor':
 			sensorHandler(buf, socket);
@@ -2612,7 +2598,8 @@ function zwave_loop() {
 
 // --------------------------------------------------------------------------------
 // POLL Loop with interval
-// Ths may not be necessary once we take over the daemon function as well
+// Go through the devices tree and for each 868 device get the status from Razberry.
+// This may not be necessary once we take over the daemon function as well
 // As from that moment on the config['devices'] will be in memory and always available
 //
 function poll_loop() {
@@ -2622,7 +2609,7 @@ function poll_loop() {
 	connection.query('SELECT * from devices', function(err, rows, fields) {
 		if (err) throw err;
 		config['devices'] = rows;
-		config['devices'] = config['devices'];			// This is a shortcut to the main config structure
+//		config['devices'] = config['devices'];			// This is a shortcut to the main config structure
   		if (debug >= 3) console.log('query devices:: is: \n', rows);
 		// Loop in our list of devices (not sensors) and make sure that for every one we take action
 		for (var i=0; i< config['devices'].length; i++) {
@@ -2654,6 +2641,7 @@ function alarm_loop()
 	logger("alarm_loop:: zTime: "+(zTime-alarm_interval),2);
 	
 	// As alarm polling takes place most often, the main poll look is in this function too!
+	// Put changed values in the devices array through callback function
 	http.request(zwave_upd_options, zwave_upd_cb).end();
 	
 	// XXX Alarm sensors are still too static, need global configuration in database.cfg
@@ -2673,7 +2661,6 @@ function alarm_loop()
 			logger("FIBARO ALARM",0);
 			var id2 = setTimeout ( function() { resilient = 0; },240000 );
 		}
-		//devices[9].instances[0].commandClasses[48].data[1].level.value = false;
 	}
 	
 	var alarm2 = devices[11].instances[0].commandClasses[48].data[1].level.value;
@@ -2697,6 +2684,7 @@ function alarm_loop()
 		logger("AEON ALARM",0);
 		// Switch off the alarm XXX not elegant. Should tell the device to be silent 30 secs after first alarm
 	}
+	
 	logger("----------- QUEUE HANDLER -------------",2);
 	queueHandler();							// Handle the run queue of LamPI commands
 	

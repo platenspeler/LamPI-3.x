@@ -18,18 +18,27 @@ Please start reading on that page when you finished reading this page.</p>
 <p>This is where I initially developed LamPI for. It will control your light switches and your dimmers and your other switches as well (if you want LamPI can switch your stereo or microwave too). </p>
 <p><img src="UserGuide/screenshots/room_screen_grey.JPG" width="899" height="582" /></p>
 <p>The screen above is one of the main screens of LamPI, and should give you a taste of what LamPI is about. As you see, the GUI interface is designed to operate (and manage) all tasks for the connected devices and minimize the need for manual changing of configuration files etc. let alone making configuration changes at compile time.</p>
-<h2>Weather Sensors</h2>
+<h2>Weather and Energy Sensors</h2>
 <p>Recently, support for weather sensors was added to LamPI. In principle the LamPI-receiver process can be taught to detect a wide variety of temperature, humidity, rain and wind sensors. For the weather gauge widgets I used existing libraries such as the &quot;steel&quot; library of Gerrit Grunwald and Mark Crossley. If the configuration file contains definitions for supported weather sensors, then the menu will automatically display an option to view/select weather info.</p>
 <p>Actually, what you see below is just a small example of what &quot;steel&quot; can do for your project. The library is highly customizable so you can make your own background, color an other settings if you like.</p>
-<p>What you see below is the first version  for LamPI 1.9 with weather support. It does support weather sensors of UPM that transmit temperature and humidity values back to the LamPI-deamon.php process which are then broadcast to all connected clients. And as you see, the client will display the temperature (top row) for outside, the extension of our home and the living room. On the second row it will display the humidity for these three rooms. The definitions of sensors are found in the  configuration file.</p>
+<p>What you see below is weather support. It does support weather sensors of UPM that transmit temperature and humidity values back to the LamPI-deamon.php process which are then broadcast to all connected clients. And as you see, the client will display the temperature (top row) for outside, the extension of our home and the living room. On the second row it will display the humidity for these three rooms. The definitions of sensors are found in the  configuration file &quot;database.cfg&quot;.</p>
 <p><img src="UserGuide/screenshots/weather_screen_1.JPG" width="966" height="636"></p>
 <p>Apart from the latest sensor info, or even near-real-time information received, I like to add support for historical charts etc. At the moment, all sensor readings are stored in a log file, and also in the MySQL database. </p>
 <p>In case I missed something, please send me an email or make a note on this page. For the moment I'm the only author of LamPI so it can take a few days before I answer.</p>
+<h1>LamPI Sensor Graphs</h1>
+<p>For general sensors and the special energy sensors LamPI has a separate program to chart/graphs the various sensors over time. When clicking on the dials of the sensor screen in LamPI GUI, a new screen opens where users can specify their own combination of sensors and make a graphs of these sensors (plotted against time).</p>
+<p><a href="Graphs_Manual/graphs/temperature_1.JPG"><img src="Graphs_Manual/graphs/temperature_1.JPG" width="684" height="444"></a></p>
+<p>&nbsp;</p>
+<h1>LamPI Rules</h1>
+<p>As from LamPI release 3.2 we offer a set of Blockly elements to help the user define his/her own rules in LamPI. Read the separate senction on Rules<a href="Rules_Manual/index.html"> &lt;HERE&gt;</a>. LamPI Rules offer the use a graphical interface to define rules based on temperature, humidity, time of day, Sunset or any other sensor value and based on these reading define actions in LamPI to be taken.</p>
+<p>All sensors can be used in queries and actions include setting devices values , showing alerts on the screen or logging values in the log file.</p>
+<p>&nbsp;</p>
+<p><a href="Rules_Manual/screenshots/sunset_1.JPG"><img src="Rules_Manual/screenshots/sunset_1.JPG" width="663" height="400"></a></p>
 <h1>LamPI History</h1>
 <p>The goal of my project was to provide an easy interface to the family to control the lights in our house. We had klikaanklikuit.nl switches and we have an iPad (and some Android phones and Laptops) and want to control our light switches with an easy-to-use GUI interface. This meant that I needed at least 2 components: A component that would control transmitter and receiver and handle low-level device commands, and a GUI in JavaScript/jQuery that would handle the human interaction. In order to store configuration information and for timing commands and unattended use, we would also need a daemon process serving in the background as well as a database (written in MySQL) to store configuration information.</p>
 <p>Although I would expect that you like to use the complete package, it is quite good possible to only use the RaspberryPI transmitter and receiver shell executables (see below)</p>
 <p>&lt;<a href="DeveloperGuide/ArchitectureGuide/architecture.html">More information is available HERE</a>&gt;</p>
-<h1>LamPI User Manual</h1>
+<h1>LamPI User Manuals</h1>
 <p>LamPI contains 7 main screens: Rooms, Scenes, Timers, Handsets, Weather, Energy and Config. For every screen I have written a few pages that contain instructions on common tasks you will perform. </p>
 <p>The documentation for the LamPI functions can be found on this site on the following pages.</p>
 <ul>
@@ -122,6 +131,16 @@ Please start reading on that page when you finished reading this page.</p>
 <p>Click <a href="planned.html">&lt;HERE&gt;</a> for a list of user stories and planned functions in next releases</p>
 <h1><a name="known_issues"></a>Known Issues, Bugs etc.</h1>
 <p>Click <a href="planned.html">&lt;HERE&gt;</a> for a list of known issues, possible being resolved in future releases</p>
+<p>&nbsp;</p>
+<h1>Acknowledgements</h1>
+<p>Thanks to everybode that contributed in some way to making LamPI possible. Either by providing libraries or pieces of code, commenting by email or on a forum etc etc. Herewith a list of technology adpted (unfortunately the list will probably NOT be complete). I like to gather all info on this page, so if I forgot someone please sed me an email.</p>
+<ul>
+  <li>Blockly - Google</li>
+  <li>Steel series gauges - https://github.com/HanSolo/SteelSeries-Canvas</li>
+  <li>wiringPI - http://www.wiringpi.com; Gordon Henderson</li>
+</ul>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
 <p>June 25, 2015</p>
 </body>
 </html>

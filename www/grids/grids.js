@@ -1,11 +1,10 @@
-// TemPI, Javascript/jQuery GUI for graphing temperature, humidit and other sensors
-// TemPI is part of the LamPI project, a system for controlling 434MHz devices (e.g. klikaanklikuit, action, alecto)
+// Grids is part of LamPI
 //
 // Author: M. Westenberg (mw12554 @ hotmail.com)
 // (c) M. Westenberg, all rights reserved
 //
 // LamPI Releases:
-// Version 1.6, Nov 10, 2013. Implemented connections, started with websockets option next (!) to .ajax calls.
+// Version 3.3, Jul 01, 2015. Start making grids/tiles
 //
 //
 // Copyright, Use terms, Distribution etc.
@@ -65,6 +64,7 @@ var mysql = "1";										// Default is using mySQL
 var cntrl = "1";										// ICS-1000== 0 and Raspberry == 1
 var healthcount = 5;									// Needs to be above 0 to show activity
 var loginprocess=false;									// Is there a login process going on?
+var gridster;
 
 // ----------------------------------------------------------------------------
 // s_STATE variables. They keep track of current room, scene and setting
@@ -106,7 +106,7 @@ Array.prototype.clear = function() {
 // --------------------------------------------------------------------------
 // MAIN FUNCTION called from extern.
 //
-function start_Rules()
+function start_Grids()
 {
   // This function first needs to be executed						
   // --------------------------------------------------------------------------
@@ -263,6 +263,13 @@ function start_Rules()
 	}							
   });
   
+  $(".gridster ul").gridster({
+        widget_margins: [10, 10],
+        widget_base_dimensions: [140, 140]
+  });
+  gridster = $(".gridster ul").gridster().data('gridster');
+
+  
   console.log("Start_rules done");
 }
 
@@ -289,9 +296,8 @@ function init() {
 	}
 
 	// Initial startup config
-	init_blockly();
+	init_grids();
 	init_menu();
-	init_rules();
 }
 
 
@@ -340,155 +346,13 @@ function init_menu()
 }
 
 
-// -------------------------------------------------------------------------------------
-// INIT SENSORS
-//
-function init_rules()
-{
-	$("#gui_header").empty( );
-	html_msg = '<table border="0">';
-	$("#gui_header").append( html_msg );
-	
-	var table = $("#gui_header").children().last();		// to add to the table tree in DOM
-	var hover = "hover";
-	var border="";
-	logger("init_rules started",2);
-	
-	but = "<tr><td>";
-	for (var i=0; i< rules.length; i++) {
-		logger("init_rules:: rule #"+i+", "+rules[i].name+", jrule: "+rules[i].jrule,1);
-		if (rules[i].active == "Y") {
-			border=" border-color:red; ";
-		} else {
-			border=" ";
-		}
-		if ( s_rule_id == i ) {
-			// This is the rule we are working with
-			console.log("init_rules:: hover: "+rules[i]['name']+" in rules");
-			hover="hover";
-		} else {
-			hover = "";
-		}
-		but +='<input type="submit" id="R'+i+'" value="'+rules[i]['name']+'" style="max-width:60px; max-height:25px;'+border+'" class="hs_button '+hover+'">';			
-	}
-	but += "</td></tr>";
-	$(table).append(but);
-}
-
 // ----------------------------------------------------------------------------------------
 // INIT_ BLOCKLY
 //
-function init_blockly() {
+function init_grids() {
 
-	var toolbox = '<xml>';
-	//toolbox += '<xml id="toolbox" style="display: none">';
-	toolbox += "<category name='controls'>";
-		toolbox += '<block type="controls_if"></block>';
-		toolbox += '<block type="controls_repeat_ext"></block>';
-		toolbox += '<block type="controls_whileUntil"></block>';
-		toolbox += '<block type="controls_when"></block>';
-	toolbox += '</category>';
+	gridster.add_widget('<li class="new">The HTML of the widget...</li>', 2, 1);
 	
-	toolbox += "<category name='logic'>";
-		toolbox += '<block type="logic_compare"></block>';
-		toolbox += '<block type="math_number"></block>';
-		toolbox += '<block type="math_arithmetic"></block>';
-	toolbox += '</category>';
-	
-	toolbox += "<category name='text'>";
-		toolbox += '<block type="text"></block>';
-		toolbox += '<block type="text_print"></block>'
-		toolbox += '<block type="text_console"></block>';
-		toolbox += '<block type="text_alert"></block>';
-		toolbox += '<block type="text_length"></block>';
-		toolbox += '<block type="text_append"></block>';
-	toolbox += '</category>';
-	
-	toolbox += "<category name='sensors'>";
-		toolbox += '<block type="sensors_temperature"></block>';
-		toolbox += '<block type="sensors_humidity"></block>'; 
-	toolbox += '</category>';
-		
-	toolbox += "<category name='devices'>";
-		toolbox += '<block type="devices_switch"></block>';
-		toolbox += '<block type="devices_set"></block>';
-	toolbox += '</category>';
-	
-	toolbox += "<category name='times'>";
-		toolbox += '<block type="times_now"></block>';
-		toolbox += '<block type="times_sunrise"></block>';
-		toolbox += '<block type="times_sunset"></block>';
-		toolbox += '<block type="times_offset"></block>';
-	toolbox += '</category>';
-
-	toolbox += '</xml>';
-	
-	var blocklyDiv = document.getElementById('blocklyDiv');
-	Blockly.JavaScript.addReservedWords('code');
-	var workspace = Blockly.inject(blocklyDiv,{toolbox: toolbox })
-	restore_blocks();	
-
-	function myUpdateFunction() {
-		var code = Blockly.JavaScript.workspaceToCode(workspace);
-		rules[s_rule_id].jrule=code;
-		document.getElementById('gui_messages').value = code;
-		logger("myUpdateFunction:: Change rule_id "+s_rule_id+" to "+code,1);
-		$("#gui_messages").empty();
-		$("#gui_messages").append(code);
-		backup_blocks();							// To rules[]
-	}
-	workspace.addChangeListener(myUpdateFunction);
-}
-
-// ----------------------------------------------------------------------------
-// backup code blocks
-//
-function backup_blocks() {
-	var xml = Blockly.Xml.workspaceToDom( Blockly.mainWorkspace );
-	rules[s_rule_id].brule = Blockly.Xml.domToText( xml );
-	logger("backup_blocks to brule: ",rules[s_rule_id].brule,2);
-//	rules[s_rule_id].jrule = 
-//	if(typeof(Storage)!=="undefined")
-//	{
-//		localStorage.setItem('blocks',Blockly.Xml.domToText( xml ));
-//		console.log("backup success");
-//	} else {
-//		// Sorry! No web storage support..
-//	}
-}
-
-// ----------------------------------------------------------------------------
-// restore code blocks
-// XXX Make sure that the block still exists before referencing to unknown
-//	part in the localstorage
-function restore_blocks() {
-
-	logger("restore_blocks for rule_id: "+s_rule_id,2);
-	logger("restore_blocks for brule: ",rules[s_rule_id].brule,2);
-	if (rules[s_rule_id].brule === null) {
-		logger("restore_blocks:: brule is null",1);
-		return;
-	}
-	try {
-		var xml = Blockly.Xml.textToDom(rules[s_rule_id].brule);
-	}
-	catch(e) {
-		logger("restore_blocks:: ERROR :"+e,1);
-		return;
-	}
-	Blockly.Xml.domToWorkspace( Blockly.mainWorkspace, xml );
-	logger("restored for s_rule_id: "+s_rule_id,1);
-	return;
-	
-//  if(typeof(Storage)!=="undefined"){
-//   if(localStorage.blocks!=null){
-//      var xml = Blockly.Xml.textToDom(localStorage.blocks);
-//      Blockly.Xml.domToWorkspace( Blockly.mainWorkspace, xml );
-//      console.log("restore success");
-//    }
-//  } else {
-//    // Sorry! No web storage support..
-//  }
 }
 
 

@@ -37,4 +37,4 @@ temperature=`echo $value | awk '{printf("%.2f\n", (a=( (("0x"substr($1,5,2)subst
 
 echo "buffer: $temperature"
 
-$EXEDIR/cmd-sensor -d -h "255.255.255.255" -p $PORTNUMBER -b "{\"tcnt\":\"48\",\"action\":\"weather\",\"brand\":\"lm75\",\"type\":\"json\",\"address\":\"48\",\"channel\":\"0\",\"temperature\":\"$temperature\"}"
+$EXEDIR/cmd-sensor -d -h "255.255.255.255" -p $PORTNUMBER -b "{\"tcnt\":\"48\",\"action\":\"sensor\",\"brand\":\"lm75\",\"type\":\"json\",\"address\":\"48\",\"channel\":\"0\",\"temperature\":\"$temperature\"}"

@@ -69,17 +69,15 @@ struct meter {
 	char kw_lo_use[12];			// Meter reading Low tariff Usage
 	char kw_hi_ret[12];			
 	char kw_lo_ret[12];
-	char gas_use[10];
+	char gas_use[10];			// Gas use
 	char kw_act_use[12];		// Actual use
 	char kw_act_ret[12];
-	char kw_ph1_use[12];		// 3-Phase power
+	char kw_ph1_use[12];		// 3-Phase use
 	char kw_ph2_use[12];
 	char kw_ph3_use[12];
-	char kw_ph1_ret[12];
+	char kw_ph1_ret[12];		// 3-Phase return
 	char kw_ph2_ret[12];
 	char kw_ph3_ret[12];
-	
-
 };
 
 struct meter mtr;
@@ -436,6 +434,7 @@ int main(int argc, char **argv)
 											
 			buf_2_server(sockfd, hostname, port, snd_buf, mode);
 			printf("%s Sent to host: %s:%s, sensor: %s\n", t, hostname, port, "e350");
+			fflush(stdout);
 		}
 		else {
 			// If in command mode

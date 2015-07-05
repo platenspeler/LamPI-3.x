@@ -272,7 +272,7 @@ int main(int argc, char **argv)
 	sockfd = socket_open(hostname, port, mode);
 	
 	// Make a jSon message to send to the server
-			sprintf(buf,"{\"tcnt\":\"21\",\"action\":\"weather\",\"brand\":\"bmp085\",\"type\":\"json\",\"address\":\"%x\",\"channel\":\"%d\",\"temperature\":\"%2.1f\",\"airpressure\":\"%2.1f\"}", 
+			sprintf(buf,"{\"tcnt\":\"21\",\"action\":\"sensor\",\"brand\":\"bmp085\",\"type\":\"json\",\"address\":\"%x\",\"channel\":\"%d\",\"temperature\":\"%2.1f\",\"airpressure\":\"%2.1f\"}", 
 		BMP085_I2C_ADDRESS,
 		channel,
 		(double)(temperature)/10, 
