@@ -9,19 +9,24 @@
 <h1>Planned Functions</h1>
 <p>Of course I'm always thinking about new functions, as long as I do not have to put the current system up-side-down too much. After all, I do have other day-time work to do and it has to make sense for me to spend additional time. Therefore, you are welcome to ask for new functions, but if it will cost me days to implement them and I will not benefit from them in any way I will probably give priority to other changes.</p>
 <ul>
-  <li>As LamPI-xx.yy.js , sensor.js , energy.js and rules.js all work on the same sort of client definitions, we probably need to make a library of those common (socket-based) functions so we do not need to worry about inconsistencies</li>
+  <li>As LamPI-xx.yy.js , sensor.js , energy.js and rules.js all work on the same sort of client definitions, we need to make a library of those common (socket-based) functions so we do not need to worry about inconsistencies</li>
   <li>Receive alarms from the LamPI-gate Z-Wave gateway and deal with them. At the moment the gateway reports back changed device values to LamPI but we need to handle alarms and temperature sensors as well.</li>
+  <li>Implementation of an alternative GUI style comparable with&nbsp;the metro intrface of Windows 8.x</li>
+  <li>See whether LamPI&nbsp;sensors work from a remote location over the internet.</li>
   <li>Add support for Android phones. This is in beta at the moment and I use PhoneGap technology of Adobe to make such version. All Javascript/jQueryMobile code is already in the LamPI-x.y.js file, the index.html file will determine what libraries to load. I will probably publish a separate branch for Android with the same version number as its web equivalent.</li>
+  <li>LamPI speech recognition. Some home automation systems have speech recognition to switch on/off devices. I'm not yet convinced of speach recognition to work well in a living room environment, but like to study the function.</li>
   <li>Add full support for Z-Wave (or Zigbee). As the LamPI-daemon is quite universal in its setup adding transmitter/receivers for these technologies is relatively easy. At the moment ZWave support is implemented through a Z-Way gateway running on a dedicated RaspberryPI</li>
   <li>I like (at some time) be integrating my front-end with the new standards for Home Automation as soon as stacks become available for the Raspberry.</li>
   <li>Internationalization; Probably not worth spending too much time on this, as most people that will use this projects do not mind English versions anyway. So probably just making an alternative startup file for ''database.cfg&quot; would be enough for international customers to get a good feel for the software.</li>
 </ul>
-<h1>Known Issues, Bugs etc.</h1>
+<h1><a name="KnownIssues"></a>Known Issues, Bugs etc.</h1>
 <p>Both architectual and GUI related</p>
 <ul>
+  <li>The LamPI-node.js process assumes that we have a zwave host (and devices). This leads to  calling of the ZWAVE host in zwave_init. If ZWAVE gateway&nbsp;is not used, we must make this code user selectable. </li>
+  <li>LamPI-receiver is not very good in reading ALL 433MHz messages.</li>
   <li>The scale- sccs templates should work on screens with different resolutions. However, need to have dynamic changes between sccs look-and-feel sets once the screen gets too narrow and we know we need to switch to a mobile phone screen.</li>
   <li>Sortable (shuffling rows in room or scene view) works OK as far as GUI is concerned, but the background sync to mySql does not. Sortable is not 100% reliable.</li>
-  <li>Sortable does not work for jqmobile yet, only for normal browser. Not sue if sorting rows makes sense for mobiles</li>
+  <li>Sortable does not work for jqmobile yet, only for normal browser. Not sure if sorting rows makes sense for mobiles</li>
   <li>If possible we shoud merge jqmobile and jqueryUI so that all handling of screen buttons etc is uniform between the 2. Since mobile devices get a larger market share by the day, LamPI may shift to primary support for jqmobile in the future</li>
   <li>Adding new handsets at this moment still requires manual editing of the database.cfg file. I like to add more options to the OPTIONS screen for setup of new switch types and handset types, so that adding such switches and handsets at runtime is a lot easier.</li>
   <li>Z-Wave alarms and sensors should be integrated into LamPI. May use database.cfg file for that</li>
