@@ -7,9 +7,10 @@
 <body>
 
 <h1>Getting Started with LamPI</h1>
-<p>This page gives more background on the LamPI GUI functions and how to start the LamPI system the first time.</p>
+<p>This page gives more background on the LamPI GUI functions and how to start the LamPI system the first time. The LamPI GUI can be started with the following command: http://&lt;your-IP&gt;/index.html</p>
+<p>However, a new and blank system does not have any switches or sensors configured&nbsp;which makes so therefore you have to make a configuration, which is explained in the section below. And most importantly, the LamPI daemon &quot;LamPI-node.js&quot; must run, as it is the spider in the web of every LamPI configuration. It sends all system information to the GUI such as updates devices information and sensor values and receives user updates from switches and dimmers. The daemon does also interact with all sensor&nbsp;devices to receive updated sensor readings.</p>
 <h1>Understanding the LamPI screens</h1>
-<p>The LamPI screen is devided in the following regions:</p>
+<p>First let's explain a little more on the LamPI screens. The LamPI screen is devided in the following regions:</p>
 <ul>
   <li>Header Section</li>
   <li>menu Section</li>
@@ -21,7 +22,8 @@
 <p>There are scaling and non-scaling skins available for LamPI. For small mobile devices it is best to use a skin which has a compact layout and is specially developed for mobile devices. For regular PC screens or tablets with large resolution screens there are skins that will automatically reorganize parts of the screen so that its content will be accessible.</p>
 <p><img src="screenshots/scene_screen_sea_narrow.JPG" width="184" height="244" hspace="5" vspace="5"><img src="screenshots/scene_screen_sea_small.JPG" width="260" height="243" hspace="5" vspace="5"><img src="screenshots/scene_screen_sea_norm.JPG" width="352" height="243" hspace="5" vspace="5"><img src="screenshots/scene_screen_sea_wide.JPG" width="507" height="243" hspace="5" vspace="5"></p>
 <p>The scaling skins adapt to the width of the screen (or window) automatically. These skins start with &quot;scale-&quot; in their filename</p>
-<p>&nbsp;</p>
+<h1>LamPI Initial Configuration</h1>
+<p>LamPI needs a working configuration file &quot;~/config/database.cfg&quot; in order to function correctly. This database.cfg file will be read by the LamPI daemon proces </p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 </body>

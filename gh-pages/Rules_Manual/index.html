@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>LamPI 433Mhz controller for RaspberryPI</title>
+</head>
+
+<body>
+
+<h1>Rules Functions</h1>
+<h2>Introduction</h2>
+<p>Starting with LamPI release 3.2, we offer another method for invoking devices based on time, alarms or other events. With the new rules engine which is based on Google's blockly developers kit it is possible to create your own rules for LamPI and have them evaluated and executed every 2 seconds.</p>
+<h2>Screen Layout</h2>
+<p>The editor screen has the following layout: At the right - Or anywhere else if defined by the CSS file in use- is the enu area. There are 5 major and standard commands recognized:</p>
+<ol>
+  <li>Run - Run a rule on the local system. Since the editor does not always have the same functions available as the daemon (LamPI-node.js runs without a gui) some functions may not run&nbsp;as expected or not run at all. For initial debugging this function is OK.</li>
+  <li>Activate - This buttons will activate or de-activate the current rule (the current rule is always&nbsp;yellow or otherwise colored by the hover css attribute). So in the example below you can see that &quot;effe&quot; is active. If you want to de-activate &quot;effe&quot;, first make it the current rule to work on (click on &quot;effe&quot;) and then click on &quot;Activate&quot; to de-activate the rule. When activating or de-activating the rule, the whole rule will be backed-up to the MySQL database.</li>
+  <li>Store - Store the current rule to the database.</li>
+  <li>New - Make a new rule and put it an the end of the header list. Please remember to save your work in the current rule first before making a new rule or that work will be lost.</li>
+  <li>Delete -&nbsp;Delete the curent rule.</li>
+</ol>
+<p>In the header section all rules that are defined are displayed. In the example below that is &quot;cv-room&quot;, &quot;console&quot; and &quot;effe&quot;. By pressing one of these buttons, the active screen loads with the corresponding rule. The yellow hover defines which rule is visible on the screen at that moment and being worked on. The red border outline of a button tells us that the corresponding rule is active on the LamPI-node.js daemon.</p>
+<h2>How to start the Rules Editor</h2>
+<p>The rules editor can be change from the LamPI Gui by visiting the config section and then select &quot;rules&quot; from the header menu bar. Alternatively the user can also start the rules editor directly from the browse by the following URL: &quot;http://&lt;Your-IP&gt;/rules&quot;.</p>
+<p><img src="screenshots/sensor_1.JPG" width="1254" height="785"></p>
+<p>&nbsp;</p>
+<p>Every rule that is made on the screen will translate in two fields in our rules array: The jrule field which is displayed in the message area of the screen contains the Javascript representation of the rule as it is executed by the daemon if we activate that rule in LamPI. The brule field of the rules object contains the internal rule definition which is used by blockly to build up all visible elements of the rules so that we can change the rule, delete it or store the rule in the database for later use.</p>
+<p>The &quot;cv-room&quot; rule defined in our example has the following jrule field for the rule in the database. I have used a pretty print method which makes the rules readible:</p>
+<p><code>if (config['sensors'][14]['sensor']['temperature']['val'] &gt; 28) { <br>
+&nbsp;&nbsp;
+console.log('Warmer, switch Lampi ');<br>
+&nbsp;&nbsp;
+queueDevices(0,'10','00:00:0:00',0,1); <br>
+}<br>
+else { <br>
+&nbsp;&nbsp;
+console.log('colder'); <br>
+&nbsp;&nbsp;
+queueDevices(0,'off','00:00:0:00',0,1); <br>
+}</code></p>
+<p>&nbsp;</p>
+<h2>And what happens under the hood?</h2>
+<p>Under the hood we use the standard available blockly functions provided by Google and we also have our own blockly defnitions put in a dedicated file: /home/pi/www/rules/myBlocks.js. For every custom Blockly element we have to define 2 functions: a definition file to support the editor in creating our object and a generator file to help generating the right javascript functions once we include our own blockly in LamPI.</p>
+<p><code>// ------------------------------------------------------------<br>
+  // 3.<br>
+  Blockly.Blocks['devices_set'] = {<br>
+  &nbsp;
+init: function() {<br>
+&nbsp;&nbsp;&nbsp;
+this.setHelpUrl('http://www.westenberg.org/');<br>
+&nbsp;&nbsp;&nbsp;
+this.setColour(280);<br>
+  &nbsp;
+ &nbsp; var str = [];<br>
+  &nbsp;
+ &nbsp; for (var i=0; i&lt;devices.length;i++) {<br>
+  &nbsp;&nbsp;
+ &nbsp;&nbsp; str.push( [ devices[i]['name'], devices[i]['name']+&quot;&quot; ] );<br>
+  &nbsp;
+ &nbsp; }<br>
+ &nbsp;&nbsp;&nbsp; this.appendValueInput(&quot;dev_set&quot;)<br>
+ &nbsp;&nbsp;&nbsp; &nbsp; .setCheck(&quot;String&quot;)			// Only if type is not appendDummyInput<br>
+ &nbsp;&nbsp;&nbsp; &nbsp; .appendField(&quot;set: &quot;)<br>
+ &nbsp;&nbsp;&nbsp; &nbsp; .appendField(new Blockly.FieldDropdown( str ), &quot;set_1&quot;)<br>
+ &nbsp;&nbsp;&nbsp; this.setPreviousStatement(true, &quot;String&quot;);<br>
+ &nbsp;&nbsp;&nbsp; this.setNextStatement(true, &quot;String&quot;);<br>
+ &nbsp;&nbsp;&nbsp; //    this.setOutput(true, &quot;String&quot;);<br>
+ &nbsp;&nbsp;&nbsp;&nbsp; this.setTooltip('Set device value');<br>
+ &nbsp; }<br>
+};</code></p>
+<p><code>Blockly.JavaScript['devices_set'] = function(block) {<br>
+ &nbsp;&nbsp; var dropdown_set_1 = block.getFieldValue('set_1');<br>
+ &nbsp;&nbsp; var value_dev_set = Blockly.JavaScript.valueToCode(block, 'dev_set', Blockly.JavaScript.ORDER_ATOMIC);<br>
+ &nbsp;&nbsp; var code = '';<br>
+ &nbsp;&nbsp; var i = lookupDeviceByName(dropdown_set_1);<br>
+ &nbsp;&nbsp; if (i&gt;=0) {<br>
+ &nbsp;&nbsp;&nbsp; //code=&quot;config['devices'][&quot;+i+&quot;]['val']=&quot;+value_dev_set; <br>
+ &nbsp;&nbsp;&nbsp;&nbsp; code=&quot;queueDevice( &quot;+i+&quot;, &quot;+value_dev_set+&quot;, '00:00:00', 0, 1); &quot;;<br>
+ &nbsp;&nbsp; }<br>
+ &nbsp;&nbsp; return code;<br>
+};</code></p>
+<p>In the two files above you can see that I added code to read my &quot;device&quot; object and use the available array members for a drop down list n the screen. In the generator file (Blockly.Javascript) you can see that I read the dropdown entry with lookupDeviceByName (a&nbsp;function made by me and also in the myBlocks.js file) and generate the queueDevice command that is availabl in my main LamPI-node.js daemon file. So once the code is &quot;eval()&quot;-uated by LamPI-node it will call that well-known function and the command will be executed.</p>
+<p>Note: The queueDevice() function contains some more parameters than just the index of the device&nbsp;(in the config['devices'] array and its SET value. The other parameters are for future extension and will allow execution of the command after a certain time and/or repeating the action for a number of times.</p>
+<p>The functions found above define my custom LamPI blocks, and are found in the myBlocks.js file in ~/rules directory. Google suggests that there are 2 separate code pieces tat may live in two separate files. Well, since we use Javascript for the screen definitions and also generate Javascript code, we have put both functions in the same myBlocks.js file. This is much better for the readibility of the code and allows easy debugging, changing etc in order to make your code work.<br>
+</p>
+<h2>Making your own custom&nbsp;Block elements</h2>
+<p>If you want to create your own custom block elements, it is adviced tat you use the provided Google Block&nbsp;Factory as a starting point. The block factory allows you to create the visual part of the new custom block without too much trouble after which you only need to provide parts of the code to interface wich your own application. The Block Factory shows the block you are working on, its block interface (see above for devices_set) and the javascript code that is being created (se also above for an example). </p>
+<p>Just cut and paste the code pieces to your own myRules.js file and make sure that file is &quot;sourced&quot; when you execute your own html/js program. And do not forget to make an entry in the blockly toolbox definition to include your new block and attach it to the menu.</p>
+<h2>Making a rule ...</h2>
+<p>This para exmplains how to make a new rule using the visible editor.</p>
+<h1>Examples</h1>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>June 25, 2015</p>
+</body>
+</html>
