@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>LamPI 433Mhz controller for RaspberryPI</title>
+<title>Rules Editor</title>
 </head>
 
 <body>
@@ -65,7 +65,7 @@ queueDevices(0,'off','00:00:0:00',0,1); <br>
 <table width="800" border="0">
   <tr>
     <td width="220"><img src="blocks/logic_value_1.JPG" width="48" height="34"></td>
-    <td width="570">This is a standard block.</td>
+    <td width="570">This is a standard block. It takes an integer or float value specified by the user</td>
   </tr>
   <tr>
     <td><img src="blocks/logic_cond_1.JPG" width="129" height="43"></td>
@@ -90,15 +90,15 @@ queueDevices(0,'off','00:00:0:00',0,1); <br>
   </tr>
   <tr>
     <td><img src="blocks/text_console_1.JPG" width="102" height="41"></td>
-    <td>This is a LamPI block.</td>
+    <td>This is a LamPI block. This element takes a string as input and displays it on the console.</td>
   </tr>
   <tr>
     <td><img src="blocks/text_alert_1.JPG" width="77" height="39"></td>
-    <td>This is a LamPI block.</td>
+    <td>This is a LamPI block. Similar to the console element, this block will display the string as an alert message on the GUI(s).</td>
   </tr>
   <tr>
     <td><img src="blocks/text_length_1.JPG" width="110" height="31"></td>
-    <td>This is a standard block</td>
+    <td>This is a standard block. This element will take a string as input on the right and return the length of this string to the left.</td>
   </tr>
   <tr>
     <td><img src="blocks/text_append_1.JPG" width="210" height="38"></td>
@@ -208,7 +208,16 @@ this.setColour(280);<br>
 <p>Just cut and paste the code pieces to your own myRules.js file and make sure that file is &quot;sourced&quot; when you execute your own html/js program. And do not forget to make an entry in the blockly toolbox definition to include your new block and attach it to the menu.</p>
 <h2>Making a rule ...</h2>
 <p>This para explains how to make a new rule using the visible editor.</p>
-<p>&nbsp;</p>
+<h2>Adding&nbsp;your rule to the database.cfg file</h2>
+<p>Every rule that you make is stored in the database. So it is protected against restarts of both client and server. But what if for whatever reason we need to re-initialize the daemon, we would loose all our rules? The solution is to add our precious rules to the &quot;~/config/database.cfg&quot; file so upon an init we would load thee rules to the system.</p>
+<p>The best way to do this is to print&nbsp;the configuration on the screen. You can do thsi from the &quot;config&quot; menu, choose &quot;console&quot; and then print the config. The other method is to use the following url: &quot;http://&lt;your-IP&gt;:8080/config&quot;. The configuration is output to the GUI, but more importantly it is also output to the console file &quot;~/log/PI-node.log&quot;.</p>
+<p>Go to this file and add the complete JSON string to the &quot;~/config/database.cfg&quot; file in the rules section.</p>
+<h1>Notes</h1>
+<p>Although rules work OK in most circumstances, there are situations or things to be careful about.</p>
+<ul>
+  <li>Be careful to make rules for devices that you will remove. The rule wil still be executed, even when the device or sensor is long&nbsp;gone.</li>
+  <li>The editor environment is NOT the run-time environment. Keep in mind that some functions, variables etc are only present in one environment but might not be present in the other. The XML definitions used on define the blocks on the screen are stored together with the excutable code in the database. If you create new block elements we do not know what happens with the ones already reated and whether they are influenced.</li>
+</ul>
 <h1>Examples</h1>
 <p>This chapter explains how to build your own rule, ranging from a simple console logging to a complicated timing example.</p>
 <h2>Example 1:</h2>
@@ -216,10 +225,18 @@ this.setColour(280);<br>
 <p><img src="examples/example_1_01.JPG" width="409" height="153"></p>
 <p>What you will find that the use of this rule is rather limited. The rule will only write to the console and apart from the administrator nobody will read the console of the LamPI-node.js daemon too often.</p>
 <h2>Example 2:</h2>
-<p>Using the example above, there are cicumstances where we want to take another type of action than just a console message when the temperature reaches a predefined level. This example exmplains to to swich a device on when the temperature reaches a certain value.<br>
+<p>Using the example above, there are circumstances where we want to take another type of action than just a console message when the temperature reaches a predefined level. This example exmplains to to swich a device on when the temperature reaches a certain value.<br>
   Please do not question yourself whether it makes senso to switch lightbulbs as a function of measured temperature ... thisexample merely shows the possibilities of the rule editor and the run-time environment.
 </p>
-<p>&nbsp;</p>
+<p><img src="examples/example_2_01.JPG" width="402" height="205"></p>
+<p>The example above works as desired: As soon as the temperature measure by sensor &quot;Outside&quot; exceeds 28 degrees Celcius the console will displa a message and the &quot;lamp left&quot; is switched on with value 14 (It is a dimmer).</p>
+<h2>Example 3:</h2>
+<p>However, although the example above works as desired, it has a major drawback; Every time the rules is evaluated - and this is once every 2 seconds - the outcome will make that a 433MHz message is sent to switch the lamp on or off. This may be our intention, but normally we would only like to send a message when the lamp should change state, so once when the temperature increases and once when it drops below 28 degress Celcius.</p>
+<p>So let's make the same example but only send messages to the 433 devices when we need to change status (we left the console messages out):</p>
+<p><img src="examples/example_3_01.JPG" width="494" height="282"></p>
+<p>So when using the rule above, the amount of transmissions over the air is reduced significantly, and apart from doing some &quot;eval&quot; uations we use no critical resources of the computer.</p>
+<h2>Example 4:</h2>
+<p>Switching on the lights in your room when it becomes dark is one of the most used rules in LamPI. Of course it is possible to use the LamPI timers for his purpose, but rules work equally well.</p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 <p>July 05, 2015</p>
