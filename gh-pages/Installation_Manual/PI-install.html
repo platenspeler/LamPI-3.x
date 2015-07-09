@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>LamPI 433Mhz controller for RaspberryPI</title>
+</head>
+
+<body>
+
+<h1>PI-install, automated installation of LamPI</h1>
+<h5>This document describs how to install the LamPI environment on your Raspberry-PI with PI-install</h5>
+<h1>Why PI-install</h1>
+<p>PI-install is a Linux script file for automated installation of the LamPI environment on your Raspberry-PI. It will perform the following tasks:</p>
+<ul>
+  <li>Update and upgrade of the Linux image</li>
+  <li>Installation of the latest LamPI image from github</li>
+  <li>Installation of all required packages</li>
+  <li>Module setup</li>
+  <li>Cron setup</li>
+</ul>
+<h1>Install an Image on your SD card</h1>
+<p>Installation of the Linux image on the SD card is not part of this page, but it is required to format the SD card and load a Linux image on the card. Then, make sure you connect the PI to wired network and power it up. Go to the PI (with a console, or through a telnet/rlogin connection from a PC or other computer).</p>
+<p>If you are able to connect to your Raspberry, run &quot;sudo raspi-config&quot; and set the password and other things right for your Raspberry.</p>
+<h1>Running PI-install</h1>
+<p>Make sure that PI-install gets on your system in the &quot;/home/pi&quot; directory. On your Raspberry go to the &quot;/home/pi&quot; directory and give the following command to make PI-install runnable:</p>
+<p><code>cd /home/pi<br>
+chmod 755 PI-install</code></p>
+<p>Now you can run the the PI-install script with the following command:</p>
+<p><code>./PI-install</code></p>
+<p>PI-install will now start runnign and will ask you what kind of installation you like to make. If this PI is your first and only PI and the moment, choose &quot;M&quot; for master and press &lt;ENTER&gt;. If you have multiple LamPI installations, you can select &quot;S&quot; (slave) for extra PI machines to be installed.<br>
+</p>
+<h1>What't next</h1>
+<p>After running PI_install there are a few things that still need to be done to configure your PI and LamPI:</p>
+<ul>
+  <li>If you use a wireless usb dongle, edit the &quot;/etc/wpa_supplicant/wpa_supplicant.conf&quot; file  to connect the PI to your router.</li>
+  <li>Prepare LamPI for first time use, edit the &quot;/home/pi/config/database.cfg&quot; file</li>
+</ul>
+<h2>Wireless</h2>
+<p>First we need to setup wireless support so you can work with your Raspberry over Wifi. This step is not necessary if your Raspberry is connected to the network by wire.</p>
+<p><img src="screenshots/wpa_supplicant_01.JPG" width="595" height="213"></p>
+<p>&nbsp;</p>
+<p><img src="screenshots/wpa_supplicant_02.JPG" width="859" height="528"></p>
+<p>You will have to use your own SSID of your router and the corresponding password in the screen below. Now use &lt;control&gt; + &lt;X&gt; key to close the editor and to save your work.</p>
+<p><img src="screenshots/wpa_supplicant_03.JPG" width="859" height="528"></p>
+<p>Here you&nbsp;choose &quot;Y&quot; obviously and hit &lt;ENTER&gt; on the filename. The nano editor will now close and bring you back to the terminal screen.</p>
+<h2>The LamPI database.cfg file</h2>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>July 07, 2015</p>
+</body>
+</html>

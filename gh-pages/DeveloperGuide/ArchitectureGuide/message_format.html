@@ -22,15 +22,20 @@
 <p>&lt;msg action&gt; is of type string and can be one of the following: </p>
 <ol>
   <li><code>&quot;ack&quot;,</code></li>
+  <li>&quot;alarm&quot;,</li>
+  <li>&quot;alert&quot;,</li>
   <li><code>&quot;ping&quot;,</code></li>
   <li><code>&quot;gui&quot;,</code></li>
   <li><code>&quot;handset&quot;,</code></li>
   <li><code>&quot;weather&quot;,</code></li>
-  <li><code>&quot;energy&quot;,</code></li>
   <li><code>&quot;sensor&quot;,</code></li>
+  <li><code>&quot;energy&quot;,</code></li>
   <li><code>&quot;load-database&quot;,</code></li>
+  <li>&quot;upd_config&quot;,</li>
   <li><code>&quot;login&quot;,</code></li>
   <li><code>&quot;console&quot;</code></li>
+  <li>&quot;list_user&quot;</li>
+  <li>&quot;rules&quot;</li>
 </ol>
 <p>In the sections below the messages are explained in more detail.</p>
 <h2>1. ack</h2>
@@ -40,7 +45,12 @@
   type;				// type of content part, eg raw or json<br>
   action == &quot;ack&quot;; </code></p>
 <p><code>}</code></p>
-<h2>alert</h2>
+<p>&nbsp;</p>
+<h2>2. alarm</h2>
+<p>Same as Alert message</p>
+<p></p>
+<p>&nbsp;</p>
+<h2>3. alert</h2>
 <p><code>var message = {</code></p>
 <table width="766" height="71" border="0">
   <tr>
@@ -63,7 +73,9 @@
   </tr>
 </table>
 <p><code>}</code></p>
-<h2>2. ping</h2>
+<p>&nbsp;</p>
+<h2>&nbsp;</h2>
+<h2>4. ping</h2>
 <p>The LamPI-daemon received PING messages from some of its connected clients to tell that they are still alive. This messaging might disappear in future releases of the software as during normal operations it does not add value. It does however for maintenance and debugging purposes.</p>
 <p><code>var message = {</code></p>
 <table width="766" height="71" border="0">
@@ -88,7 +100,7 @@
 </table>
 <p><code>}</code></p>
 <p>&nbsp;</p>
-<h2>3. gui (=upd)</h2>
+<h2>5. gui (=upd)</h2>
 <p>Let's start with the messages between the GUI and the LamPI daemon. The GUI connects to the LamPI-daemon either through Ajax calls (Old way) or over a websocket connection. Wesbockets use the jSon message format and therefore a range of messages is used to get messages accross to the LamPI-daemon. The content of these messages are in the standard ICS-1000 message format which is a simple ASCII coding. However, since the LamPI system supports more devices than the ICS-1000 some additional messages are defined.</p>
 <p><code>var message = {</code></p>
 <blockquote>
@@ -111,7 +123,7 @@
 </blockquote>
 <p><code>}</code></p>
 <p>&nbsp;</p>
-<h2>4. handset</h2>
+<h2>6. handset</h2>
 <p>Handsets from klikaanklikuit, Action or other handsets that are defined and recognized can send information about buttons pressed to the LamPI-daemon process.</p>
 <p><code>var rcv = {</code></p>
 <blockquote>
@@ -120,7 +132,7 @@
     rcv.action; </code></p>
 </blockquote>
 <p><code>}</code></p>
-<h2>5. weather</h2>
+<h2>7. weather</h2>
 <p>Messages received from the LamPI_receiver or any other sensor control program might contain the weather action, which will be interpreted by the LamPI_daemon and its values forwarded to the connected GUI clients.</p>
 <p>var rcv = {</p>
 <p><code>	tcnt: , 				// message transaction counter<br>
@@ -138,7 +150,14 @@ action: 'weather',
   rainfall: </code><br>
 </p>
 <p>}</p>
-<h2>6. energy</h2>
+<p>&nbsp;</p>
+<h2>8. Sensor-Daemon Message Format</h2>
+<p>The second important message format is between sensors and the LamPI-node.js daemon. Sensors connect to the LamPI-daemon through there own piece of code which will read the sensor value, open a socket connection to the daemon and send the value in a jSon encoded format.</p>
+<p><code>var sensor = {</code></p>
+<p><code> tcnt: &lt;integer value&gt; // transaction count for reference by transmitter and daemon</code></p>
+<p><code>}</code></p>
+<p>&nbsp;</p>
+<h2>9. energy</h2>
 <p>var rcv = {</p>
 <p> <code>rcv.tcnt; 				// message transaction counter<br>
   rcv.type;				// type of content part, eg raw or json<br>
@@ -147,20 +166,20 @@ rcv.action = &quot;energy&quot;;</code></p>
   TBD
 </p>
 <p>}</p>
-<h2>7. Sensor-Daemon Message Format</h2>
-<p>The second important message format is between sensors and the LamPI-daemon. Sensors connect to the LamPI-daemon through there own piece of code which will read the sensor value, open a socket connection to the daemon and send the value in a jSon encoded format.</p>
-<p><code>var sensor = {</code></p>
-<p><code>	tcnt: &lt;integer value&gt; // transaction count for reference by transmitter and daemon</code></p>
-<p><code>}</code><br>
-</p>
-<h2>8. load_database</h2>
+<h2><br>
+</h2>
+<h2>10. load_database</h2>
 <p>This is the message that will reset the Mysql database and re-load the <code>~/config/database.cfg</code> file into the system</p>
 <p>var rcv = {</p>
 <p> <code>tcnt: &lt;integer	value&gt;,			// message transaction counter<br>
   type: &quot;json&quot;,				// type of content part, eg raw or json<br>
   action : &quot;load_database&quot;</code></p>
 <p>}</p>
-<h2>9. login</h2>
+<p>&nbsp;</p>
+<h2>11. upd_config</h2>
+<p>This message format is almost the same as the load_database message. However, we do not expect the init action. </p>
+<p>&nbsp;</p>
+<h2>12. login</h2>
 <p>This message is used to tell the GUI that the LamPI-daemon does or does not trust the client, based on its IP address.</p>
 <p>var rcv = {</p>
 <p> <code>tcnt: &lt;integer	value&gt;,			// message transaction counter<br>
@@ -170,7 +189,7 @@ rcv.action = &quot;energy&quot;;</code></p>
 </code>&quot;optional text message&quot;</p>
 <p>}</p>
 <p></p>
-<h2>10. console</h2>
+<h2>13. console</h2>
 <p>The console message is used to receive and send messages to the GUI client that contain console/management - like information about the system. Examples are: Connected clients to the LamPI-deamon, last 20 lines of the log/LamPI_daemon.log file and restarting the daemon itself.</p>
 <p><code>var rcv = {</code></p>
 <p><code> rcv.tcnt; 				// message transaction counter<br>
@@ -178,6 +197,10 @@ rcv.action = &quot;energy&quot;;</code></p>
   rcv.action == &quot;console&quot;; <br>
   TBD </code></p>
 <p><code>}</code></p>
+<h2>14. list_user</h2>
+<p>This message is used to provide the GUI with a list of authorized user profiles. Used in the config -&gt; users option.</p>
+<h2>15. rules</h2>
+<p>The program in ~/www/rules will sen and receive message with the LamPI-node.js daemon.</p>
 <p>&nbsp;</p>
 <h1>Z-wave Connect</h1>
 <p>The Z-Wave messaging format is described on the separate Z-Wave page. Reason is that this is not so much a programming interface but communication takes place as a URL string that is executed by &quot;curl&quot; in the LamPI-daemon. At the moment the communication is therefore initiated by the LamPI-daemon only.</p>

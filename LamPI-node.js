@@ -8,6 +8,7 @@ LamPI Version:
 	3.0.3; May 26, 2015; Adding support for Woonveilig Alarm system
 
 ***********************************************************************************	*/
+// Configuration
 var debug = 1;
 
 var poll_interval =   6000;			// Determine how often we poll the devices for changed values
@@ -20,10 +21,15 @@ var sockPort = 5000;				// Websockets (gui) (XXX this must become port 5000)
 var udpPort  = 5001;				// UDP sensors this is port 5001
 var tcpPort  = 5002;				// RAW connected sensors: Port for net raw tcp connections
 
+var zhost = "192.168.1.52";			// IP of local Z-way gateway, in my case: 192.168.2.52
+var dbHost = "localhost";			// localhost, of 192.168.2.11 in my case
+var dbUser = "coco";
+var dbPassword = "coco";
+
+// Variables
 var tcnt = 0;						// transaction counter
-var zroot;							// Z-Wave root object (devices is one of its children)
-var zhost = "192.168.2.52";			// IP of local Z-way gateway
-var devices;						// The Z-Wave array of devices
+var zroot = {};						// Z-Wave root object (devices is one of its children)
+var devices = {};					// The Z-Wave array of devices
 var clients = [];					// Keep track of all connected clients
 var loops = [];						// Keep track of running loop id's
 var config={};						// This is the overall LamPI configuration array root
@@ -34,32 +40,9 @@ var logDir  = homeDir+"/log"
 var rrdDir  = homeDir+"/rrd"
 var wwwDir  = homeDir+"/www"
 
-// --------------------------------------------------------------------------------
-// Put startup require dependencies here
-// --------------------------------------------------------------------------------
-
-var http  = require('http'); console.log("http loaded");
-var net   = require('net');	console.log("net loaded");					// Raw Sockets Server
-var dgram = require("dgram"); console.log("dgram loaded");
 var mysql = require('mysql'); console.log("mySQL loaded");
-var express= require('express'); console.log ("express loaded");		// Middleware
-var async = require("async"); console.log("ssync loaded");
-var S     = require("string"); console.log("string loaded");
-var fs    = require("fs"); console.log("fs loaded");					// Filesystem
-var exec  = require('child_process').exec; console.log("child_process loaded");
-var serveStatic= require('serve-static'); console.log("erve-static loaded");
-var WebSocketServer = require('ws').Server; console.log ("ws loaded");
-
-// External apps
-var SunCalc = require('suncalc'); console.log("suncalc loaded");
+var fs    = require("fs"); console.log("fs loaded");
 var strip = require("strip-json-comments"); console.log("strip-json-comments loaded");
-
-// Own Local modules
-var alarmRouter = require('./modules/alarmRouter'); console.log("alarmRouter loaded");
-var woonveilig = require('./modules/woonveilig'); console.log("woonveilig loaded");
-
-console.log("All required modules loaded");
-
 
 // --------------------------------------------------------------------------------
 // Logging function
@@ -146,6 +129,30 @@ process.argv.forEach(function (val, index, array) {
 	break;
   }
 });
+
+// --------------------------------------------------------------------------------
+// Put refular startup require dependencies here
+// --------------------------------------------------------------------------------
+
+var http  = require('http'); console.log("http loaded");
+var net   = require('net');	console.log("net loaded");					// Raw Sockets Server
+var dgram = require("dgram"); console.log("dgram loaded");
+var express= require('express'); console.log ("express loaded");		// Middleware
+var async = require("async"); console.log("ssync loaded");
+var S     = require("string"); console.log("string loaded");
+					// Filesystem
+var exec  = require('child_process').exec; console.log("child_process loaded");
+var serveStatic= require('serve-static'); console.log("serve-static loaded");
+var WebSocketServer = require('ws').Server; console.log ("ws loaded");
+
+// External apps
+var SunCalc = require('suncalc'); console.log("suncalc loaded");
+
+// Own Local modules
+var alarmRouter = require('./modules/alarmRouter'); console.log("alarmRouter loaded");
+var woonveilig = require('./modules/woonveilig'); console.log("woonveilig loaded");
+
+console.log("All required modules loaded");
 
 // --------------------------------------------------------------------------------
 // EXPRESS middleware
@@ -246,14 +253,13 @@ function printConfig() {
 			str += "<td>: "+ config[key][j]['name']+"</td>";
 			switch (key) {
 				case "rules":
-					str += "<td>, active: "+config[key][j]['active']+"</td>"
-					str += "<td>, jrule: "+JSON.stringify(config[key][j]['jrule'])+"</td>"
-					str += "<td>, brule: "+JSON.stringify(config[key][j]['brule'])+"</td>";
-//					str += "<td>, loc: "+config[key][j]['location']+"</td>";
-//					str += "<td>, brand: "+config[key][j]['brand']+"</td>";
-//					str += "<td>, temp: "+config[key][j]['temperature']+"</td>";
-//					str += "<td>, humi: "+config[key][j]['humidity']+"</td>";
-//					str += "<td>, press: "+config[key][j]['airpressure']+"</td>";
+					str += "<td>, active: "+config[key][j]['active']+"</td>";
+					str += "<tr><td>";
+					str += "<td colspan='2'>, jrule: "+JSON.stringify(config[key][j]['jrule'])+"</td>";
+					str += "<tr><td>";
+					str += "<td colspan='2'>, brule: "+JSON.stringify(config[key][j]['brule'])+"</td>";
+					// As the XML will not show correctlyin a webpage we do on the console
+					console.log("rule stringify "+j+": ",JSON.stringify(config[key][j]));
 				break;
 				case "sensors":
 					str += "<td>, addr: "+config[key][j]['address']+"</td>"
@@ -303,7 +309,13 @@ function zwave_init (cb) {
 			cb(null,"zwave_init done");
   		});
 	}
-	http.request(zwave_init_options, zwave_init_cb).end();
+	//var req = http.request(zwave_init_options, zwave_init_cb).end();
+	var req = http.request(zwave_init_options, zwave_init_cb);
+	req.on('error', function(e) {
+		logger("zwave_init:: ERROR opening connection to zwave host, "+e.message,1);
+		cb("zwave no connection",null);
+	})
+	req.end();
 }
 
 
@@ -450,6 +462,9 @@ var server = net.createServer(function(socket) { //'connection' listener
 		};
 		var ret = sock.write(JSON.stringify(data));
 	});
+	socket.on('error', function(e) {
+		logger("SOCKET:: Error: "+e,1);
+	});
 	socket.on('connect', function() {
 		logger("SOCKET:: socket Connection Established ",1);
 	});
@@ -526,9 +541,9 @@ userver.on("listening", function () {
 //	network
 // ----------------------------------------------------------------------------
 var connection = mysql.createConnection({
-  host     : '192.168.2.11',
-  user     : 'coco',
-  password : 'coco',
+  host     : dbHost ,
+  user     : dbUser ,
+  password : dbPassword ,
   database : 'LamPI'
 });
 
@@ -541,6 +556,7 @@ function connectDbase(cbk) {
 		}
 		else {
 			logger("ERROR:: Connecting to the MySQL Database, make sure database exists and permissions are OK",1);
+			logger("connectDbase:: err: "+err,1);
 			cbk("connectDbase error","null");
 		}
 	});
@@ -621,7 +637,7 @@ function delDevDb(table, obj, cbk) {
 			cbk(null,result);
   		}
 		else {
-			console.log('updateDbe:: err: '+err+', query ',query.sql);
+			console.log('delDevDb:: err: '+err+', query ',query.sql);
 			cbk(err,result);
 		}
   	});	
@@ -637,7 +653,7 @@ function updDevDb(table, obj, cbk) {
 			cbk(null,result);
   		}
 		else {
-			console.log('updateDbe:: err: '+err+', query ',query.sql);
+			console.log('updDevDb:: err: '+err+', query ',query.sql);
 			cbk(err,result);
 		}
   	});	
@@ -740,7 +756,7 @@ function createDbase(cb) {
   },
   function (callback) {
     queryDbase('DROP TABLE IF EXISTS rules',function(err, ret) { 
-		queryDbase('CREATE TABLE rules(id INT, descr CHAR(128), name CHAR(20), active CHAR(1), jrule TEXT(65000), brule CHAR(255) )',function(err,ret) {
+		queryDbase('CREATE TABLE rules(id INT, descr CHAR(128), name CHAR(20), active CHAR(1), jrule TEXT(65000), brule TEXT(65000) )',function(err,ret) {
   		callback(null,'rules made');
 		});
   	});
@@ -792,6 +808,7 @@ function createDbase(cb) {
   function (callback) { var r = [];
     for (var i=0; i< config['rules'].length; i++) {
 		var obj = config['rules'][i];
+		console.log("RULES:: i: "+i+", jrule",config['rules']); // XXX
 		obj.jrule = JSON.stringify(config['rules'][i]['jrule']);
 		obj.brule = JSON.stringify(config['rules'][i]['brule']);
  		insertDb("rules", obj, function(cb) { r.push("s"); }); 	
@@ -829,8 +846,9 @@ function loadDbase(db_callback) {
   async.series([			  
 	function(callback) {
 	  queryDbase('SELECT * from devices',function(err, dev) { 
-		config['devices']=dev;  
-		for (var i=0; i< config['devices'].length; i++) {		// Init the lampi_admin array
+		if (!err) {
+		  config['devices']=dev;  
+		  for (var i=0; i< config['devices'].length; i++) {		// Init the lampi_admin array
 			if (config['devices'][i]['gaddr'] == "868") {		// Is this a Z-Wave device
 				var rec = {										// every rec is defined only once
 					val: config['devices'][i]['val'],
@@ -839,8 +857,13 @@ function loadDbase(db_callback) {
 				var unit = config['devices'][i]['uaddr'];
 				lampi_admin[unit] = rec;
 			}//if 868
-		}//for
-		callback(null,'devices '+dev.length);
+		  }//for
+		  callback(null,'devices '+dev.length);
+		}
+		else {
+			logger("loadDbase:: ERROR reading devices table, "+err,1);
+			callback("loadDbase ERROR reading devices",null);
+		}
 	  });
 	},
 	// Do the CURL request to Z-Wave to load the devices data
@@ -875,14 +898,17 @@ function loadDbase(db_callback) {
 				callback("loadDbase rules error",null); 
 			} else {
 			  for (var i=0; i<arg.length; i++) { 
-				try {
-					arg[i]['jrule'] = JSON.parse(arg[i]['jrule'] );
-					arg[i]['brule'] = JSON.parse(arg[i]['brule'] );
-				}
+				try { arg[i]['jrule'] = JSON.parse(arg[i]['jrule'] ); }
 				catch(e) {
-					logger("JSON error parsing rules",1);
+					logger("JSON error parsing jrule",1);
 					console.log(e);
-					callback("loadDbase rules error",null); 
+					callback("loadDbase jrule error",null); 
+				}
+				try { arg[i]['brule'] = JSON.parse(arg[i]['brule'] ); }
+				catch(e) {
+					logger("JSON error parsing brule",1);
+					console.log(e);
+					callback("loadDbase brule error",null); 
 				}
 			  }
 			  config['rules']=arg;
@@ -924,7 +950,7 @@ function deviceSet (ldev, val) {
 	var type = config['devices'][ldev]['type'];
 	var zval = Math.floor( val * 99 / 32);
 	var opt4set = {
-		host: '192.168.2.52',
+		host: zhost,
 		path: '',
 		port: '8083',
 		method: 'GET',
@@ -960,7 +986,14 @@ function deviceSet (ldev, val) {
 	//lampi_admin[zdev]['val'] = val;								// Update the admin array asap
 
 	// Call the function
-	http.request(opt4set, callSet).end();
+	//http.request(opt4set, callSet).end();
+	var req = http.request(opt4set, callSet);
+		
+	req.on('error', function(e) {
+		logger("deviceSet:: ERROR making connection to zwave host, "+e.message,1);
+	})
+	
+	req.end();
 }
 
 // --------------------------------------------------------------------------------
@@ -975,7 +1008,7 @@ function deviceGet(ldev,ltype) {
 	var aVal = lampi_admin[dev]['val'];			// NOTE: This array is indexed like the Z-Way(!) devices[] array
 	var newVal, lastUpdate, inValid;
 	var opt4get = {
-		host: '192.168.2.52',
+		host: zhost,
 		path: '/ZWaveAPI/Run/devices['+dev+'].Basic.Get()',
 		port: '8083',
 		method: 'GET',
@@ -1111,7 +1144,14 @@ function deviceGet(ldev,ltype) {
 		response.setTimeout(5000);
 	}
 	// Call the function
-	http.request(opt4get, callget).end();
+	var req = http.request(opt4get, callget);
+		
+	req.on('error', function(e) {
+		logger("deviceGet:: ERROR opening connection to zwave host, "+e.message,1);
+	})
+	
+	req.end();
+
 }
 
 // --------------------------------------------------------------------------------
@@ -1213,6 +1253,7 @@ function findScene (name) {
 
 function addrSensor (address, channel) {
 	logger("addrSensor:: address: "+address+", channel: "+channel,2);
+	if (config['sensors'] == undefined) return -1;
 	var i;
 	for (i=0; i < config['sensors'].length; i++) {
 		if ((config['sensors'][i]['address'] == address ) && (config['sensors'][i]['channel'] == channel )) {
@@ -1485,16 +1526,26 @@ function dbaseHandler(cmd, args, socket) {
 		break;
 		case 'add_rule':
 			config['rules'].push(args);
-			//args.jrule = JSON.stringify(args.jrule);	// convert to json before storing in database
-			//args.brule = JSON.stringify(args.brule);
-			insertDb("rules", args, function(result) { logger("add_rule finished OK "+result,1); });
+			var upd = { 
+				name: args.name, 
+				id:args.id, 
+				descr: args.descr,
+				jrule: JSON.stringify(args.jrule),
+				brule: JSON.stringify(args.brule)
+			};
+			insertDb("rules", upd, function(result) { logger("add_rule finished OK "+result,1); });
 		break;
 		case 'store_rule':
 			updFromArray(config['rules'],args);
-			// XXX For some reasons, we do NOT need to use JSON.stringify for XML structure
-			//args.jrule = JSON.stringify(args.jrule);	// convert to json before storing in database
-			//args.brule = JSON.stringify(args.brule);			
-			updateDb("rules", args, function(result) { logger("add_rule finished OK "+result,1); });
+			var upd = { 
+			name:  args.name, 
+			id:    args.id,
+			active:args.active,
+			descr: args.descr,
+			jrule: JSON.stringify(args.jrule),
+			brule: JSON.stringify(args.brule)
+			};
+			updateDb("rules", upd, function(result) { logger("store_rule finished OK "+result,1); });
 		break;
 		case 'delete_rule':
 			deleteDb("rules", args, function(result) { logger("delete_rule finished OK "+result,1); });
@@ -1758,7 +1809,7 @@ function guiHandler(buf, socket) {
 // 'type'    : 'raw'
 // 'cmd'     : 'kaku', 'livolo', 'zwave'
 // 'action'  : 'gui'
-// 'message' : '<ICS 1000 message format>'
+// 'message' : '<ICS 1000 message format>' -> F0 translated to off at device, F1 to on. FdP10 to value 10
 function icsHandler(buf, socket) {
 	//logger("icsHandler:: receiving message: "+buf.message,2);
 	var ics =    buf.message;
@@ -2287,9 +2338,10 @@ function queueHandler() {
 function ruleHandler() {
 	for (var i = 0; i< config['rules'].length; i++) {
 		if (config['rules'][i].active == "Y") {
-			logger("ruleHandler:: rule "+config['rules'][i]['name']+" is active",1);
+			logger("ruleHandler:: rule "+config['rules'][i]['name']+" is active",2);
 			try {
-				logger("ruleHandler:: eval: "+config['rules'][i]['jrule'],1);
+				logger("ruleHandler:: eval "+config['rules'][i]['name'],1);
+				logger("ruleHandler:: "+config['rules'][i]['jrule'],2);
 				eval( config['rules'][i]['jrule'] );
 			}
 			catch (e) {
@@ -2362,11 +2414,15 @@ function timer_loop() {
   var id = setInterval ( function() {
 	var now = new Date();						  
 	var ticks = Math.floor(now.getTime()/1000);
-	logger('Loop '+i+", ticks: "+ticks+", devices: "+Object.keys(devices).length,2); 
+	// logger('Loop '+i+", ticks: "+ticks+", devices: "+Object.keys(devices).length,2); 
 
 	logger("----------- TIMER EXPIRED? ------------",1);
 	// Refresh timers AND scenes from database from database
-	queryDbase('SELECT * from timers',function (err, timers) { 
+	queryDbase('SELECT * from timers',function (err, timers) {
+	  if (err) {
+		  logger("timer_loop:: ERROR table timers not found, "+err,1);
+		  return;
+	  }
 	  config['timers']=timers; 
 	  logger("timer_loop:: #timers: "+timers.length,2); 
 	  queryDbase('SELECT * from scenes',function (err, scenes) {
@@ -2479,9 +2535,15 @@ function zwave_loop() {
 	}
 	logger("----------- ACTIVE ZWAVE DEVICES ------------",1);
 	// Do a complete init of the datastructure every 60 seconds just to be sure we didnt miss updates
-	zwave_init(function(err,result) {logger("zwave_loop:: zwave_init: "+result,1); } ); 
+	// NOTE: The program will continu while waiting for the outcome...
+	zwave_init(function(err,result) {
+		if (err) {
+			logger("zwave_loop:: ERROR unable to run zwave_init, "+err,1);
+			return;
+		}
+		logger("zwave_loop:: zwave_init: "+result,1); 
+	}); 
 	var ticks = Math.floor(Date.now()/1000);
-	logger('Loop '+i+", ticks: "+ticks+", devices: "+Object.keys(devices).length,2);
 
 	// Logging of all Z-Wave devices in the zroot data structure
 	Object.keys(devices).forEach(function(key) {
@@ -2607,9 +2669,12 @@ function poll_loop() {
   var id = setInterval ( function() {
 	logger("-----------       POLL      ------------",1);
 	connection.query('SELECT * from devices', function(err, rows, fields) {
-		if (err) throw err;
+		if (err) { 
+			logger("poll_loop:: ERROR reading devices, "+err,1);
+			// throw err;
+			return;
+		}
 		config['devices'] = rows;
-//		config['devices'] = config['devices'];			// This is a shortcut to the main config structure
   		if (debug >= 3) console.log('query devices:: is: \n', rows);
 		// Loop in our list of devices (not sensors) and make sure that for every one we take action
 		for (var i=0; i< config['devices'].length; i++) {
@@ -2631,22 +2696,41 @@ function poll_loop() {
 // Also, as the alarm loop has finest timing granularity, we read the ready queue for runnable commands!
 // ? Maybe start with binding functions to changed values
 //
+// XXX Put the rest of the function in the callback function of http.request!
+//		so that we do ONLY execute when http.request is successful
 function alarm_loop()
 {
   logger("Starting alarm_loop",1);
   var resilient = 0;
   var id = setInterval ( function() {
+								  
 	var	zTime = Math.floor(Date.now()/1000);					// 
-	zwave_upd_options.path = '/ZWaveAPI/Data/'+(zTime - alarm_interval);
 	logger("alarm_loop:: zTime: "+(zTime-alarm_interval),2);
 	
-	// As alarm polling takes place most often, the main poll look is in this function too!
-	// Put changed values in the devices array through callback function
-	http.request(zwave_upd_options, zwave_upd_cb).end();
+	logger("----------- QUEUE HANDLER -------------",2);
+	queueHandler();							// Handle the run queue of LamPI commands
 	
-	// XXX Alarm sensors are still too static, need global configuration in database.cfg
-	var alarm1 = devices[9].instances[0].commandClasses[48].data[1].level.value;
-	if (alarm1 === true) {
+	logger("----------- RULES HANDLER -------------",2);
+	ruleHandler();
+	
+	// Only when devices ar edefined by zwave_init will we get updates ...!
+	// Once the zwave host comes on-line, zwave_init will be called and devices will be defined ...
+	if (( devices == undefined ) || (Object.getOwnPropertyNames(devices).length == 0)) {
+		logger("alarm_loop:: ERROR No devices found, or zwave gateway down",2);
+		return;
+	}
+	else {
+	  // As alarm polling takes place most often, the main poll look is in this function too!
+	  // Put changed values in the devices array through callback function
+	  zwave_upd_options.path = '/ZWaveAPI/Data/'+(zTime - alarm_interval);
+	  var req = http.request(zwave_upd_options, zwave_upd_cb);
+	  req.on('error', function(e) {
+		logger("alarm_loop:: ERROR no connection to zwave host, "+e.message,1);
+	  })
+	  req.end();
+	  // XXX Alarm sensors are still too static, need global configuration in database.cfg
+	  var alarm1 = devices[9].instances[0].commandClasses[48].data[1].level.value;
+	  if (alarm1 === true) {
 		console.log("Fibaro ALARM");
 		var data = {
 			tcnt: 868,
@@ -2661,10 +2745,9 @@ function alarm_loop()
 			logger("FIBARO ALARM",0);
 			var id2 = setTimeout ( function() { resilient = 0; },240000 );
 		}
-	}
-	
-	var alarm2 = devices[11].instances[0].commandClasses[48].data[1].level.value;
-	if (alarm2 === true) {
+	  }
+	  var alarm2 = devices[11].instances[0].commandClasses[48].data[1].level.value;
+	  if (alarm2 === true) {
 		console.log("Aeon ALARM");
 		var data = {
 			tcnt: 868,
@@ -2683,14 +2766,9 @@ function alarm_loop()
 		// Gui's get a broadcast only every 4 minutes
 		logger("AEON ALARM",0);
 		// Switch off the alarm XXX not elegant. Should tell the device to be silent 30 secs after first alarm
-	}
-	
-	logger("----------- QUEUE HANDLER -------------",2);
-	queueHandler();							// Handle the run queue of LamPI commands
-	
-	logger("----------- RULES HANDLER -------------",2);
-	ruleHandler();
-	
+	  }
+	}// if undefined
+
   }, alarm_interval );
   loops.push(id);
 }

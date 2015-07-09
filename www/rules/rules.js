@@ -59,7 +59,7 @@ var murl='/';											// For Phonegap and Ajax usage, build a url. DO NOT CHAN
 // 
 //
 var skin = "";
-var debug = 1;										// debug level. Higher values >0 means more debug
+var debug = 2;										// debug level. Higher values >0 means more debug
 var persist = "1";										// Set default to relaxed
 var mysql = "1";										// Default is using mySQL
 var cntrl = "1";										// ICS-1000== 0 and Raspberry == 1
@@ -191,8 +191,9 @@ function start_Rules()
 						// SO what are the variables returned by the function???
 						if (debug > 2) alert(" Dialog returned Name,Type: " + ret);	
 						rules[s_rule_id].name = ret[0];
-						myAlert("<br>rule: "+rules[s_rule_id].name+"<br>jrule: <br>"+rules[s_rule_id].jrule
-											+"<br><br>brule: <br>"+JSON.stringify(rules[s_rule_id].brule));
+						//myAlert("<br>rule: "+rules[s_rule_id].name+"<br>jrule: <br>"+rules[s_rule_id].jrule
+						//					+"<br><br>brule: <br>"+JSON.stringify(rules[s_rule_id].brule));
+						myAlert("rule:: "+JSON.stringify(rules[s_rule_id]));
 						send2daemon("dbase","store_rule", rules[s_rule_id]);
 						init_rules();
 						return(1);	//return(1);
@@ -469,6 +470,7 @@ function restore_blocks() {
 		logger("restore_blocks:: brule is null",1);
 		return;
 	}
+	
 	try {
 		var xml = Blockly.Xml.textToDom(rules[s_rule_id].brule);
 	}
@@ -491,110 +493,6 @@ function restore_blocks() {
 //  }
 }
 
-
-// -------------------------------------------------------------------------------------
-// Dialog Box, Ask for  details as specified in function paramters
-// 1. Your dialog text,including the button specification (see activate_room for a description)
-// 2. The function to execute when user has provided input
-// 3. The function to execute when operation is cancelled
-// 4. The title of your dialog
-//
-// Input Values (only val_1 is required, other optional for more or less input fields
-// val_1, val_2, val_3 etc 
-// Return values is an array in var ret, So ret[0] may contain values just as many as val_x
-//
-function askForm(dialogText, okFunc, cancelFunc, dialogTitle) {
-  if (jqmobile == 1) {
-		$( "#header" ).empty();
-		var $popUp = $("<div/>").popup({
-			id: "popform",
-			dismissible : false,
-			theme : "b",
-			overlayTheme : "a",
-			title: dialogTitle || 'Confirm',
-			maxWidth : "500px",
-			dialogClass: 'askform',
-			transition : "pop"
-		}).bind("popupafterclose", function() {
-			//remove the popup when closing
-			$(this).remove();
-		});
-		$("<div/>", {
-			text : dialogTitle
-		}).appendTo($popUp);
-		$(dialogText,{}).appendTo($popUp);
-	
-		// Submit Button
-		$("<a>", {
-			text : "Submit"
-		}).buttonMarkup({
-			inline : true,
-			icon : "check"
-		}).bind("click", function() {
-			if (typeof (okFunc) == 'function') {
-				// Return max of 5 results (may define more)...
-				var ret = [ $("#val_1").val(), $("#val_2").val(), $("#val_3").val(), $("#val_4").val(), , $("#val_5").val() ];
-				setTimeout(function(){ okFunc(ret) }, 50);
-			}
-			if (debug>=2) alert("Submit");
-			$popUp.popup("close");
-			//that.subscribeToAsset(callback);
-		}).appendTo($popUp);
-
-		// Back button
-		$("<a>", {
-			text : "CANCEL",
-			"data-jqm-rel" : "back"
-		}).buttonMarkup({
-			inline : true,
-			icon : "back"
-		}).bind("click", function() {
-			if (typeof (cancelFunc) == 'function') {
-				setTimeout(cancelFunc, 50);
-			}
-			$popUp.popup("close");
-			if (debug>1) alert("cancel");
-			//that.subscribeToAsset(callback);
-		}).appendTo($popUp);
-		$popUp.popup("open");
-	}
-  
-  // jQuery UI style of dialog
-  
-	else {
-		$('<div style="padding: 10px; max-width: 500px; word-wrap: break-word;">'+dialogText+'</div>').dialog({
-			draggable: false,
-			modal: true,
-			resizable: false,
-			width: 'auto',
-			title: dialogTitle || 'Confirm',
-			minHeight: 120,
-			dialogClass: 'askform',
-			buttons: {
-				OK: function () {
-					//var bValid = true;
-	//				bValid = bValid && checkLength( name, "name", 3, 16 );
-        			if (typeof (okFunc) == 'function') {
-						// Return max of 5 results (may define more)...
-						var ret = [ $("#val_1").val(), $("#val_2").val(), $("#val_3").val(), $("#val_4").val(), $("#val_5").val() ];
-						setTimeout(function(){ okFunc(ret) }, 50);
-					}
-					$(this).dialog('destroy');
-				},
-				Cancel: function () {
-					if (typeof (cancelFunc) == 'function') {
-						setTimeout(cancelFunc, 50);
-        			}
-					$(this).dialog('destroy');
-				}
-			},
-			close: function() {
-				$(this).dialog('destroy');
-			}
-		});
-		// logger(" name: "+name.val);
-	}
-} // askForm end
 
 
 

@@ -167,7 +167,7 @@ Blockly.JavaScript['devices_switch'] = function(block) {
 
   var i = lookupDeviceByName(dropdown_switch_1);
   if (i>=0) {
-	 code="confif['devices']["+i+"]['val']"; 
+	 code="config['devices']["+i+"]['val']"; 
   }
   return [code, Blockly.JavaScript.ORDER_FUNCTION_CALL];
 };

@@ -7,6 +7,7 @@
 <body>
 
 <h1>LamPI Architecture Intro</h1>
+<p><strong><em>*** As of June 2015 all PHP files have been converted to node.js code. This page still needs to be reritten to reflect this change.</em></strong></p>
 <p>This chapter describes some design and architecture considerations for LamPI. It is meant to provide background information on why the components and their setup are chosen the way they are, and at the same time will allow you to judge if you can live with that setup or whether you are convinced that you can do better yourself. </p>
 <p>Please tell me if you consider certain aspects a major flaw, and I might re-design those parts. Also, if you like to partitipate in the project and rewrite some new parts of the code, please tell me. This chapter contains the following subjects (for easy navigation):</p>
 <ul>
@@ -21,20 +22,31 @@
 </ul>
 <p>LamPI started as an alternative controller to the ICS-1000 controller of klikaanklikuit.nl (150 EURO), but today it offers support for other brands as well as well support for sensors and even 868MHz Z-Wave devices.</p>
 <h1><a name="maincomponents"></a>Main Components and Relations</h1>
-<p>LamPI consists of a few major components as outlined in the pisture below (picture needs some updating). Starting with release 1.7 all communication between the front-end and the controlling daemon takes place over websockets. Of course, when you work with the ICS-1000 this will be an exception.</p>
-<p><img src="architecture.gif" width="960" height="720"></p>
+<p>LamPI consists of a few major components as outlined in the pisture below. Starting with release 1.7 all communication between the front-end and the controlling daemon takes place over websockets. Of course, when you work with the ICS-1000 this will be an exception. </p>
+<ul>
+  <li>All communication between the GUI frontend and the sensors or devices takes place through the LamPI-node.js daemon process. This process is the spider in the web, it maintains the database relation (consistency) and an administration of all sensors and devices in the system</li>
+</ul>
+<ul>
+  <li>The LamPI-3.x.js gui application will take care of  all user communicaion related to the first line of user interface. Only sensors and energy graphs and the rules editor are not implemented by this file</li>
+  <li>Located in the ~/www/graphs directory the two files sensor.js and energy.js implement the files to show graphs on your screen.</li>
+  <li>The rules editor is found in the ~/www/rules directory and is implemented by the file rules.js</li>
+</ul>
+<ul>
+  <li>Sensors executables are found in the directory ~/exe , the sources of the sensors in ~/sources</li>
+</ul>
+<p><a href="architecture1.gif"><img src="architecture2.gif" width="960" height="720"></a></p>
 <p>Let's explain a little bit more about the architecture. There are a few main components to be recognized that are further described in this document. These components or modules are the following:</p>
 <ul>
   <li>The GUI of LamPI</li>
-  <li>The LamPI-daemon process</li>
+  <li>The LamPI-node.js process</li>
   <li>The device handling, with transmitters (send 2 device) and receivers (from sensors)</li>
   <li>The mySql database</li>
   <li>New: The Z-Wave gateway</li>
 </ul>
 <p>When you have a lot of devices, or sensors around the house you might duplicate functions for more reach, or duplicate to spread the load on the system more evenly. In this case the described modules can be put on separate systems. These do not have to be Raspberry systems per-se but can also be your fileserver or NAS or your router.</p>
-<p>You have to keep in mind though that these systems have dependensies and need other packages to be available in order to work. For example the LamPI-gui needs apache and webserver availability including websocket support, the database function needs MySQL support and the LamPI-daemon needs a php system in place. Communication between modules takes place with regular sockets or websockets (with exception of the database where we use the mysql function). There are advantages and disadvantages wrt to the approach chosen for the communication between GUI frontend and LamPI-daemon backend.</p>
+<p>You have to keep in mind though that these systems have dependensies and need other packages to be available in order to work. For example the LamPI-gui probably needs apache and webserver availability including websocket support, the database function needs MySQL support and the LamPI-node.js needs a node.js system in place. Communication between modules takes place with regular sockets or websockets (with exception of the database where we use the mysql function). There are advantages and disadvantages wrt to the approach chosen for the communication between GUI frontend and LamPI-node backend.</p>
 <p>The disadvantage is that with the old plain socket communication and supporting ajax PHP scripts such as backend_rasp.php all looked much easier and developer is in control. Only you think you are, as most of the ajax calls are asynchronous in nature, and the backend PHP scripts run only once so information that is not directy available from the LamPI-daemon will not be received and results in a time-out.</p>
-<p>Webserver transmission is rather simple, once the socket is open you're good to go. Incoming messages are more complicated, they arrive asynchronously to the LamPI-x.y.js client and so we must make sure that these messages are delivered to the correct handler of the program. Also, it is good to define a standard message format between GUI &lt;-&gt; LamPI-daemon &lt;-&gt; Transmitter/Receiver/Sensors.</p>
+<p>Webserver transmission is rather simple, once the socket is open you're good to go. Incoming messages are more complicated, they arrive asynchronously to the LamPI-x.y.js client and so we must make sure that these messages are delivered to the correct handler of the program. Also, it is good to define a standard message format between GUI &lt;-&gt; LamPI-node &lt;-&gt; Transmitter/Receiver/Sensors.</p>
 <p>As good example is what we do with incoming startus changes for devices in the program.</p>
 <ul>
   <li>If we receive status change for a device which is in our current room on screen, we want to update the switch or slider on the screen to reflect the change in value.</li>
@@ -62,56 +74,52 @@ The startup html file calls LamPI-x.x.min.js which will perform the following in
 </ul>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
-<h1><a name="lampidaemon"></a>Architecture of the LamPI-daemon</h1>
-<p>The LamPI-daemon can be found in the ~/daemon directory together with its supporting backend files. LamPI-daemon.php is written in php and is started automatically with a cron script every minute. This way we know that the systen will start even when it encountered a fatal error. Not that there are any known at the moment of writing, the daemon will run fine for weeks in a row, but just in case. Actuall, since we use the log aging system - every night at 02:00 hrs the log files are moved to a .log.x file - the daemon needs to be restarted so that it again writes to the new and correct ~/www/log/LamPI-daemon.log file</p>
-<p>The LamPI-daemon is a PHP program that will accept socket connections from clients and  transceivers. It will accept device commands from the front end and send back status changes of devices (for example from timers). On the &quot;other side&quot; it will messages from the transceiver with read sensor and handset information and may act upon those messages. LamPI-daemon will also initiate messages to the 433MHz devices based on either incoing commands from the client(s) or timers that expire for certain actions. The LamPI-daemon is implemented in PHP and is found in the exe directory (as we have to remove such a PHP function from the www directory so it cannot be called directly by a web client).</p>
-<h2>Why use PHP</h2>
-<p>The fact that the daemon is implemented as a PHP program has its reasons. And of course there are disadvantages but also advantages to this approach. Let me start off with some reasons why I decided to implement the daemon in PHP rather than C or C++.</p>
+<h1><a name="lampidaemon"></a>Architecture of the LamPI-node.js daemon</h1>
+<p>The LamPI daemon can be found in the ~ directory together with its supporting local libraries in the ~/modules directory. LamPI-node.js is written in Javascript and is started automatically with a cron script every minute. This way we know that the systen will start even when it encountered a fatal error. Not that there are any known at the moment of writing, the daemon will run fine for weeks in a row, but just in case. Actually, since we use the log aging system - every night at 02:00 hrs the log files are moved to a .log.x file - the node daemon needs to be restarted so that it again writes to the new and correct ~/www/log/LamPI-daemon.log file</p>
+<p>The LamPI-node.js is a node.js Javascript program that will accept socket connections from clients and  transceivers. It will accept device commands from the front end and send back status changes of devices (for example from timers). On the &quot;other side&quot; it will messages from the transceiver with read sensor and handset information and may act upon those messages. LamPI-node will also initiate messages to the 433MHz devices based on either incoing commands from the client(s) or timers that expire for certain actions. The LamPI-daemon is found in the ~ directory.</p>
+<h2>Why use node.js</h2>
+<p>Not ong ago the LamPI&nbsp;daeon was implemented in PHP, and I was reasonable satisfied with the results. However, in April 2015 I decided to rewrite the code to node.js. If offered a set of distict advantages: </p>
 <ul>
-  <li>PHP is present on (m)any webservers; </li>
-  <li>It is much more well-known to web developers than C or C++. As a result there are tons of example programs available and a communicty that will support you (provided you ask sensible questions :-).</li>
-  <li>It is a language with very many built-in functions and extensions.</li>
-  <li>Easy debugging</li>
+  <li>One language to work in. May not seem that important, and it certainly was not a big deal for me. However I found that sharing object defnitions and working with websockets is indeed easier&nbsp;f both sides use more or less same language, libraries and tools.</li>
+  <li>Performance of node.js is quite OK. Only the static webserver does not have enough performance and therefore it is adviced to use apache to run the gui website. It is possible to use the static webserver of node.js on port 8080 as well, then the user should start his/her page with &quot;http://&lt;your-IP&gt;:8080&quot; as LamPI-node.js listens to port 8080.</li>
+  <li>The whole concept of node.js - asynchronous execution - is very, very much suitable for LamPI</li>
+  <li>Node.js is hot and there is support from user communicties and modules are developed on a daily base.</li>
 </ul>
-<p>Some disadvantages of not using C/C++</p>
+<h3>Disadvantages:</h3>
+<ul>
+  <li>Node.js does not have the same modular approach as PHP has (or can have). Including functions when needed is different and&nbsp;the Javascript program is evaluated and run as a whole in most cases.</li>
+  <li>Some modules are developed but since they are not maintained by a standards group but by individuals, support may be limited or case after a while.</li>
+</ul>
+<h3>Some disadvantages of not using C/C++</h3>
 <ul>
   <li>Speed; PHP is an interpreted language. This may sound as a serious disadvantage, but speed as in reaction time is not important for LamPI-daemon as the resolution for timing is 1 minute for timing settings, and a second for timing of commands coming from clients. Sor sensors this is different, they work on interrupt basis and therefore handling of incoming pulses or sensor values is critical. Therefore sensors are programmed in C for speed and deliver their values over the network to the daemon.</li>
   <li>Linux standard for daemons is C; true in most cases, and daemons are started in services/init.d or inet in most cases. However, for a Raspberry which is dedicated to just this task or one or two others this is not a problem.</li>
-  <li>PHP does not have native websocket support. Nor does C/C++, but we're used to that. Actually, initiating socket communication is a lot simpler in PHP than C and although PHP does not yet have a websockets layer, it does have native jSon encode/decode functions which are very easy due to the flexible memory allocation in PHP.<br>
-    Most important omission is the connection upgrade needed for Websocket support. At the moment there are pieces of code available that support these websocket functions but we could for sure use a better/standard library.
-  </li>
 </ul>
-<p>So, after some consideration I decided that building this daemon in PHP would offer me more functions, allow me to put the daemon on almost any webserver without the need of a C/C++ compiler and be much more flexible when making changes.</p>
-<h2>Architecture of the LamPI-daemon.php file</h2>
-<p>The LamPI-daemon process is implemented in the LamPI-daemon.php file and one or two supporting files (one for configuration and one for common smaller functions). The file is split in a few important parts:</p>
+<p>So, after some consideration I decided that building this daemon in node.js would offer me enough functionality, allow me to put the daemon on almost any webserver without the need of a C/C++ compiler and be much more flexible when making changes.</p>
+<h2>Architecture of the LamPI-node.js file</h2>
+<p>The LamPI daemon process is implemented in the LamPI-node.js file and a few supporting modules (in directory ~/modules). The file is split in a few important parts:</p>
 <ul>
   <li>The definition of supporting functions that are called from the main program</li>
   <li>The main program initialization part for variables and reading the commandline</li>
   <li>The main Loop for the daemon with globally three stages:<br>
     <br>
     <ol>
-      <li>Reading the network Sockets; for incoming requests from the clients and incoming messages from sensors or handsets.</li>
-      <li>Run Queue; The queue with all runnable commands (received from timers and over sockets)  is read and if it is time, the command is popped off the queue and the command messages is forwarded to the transceiver which will send the command to the 433MHz devices in our home.</li>
-      <li>Timer section. It will read the MySQL database and if there are timers that expire, it will read the scene with actions associated with that timer and after breaking down each of the device commands in that scene, these device commands are put in the run queue (stage 2) for the daemon</li>
+      <li>Starting all connection endpoints and database. The whole initialisation takes quite some time&nbsp;on an old model Raspberry.</li>
+      <li>After initializations, messages coming in on the system are forwarded to the socketHandler() function which in turn will split out to dbaseHandler(), guidHandler(), rulesHandler() etc based on the nature of the message received.</li>
+      <li>poll_loop() - A timer loop with a medium length interval that will poll the Z-Wave device for changed device values. If found, it will update the internal LamPI-device object ith these changed values. Remember LamPI has both 433 and 868MHz devices attached and this loop will only deal with the Z-Wav (868 MHz) devices.</li>
+      <li>alarm_loop() - An interval timer that is running with a VERY short interval. It should be able to handle alarms coming in to the system and deal with rules that are present in the config['rules'] object</li>
+      <li>zwave_loop() -&nbsp; This is a logging loop for Z-Way devices only. It is run once every 2 minutes and will show the status of the various ZWave devices on the log file. This function is not critical by any means and if not necessary the user can decide to increase its timer to a much higher value.</li>
+      <li>timer_loop() - This loop will study the config['timers']&nbsp;array looking for timers that need to run. It is started every 30 seconds or so. Since LamPI timers have a resolution of one minute it does not make sense to decrease the timer lower than 30 seconds.</li>
+      <li>routes - LamPI-node.js has a few other &quot;routes&quot; to support special/management functions. The URL &quot;http://&lt;your-IP&gt;:8080/init&quot; will re-nit the database, it will read ~/config/database.cfg and fill the LamPI database from scratch. Note: User tables once put in the database will not be overwritten. Use your database program to change these by hand&nbsp;if necessary.</li>
     </ol>
   </li>
 </ul>
 <p>Note: The run queue might also consist of more complex commands such as &quot;All Off&quot; in a room. If such a complex command is encountered on the Run Queue it is replaced with the individual device &quot;OFF&quot; commands which are then each added separately to the Run Queue instead.</p>
-<h3>Stage 1: Reading the Network Sockets</h3>
-<p>In the first stage of the Main Loop, we read sockets and process incoming messages and reply where necessary to connected GUI clients and daemon programs (receivers). For the GUI clients we make use of websockets, which is a more secure and protected service using a 2-step connection mechanism. For the receivers (433, 1-wire etc sensors) we use a simple interface which is not based on websockets. If we receive an incoming GUI message telling us that the used changed the setting of a remote dimmer, than the message will be decoded an put in the run-queue of ready-to-run device commands. In <a href="#stage2">stage 2 (below)</a> the run queue will be handled and we will take care of messages/commands tha are ready to run.</p>
-<p>The LamPI-daemon.php process will accept both websocket and normal tcp/ip connect requests and we will make note of the type of device connecting. This is important, as incoming messages from sensors need to be forwarded to the connect GUI clients but most likely we do NOT forward to other receivers. </p>
-<p>As of release 1.9.3 the default communication protocol for sensors is UDP broadcast (SOCK_DGRAM). The advantage for using a connectionless broadcast messaging protocol outweigh the drawbacks of UDP, which is that it is less reliable and one might miss a transmission. As messages sent by sensors are mostly shorter in size than a few hundred bytes, we do not really need a connection-based protocol that is reliable. After all, we are not making a tcp service for transmitting magebytes of data, and should we miss a message than within one or two minutes the next sensor message will be transmitted.</p>
-<h3><a name="stage2"></a>Stage 2: Reading the run queue</h3>
-<p>The run queue is defined by the QUEUE class and defined in the LamPI-daemon.php file. The Queue consists of messages that are all defined in the same sort of syntax that is used by the ICS-1000 device, but extended with some new message definitions that we use for connected handsets, sensors etc.</p>
-<p>A special case are the &quot;All Off&quot; scene commands. If we encounter such a command next in the queue, the scene message is replace by a room &quot;device OFF&quot; command for every device in that room. </p>
-<h3>Stage 3: Reading Timers (and put ready commands in run queue)</h3>
-<p>When starting this stage in the daemon loop, we start reading the database and load the timers array with the latest values in the database. This prevents us from taking actions based on database information that could already be out of date.</p>
-<p>If we find a timer that is runnable, we take the scene command inside that timer and put it on the run queue. It will then be taken off the queue in the next loop of the program in <a href="#stage2">stage 2</a>.</p>
-<p>&nbsp;</p>
+<h3>&nbsp;</h3>
 <h1><a name="transceiver"></a>Device Handling: Transmitters &amp; Receivers</h1>
 <p>Transceivers is not entirely the correct name for the programs in this section. But as seen from the LamPI-daemon (<a href="#lampidaemon">see next main section</a>) these are the functions interfacing with the physical 433MHz receiver and transmitter devices on the RaspberryPI. The daemon sees it as one connection with the Raspberry for both receiving handset/sensor information as well as sending device commands.</p>
 <p><em>Note: In the last revision of the LamPI software, sensors or receivers (= receivers) send messages to the LamPI-daemon  and LamPI-daemon sending device commands (= transmitters) will be in separated directories.</em></p>
-<p>The receiver functions are located in the ~/receivers subdirectory.</p>
+<p>The sources of the receiver functions are located in the ~/receivers subdirectory.</p>
 <h2>Transmitters</h2>
 <p>The transmitter function is the most straightforward function implemented. For every known and supported brand we compile and build and executable which is installed in the ~/exe directory. It is possible to call these functons from the commandline, but if we run the LamPI-receiver in daemon mode (-d option) the daemon will also provide transmitter functions (for requests coming in on sockets). The LamPI-receiver will call these command-line programs directly using the PHP system() command.</p>
 <p>Therefore it makes sense to keep the naming of the transmitter programs standard (make no change, or if you do change the transmitter.c code as well). Also the commandline options for each of the transmitter programs are the same (makes sense too, not?). All programs must be called as follows&quot;</p>
@@ -144,7 +152,7 @@ The startup html file calls LamPI-x.x.min.js which will perform the following in
 <h4>transmitter (transmitter.c)</h4>
 <p>Without the -d option to the commandline, the sniffer program will not be configured to interface with the various transmitters. But with the -d options specified, the sniffer executable (or if you run make install it is called ~/exe/LamPI-receiver) will act as a daemon listening to port 5000 on a socket TCP connection. It will write all received handset and sensor codes to the socket, but more importantly for this discussion, it will also listen to incoming commands over the socket and than call the corresponding transmitter program.</p>
 <h3>Message format</h3>
-<p>The message format that is exchanged between the LamPI-daemon and the LamPI-receiver process (2-way) is described in more detail above.</p>
+<p>The message format that is exchanged between the LamPI-daemon and the LamPI-receiver process (2-way) is described<a href="message_format.html"> in a separate document</a>.</p>
 <p>&nbsp;</p>
 <h2><a name="zwave"></a>Z-wave Gateway Connect</h2>
 <p>The Z-Wavy messaging format is described on the separate Z-Wave page. Reason is that this is not so much a programming interface but communication takes place as a URL string that is executed by &quot;curl&quot; in the LamPI-daemon. At the moment the communication is therefore initiated by the LamPI-daemon only.</p>

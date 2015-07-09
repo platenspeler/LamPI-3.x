@@ -8,24 +8,24 @@
 
 <h1>LamPI ToC</h1>
 <h4>This page contains the Table of Content fo LamPI. For other information such as code please visit its  GIT repository on <a href="https://github.com/platenspeler">https://github.com/platenspeler</a>, and the documentation on <a href="http://platenspeler.github.io">http://platenspeler.github.io</a></h4>
-<h2>Release Manual</h2>
+<h1>Release Manual</h1>
 <ul>
   <li><a href="changelog.html">Read the Changelog</a></li>
-  <li><a href="index.html#known_issues">Known Issues</a></li>
-  <li><a href="index.html#planned_functions">Planned Functions</a></li>
+  <li><a href="planned.html#KnownIssues">Known Issues</a></li>
+  <li><a href="planned.html">Planned Functions</a></li>
 </ul>
-<h2>Hardware Support Guide</h2>
+<h1>Hardware Support Guide</h1>
 <ul>
   <li><a href="Hardware/hardware_guide.html">Hardware Guide</a></li>
   <li><a href="Hardware/transceiver.html">Transceiver (Receiver and Transmitter)</a></li>
 </ul>
-<h2>Installation Guide</h2>
+<h1>Installation Guide</h1>
 <ul>
   <li><a href="Installation_Manual/setup.html">Initial LamPI Setup</a></li>
-  <li>Using Automated Installation with PI-install</li>
+  <li><a href="Installation_Manual/PI-install.html">Using Automated Installation with PI-install</a></li>
 </ul>
-<h1>User Guide; LamPI GUI Functions</h1>
-<p>LamPI contains 6 main screens at the moment: Rooms, Scenes, Timers, Handsets, Weather and Config. A next section on Energy is planned. For every screen I have assembled a few pages that contain instructions on common tasks you will perform. The documentation for the LamPI functions can be found on this site on the following pages.</p>
+<h1>User Guide; LamPI GUI</h1>
+<p>LamPI contains 7 main screens at the moment: Rooms, Scenes, Timers, Handsets, Sensors, Energy and Config.  For every screen I have assembled a few pages that contain instructions on common tasks you will perform. The documentation for the LamPI functions can be found on this site on the following pages.</p>
 <ul>
   <li><a href="UserGuide/getting_started.html">Getting Started with LamPI</a></li>
   <li><a href="UserGuide/rooms.html">The Rooms Screen</a></li>
@@ -36,30 +36,30 @@
   <li><a href="UserGuide/energy.html">The Energy screen (optional)</a></li>
   <li><a href="UserGuide/config.html">The Config Screen</a></li>
 </ul>
-<h2>&nbsp;</h2>
 <h1>Developer Guide</h1>
-<h3>Architecture</h3>
+<h2>Architecture</h2>
 <ul>
   <li><a href="DeveloperGuide/ArchitectureGuide/architecture.html">Architecture Guide for LamPI</a></li>
   <li>LamPI Directory Structure</li>
   <li><a href="DeveloperGuide/ArchitectureGuide/message_format.html">LamPI message format</a></li>
 </ul>
-<h3>LamPI Look-'n-feel with css files</h3>
+<h2>LamPI Look-'n-feel with css files</h2>
 <ul>
   <li>.scss files and .css files</li>
   <li>Using Koala (or other css authoring tools)</li>
+  <li> Customizing LamPI Gui</li>
 </ul>
-<h3>LamPI Settings</h3>
+<h2>LamPI Rules Editor</h2>
+<p>The LamPI rules editor is based on the Google Blockly work.</p>
 <ul>
-  <li>	Customizing LamPI Gui</li>
+  <li><a href="Rules_Manual/index.html">Rules Developer Info</a></li>
 </ul>
 <h2>LamPI Backend</h2>
-<p>Apart from the GUI interface, on the backend there are some other programs active that interact with home automation switches in our house. Backend services are provided by the LamPI-daemon.php process and located in the ~/daemon directory. Some supporting executables are located in the ~/exe directory, especially as these need root privileges to run, I put them all in a separate location.<br>
+<p>Apart from the GUI interface, on the backend there are some other programs active that interact with home automation switches in our house. Backend services are provided by the LamPI-node.js process and located in the ~ directory. Some supporting executables are located in the ~/exe directory, especially as these need root privileges to run I put them all in a separate location.<br>
 </p>
 <ul>
-  <li><a href="sensors/weather_sensors_msg_format.html"></a>LamPI-daemon.php (see directory ~/daemon)</li>
-  <li>Supporting files for the daemon; backend_lib.php, backend_sql.php, backend_set.php, backend_cfg.php</li>
-  <li>Command-Line Interface (see directory ~/exe)</li>
+  <li><a href="sensors/weather_sensors_msg_format.html"></a>LamPI-node.js (see directory ~)</li>
+  <li>Command-Line Interface (see directory ~/exe) for sensors, transmitters and receiver</li>
   <li>LamPI-receiver (see directory ~/exe)<br>
   </li>
 </ul>
@@ -70,14 +70,15 @@
   <li><a href="sensors/dallas_sensors.html">Wired sensors connected with the Dallas bus</a></li>
   <li><a href="sensors/i2c_sensors.html">Wired sensors connected with the i2c bus</a></li>
   <li><a href="index.html#planned_functions">Message format for weather sensors</a></li>
-  <li>Energy sensors</li>
-  <li>Message format for energy sensors</li>
+  <li>Energy sensors and message format for energy sensors</li>
 </ul>
 <h2>LamPI and TemPI Graphics</h2>
 <p>How to make sensor trend graphics for historical temperature, humidity etc. using rrdtool</p>
 <ul>
-  <li><a href="rrdtool graphs/graphs.html">Introduction to rrdtool graphs</a> </li>
-  <li><a href="rrdtool graphs/making_graphs.html">How to make your own Graphs</a></li>
+  <li><a href="Graphs_Manual/graphs.html">Introduction to rrdtool graphs</a> </li>
+  <li><a href="Graphs_Manual/making_graphs.html">How to make your own Graphs</a></li>
 </ul>
+<p>&nbsp;</p>
+<p>July 07, 2015</p>
 </body>
 </html>

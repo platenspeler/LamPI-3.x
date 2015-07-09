@@ -2,7 +2,7 @@
 // This "library File" does dontain the socket communication which should
 // be the same across all LamPI related programs suchs as sensor and energy charts 
 // and the rules editor.
-// Please note that not all functions are used in every sub page, so be careful with 
+// Please note that not all functions are used in every sub page, so be careful with
 // function and variable references
 // ========================================================================================
 // 
@@ -33,7 +33,7 @@
 // VARIABLES
 //
 var use_energy = 0;						// Initialize the value on 0
-
+var loginprocess=false;					// Is there a login process going on?
 		
 
 
@@ -158,6 +158,125 @@ function lookup_uaddr(rm_id, dev_id) {
 	logger("lookp_uaddr:: No index in devices found for room: "+rm_id+", dev id: "+dev_id,1);
 	return(-1);		
 }
+
+// -------------------------------------------------------------------------------
+// Helper function for askForm
+//
+function checkLength( o, n, min, max ) {
+	if ( o.val().length > max || o.val().length < min ) {
+		o.addClass( "ui-state-error" );
+		updateTips( "Length of " + n + " must be between " +
+		min + " and " + max + "." );
+		return false;
+	} else {
+		return true;
+	}
+}
+
+// -------------------------------------------------------------------------------------
+// Dialog Box, Ask for  details as specified in function paramters
+// 1. Your dialog text,including the button specification (see activate_room for a description)
+// 2. The function to execute when user has provided input
+// 3. The function to execute when operation is cancelled
+// 4. The title of your dialog
+//
+// Input Values (only val_1 is required, other optional for more or less input fields
+// val_1, val_2, val_3 etc 
+// Return values is an array in var ret, So ret[0] may contain values just as many as val_x
+//
+function askForm(dialogText, okFunc, cancelFunc, dialogTitle) {
+  if (jqmobile == 1) {
+		$( "#header" ).empty();
+		var $popUp = $("<div/>").popup({
+			id: "popform",
+			dismissible : false,
+			theme : "b",
+			overlayTheme : "a",
+			title: dialogTitle || 'Confirm',
+			maxWidth : "500px",
+			dialogClass: 'askform',
+			transition : "pop"
+		}).bind("popupafterclose", function() {
+			//remove the popup when closing
+			$(this).remove();
+		});
+		$("<div/>", {
+			text : dialogTitle
+		}).appendTo($popUp);
+		$(dialogText,{}).appendTo($popUp);
+	
+		// Submit Button
+		$("<a>", {
+			text : "Submit"
+		}).buttonMarkup({
+			inline : true,
+			icon : "check"
+		}).bind("click", function() {
+			if (typeof (okFunc) == 'function') {
+				// Return max of 5 results (may define more)...
+				var ret = [ $("#val_1").val(), $("#val_2").val(), $("#val_3").val(), $("#val_4").val(), , $("#val_5").val() ];
+				setTimeout(function(){ okFunc(ret) }, 50);
+			}
+			if (debug>=2) alert("Submit");
+			$popUp.popup("close");
+			//that.subscribeToAsset(callback);
+		}).appendTo($popUp);
+
+		// Back button
+		$("<a>", {
+			text : "CANCEL",
+			"data-jqm-rel" : "back"
+		}).buttonMarkup({
+			inline : true,
+			icon : "back"
+		}).bind("click", function() {
+			if (typeof (cancelFunc) == 'function') {
+				setTimeout(cancelFunc, 50);
+			}
+			$popUp.popup("close");
+			if (debug>1) alert("cancel");
+			//that.subscribeToAsset(callback);
+		}).appendTo($popUp);
+		$popUp.popup("open");
+	}
+  
+  // jQuery UI style of dialog
+  
+	else {
+		$('<div style="padding: 10px; max-width: 500px; word-wrap: break-word;">'+dialogText+'</div>').dialog({
+			draggable: false,
+			modal: true,
+			resizable: false,
+			width: 'auto',
+			title: dialogTitle || 'Confirm',
+			minHeight: 120,
+			dialogClass: 'askform',
+			buttons: {
+				OK: function () {
+					//var bValid = true;
+	//				bValid = bValid && checkLength( name, "name", 3, 16 );
+        			if (typeof (okFunc) == 'function') {
+						// Return max of 5 results (may define more)...
+						var ret = [ $("#val_1").val(), $("#val_2").val(), $("#val_3").val(), $("#val_4").val(), $("#val_5").val() ];
+						setTimeout(function(){ okFunc(ret) }, 50);
+					}
+					$(this).dialog('destroy');
+				},
+				Cancel: function () {
+					if (typeof (cancelFunc) == 'function') {
+						setTimeout(cancelFunc, 50);
+        			}
+					$(this).dialog('destroy');
+				}
+			},
+			close: function() {
+				$(this).dialog('destroy');
+			}
+		});
+		// logger(" name: "+name.val);
+	}
+} // askForm end
+
 
 
 

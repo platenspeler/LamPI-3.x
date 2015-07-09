@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Rules Editor</title>
+</head>
+
+<body>
+
+<h1>LamPI Rules Function</h1>
+<h2>Introduction</h2>
+<p>Starting with LamPI release 3.3, we offer another method for invoking devices based on time, alarms or other events. With the new rules engine which is based on Google's blockly developers kit it is possible to create your own rules for LamPI and have them evaluated and executed every 2 seconds.</p>
+<h2>Screen Layout</h2>
+<p>The editor screen has the following layout: At the right - or anywhere else if defined by the CSS file in use- is the menu area. There are 5  standard commands recognized:</p>
+<ol>
+  <li><img src="menu/menu_run_01.JPG" width="112" height="38"> - Run a rule on the local editor system. Since the editor does not always have the same functions available as the daemon (LamPI-node.js runs without a GUI) some functions may not run&nbsp;as expected or not run at all. For initial debugging this function is OK.</li>
+  <li><img src="menu/menu_activate_01.JPG" width="110" height="39"> - This buttons will activate or de-activate the current rule (the current rule is always&nbsp;yellow or otherwise colored by the hover css attribute). So in the example below you can see that &quot;effe&quot; is active. If you want to de-activate &quot;effe&quot;, first make it the current rule to work on (click on &quot;effe&quot;) and then click on &quot;Activate&quot; to de-activate the rule. When activating or de-activating the rule, the whole rule will be backed-up to the MySQL database.</li>
+  <li><img src="menu/menu_store_01.JPG" width="113" height="40"> - Store the current rule to the database. When pressing the store button the system will show a popup window with the current generated jrule and the brule generated that are&nbsp;stored in the database. If you want to load the rule whene (re-)initializing the database, make sure to cut and paste these 2 values in the &quot;~/config/database.cfg&quot; json database file.</li>
+  <li><img src="menu/menu_new_01.JPG" width="113" height="42"> - Make a new rule and put it an the end of the header list. Please remember to save your work in the current rule first before making a new rule or the work on the screen you're working on will be lost.</li>
+  <li><img src="menu/menu_delete_01.JPG" width="111" height="41"> -&nbsp;Delete the curent rule.</li>
+</ol>
+<p>In the header section all rules that are defined are displayed. In the example below that is &quot;cv-room&quot;, &quot;console&quot; and &quot;effe&quot;. By pressing one of these buttons, the active screen loads with the corresponding rule. The yellow hover defines which rule is visible on the screen at that moment and being worked on. The red border outline of a button tells us that the corresponding rule is active in the LamPI-node.js daemon.</p>
+<h2>How to start the Rules Editor</h2>
+<p>The rules editor can be change from the LamPI Gui by visiting the config section and then select &quot;rules&quot; from the header menu bar. Alternatively the user can also start the rules editor directly from the browse by the following URL: &quot;http://&lt;Your-IP&gt;/rules&quot;.</p>
+<p>On the screen below you see that the active rule is &quot;cv-room&quot; and there is only one active rule: &quot;effe&quot;.</p>
+<p><img src="screenshots/sensor_1.JPG" width="1254" height="785"></p>
+<p>&nbsp;</p>
+<p>Every rule that is made on the screen will translate in two fields in our rules array: The jrule field which is displayed in the message area of the screen contains the Javascript representation of the rule as it is executed by the daemon if we activate that rule in LamPI. The brule field of the rules object contains the internal rule definition which is used by blockly to build up all visible elements of the rules so that we can change the rule, delete it or store the rule in the database for later use.</p>
+<p>The &quot;cv-room&quot; rule defined in our example has the following jrule field for the rule in the database. I have used a pretty print method which makes the rules readible:</p>
+<p><code>if (config['sensors'][14]['sensor']['temperature']['val'] &gt; 28) { <br>
+&nbsp;&nbsp;
+console.log('Warmer, switch Lampi ');<br>
+&nbsp;&nbsp;
+queueDevices(0,'10','00:00:0:00',0,1); <br>
+}<br>
+else { <br>
+&nbsp;&nbsp;
+console.log('colder'); <br>
+&nbsp;&nbsp;
+queueDevices(0,'off','00:00:0:00',0,1); <br>
+}</code></p>
+<h2>Blocks Available</h2>
+<p>The blockly interface as defined by Goggle offers a set of standard block elements to use in your own rules. However, not all rules make sense in a Home Automation (HA) environment, and some are missing. Therefore, some element have been created that are useful&nbsp;when creating your own rules.</p>
+<p>The following LamPI building blocks are available to build your rules:</p>
+<h3>controls</h3>
+<p>&nbsp;</p>
+<table width="800" border="0">
+  <tr>
+    <td width="216"><img src="blocks/if_01.JPG" width="87" height="82"></td>
+    <td width="574">This is a standard block, optionally, by clicking the * the user may specify &quot;else&quot; and &quot;else if&quot; conditions</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/repeat_01.JPG" width="162" height="93"></td>
+    <td>This is a standard block</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/repeat_02.JPG" width="158" height="78"></td>
+    <td>This is a standard block</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/freq_1.JPG" width="198" height="55"></td>
+    <td>This is a LamPI block.</td>
+  </tr>
+</table>
+<h3>logic</h3>
+<table width="800" border="0">
+  <tr>
+    <td width="220"><img src="blocks/logic_value_1.JPG" width="48" height="34"></td>
+    <td width="570">This is a standard block. It takes an integer or float value specified by the user</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/logic_cond_1.JPG" width="129" height="43"></td>
+    <td>This is a standard block.</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/logic_oper_1.JPG" width="134" height="43"></td>
+    <td>This is a standard block.</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h3>text</h3>
+<p>&nbsp;</p>
+<table width="800" border="0">
+  <tr>
+    <td width="219"><img src="blocks/text_quote_1.JPG" width="93" height="31"></td>
+    <td width="571">This is a standard block</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/text_print_1.JPG" width="70" height="39"></td>
+    <td>This is a standard block</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/text_console_1.JPG" width="102" height="41"></td>
+    <td>This is a LamPI block. This element takes a string as input and displays it on the console.</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/text_alert_1.JPG" width="77" height="39"></td>
+    <td>This is a LamPI block. Similar to the console element, this block will display the string as an alert message on the GUI(s).</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/text_length_1.JPG" width="110" height="31"></td>
+    <td>This is a standard block. This element will take a string as input on the right and return the length of this string to the left.</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/text_append_1.JPG" width="210" height="38"></td>
+    <td>This is a standard block</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h3>sensors</h3>
+<p>Sensors are read-only&nbsp;(by the program) in principle. There are several types of sensors possible, the most well known being the tenperature and humidity sensors.</p>
+<table width="800" border="0">
+  <tr>
+    <td width="213"><img src="blocks/sensors_temperature_1.JPG" width="163" height="37"></td>
+    <td width="577">This is a LamPI block to lookup the last known value of a temperature sensor and pass it to the left (to use in a condition)</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/sensors_humidity_1.JPG" width="156" height="33"></td>
+    <td>This is a LamPI block to lookup the last known value of a humidity sensor and pass it to the left (to use in a condition)</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<h3>devices</h3>
+<p>Well known devices are switches, dimmers and thermostats. Values of these three type of devices can be read and changed.</p>
+<table width="800" border="0">
+  <tr>
+    <td width="213"><img src="blocks/devices_get_1.JPG" width="199" height="36"></td>
+    <td width="577">&nbsp;This is a LamPI block used in conditions&nbsp;and can be used to pass the value of the device to&nbsp;the condition.</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/devices_set_1.JPG" width="161" height="43"></td>
+    <td>This is a LamPI block used to set the value of a device to a particular value. The device can be selected using the drop down menu, the value must be passed on the right side.</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h3>times</h3>
+<table width="800" border="0">
+  <tr>
+    <td width="214"><img src="blocks/times_time_1.JPG" alt="" width="68" height="35"></td>
+    <td width="576">This is a LamPI block. The current time in milliseconds from 1 jan 1970 is output to the left element.</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/times_sunrise_1.JPG" alt="" width="93" height="37"></td>
+    <td>This is a LamPI block. The sunrise time of today is output in milliseconds</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/times_sunset_1.JPG" alt="" width="88" height="35"></td>
+    <td>This is a LamPI block. The sunset time of today is output in milliseconds</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/times_hhmmss_1.JPG" alt="" width="154" height="33"></td>
+    <td>This is a LamPI block. The number of hours, minutes and seconds is output in milliseconds.</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h2>And what happens under the hood?</h2>
+<p>Under the hood we use the standard available blockly functions provided by Google and we also have our own blockly defnitions put in a dedicated file: /home/pi/www/rules/myBlocks.js. For every custom Blockly element we have to define 2 functions: a definition file to support the editor in creating our object and a generator file to help generating the right javascript code once we include our own blockly in LamPI.</p>
+<p><code>// ------------------------------------------------------------<br>
+  // 3.<br>
+  Blockly.Blocks['devices_set'] = {<br>
+  &nbsp;
+init: function() {<br>
+&nbsp;&nbsp;&nbsp;
+this.setHelpUrl('http://www.westenberg.org/');<br>
+&nbsp;&nbsp;&nbsp;
+this.setColour(280);<br>
+  &nbsp;
+ &nbsp; var str = [];<br>
+  &nbsp;
+ &nbsp; for (var i=0; i&lt;devices.length;i++) {<br>
+  &nbsp;&nbsp;
+ &nbsp;&nbsp; str.push( [ devices[i]['name'], devices[i]['name']+&quot;&quot; ] );<br>
+  &nbsp;
+ &nbsp; }<br>
+ &nbsp;&nbsp;&nbsp; this.appendValueInput(&quot;dev_set&quot;)<br>
+ &nbsp;&nbsp;&nbsp; &nbsp; .setCheck(&quot;String&quot;)			// Only if type is not appendDummyInput<br>
+ &nbsp;&nbsp;&nbsp; &nbsp; .appendField(&quot;set: &quot;)<br>
+ &nbsp;&nbsp;&nbsp; &nbsp; .appendField(new Blockly.FieldDropdown( str ), &quot;set_1&quot;)<br>
+ &nbsp;&nbsp;&nbsp; this.setPreviousStatement(true, &quot;String&quot;);<br>
+ &nbsp;&nbsp;&nbsp; this.setNextStatement(true, &quot;String&quot;);<br>
+ &nbsp;&nbsp;&nbsp; //    this.setOutput(true, &quot;String&quot;);<br>
+ &nbsp;&nbsp;&nbsp;&nbsp; this.setTooltip('Set device value');<br>
+ &nbsp; }<br>
+};</code></p>
+<p><code>Blockly.JavaScript['devices_set'] = function(block) {<br>
+ &nbsp;&nbsp; var dropdown_set_1 = block.getFieldValue('set_1');<br>
+ &nbsp;&nbsp; var value_dev_set = Blockly.JavaScript.valueToCode(block, 'dev_set', Blockly.JavaScript.ORDER_ATOMIC);<br>
+ &nbsp;&nbsp; var code = '';<br>
+ &nbsp;&nbsp; var i = lookupDeviceByName(dropdown_set_1);<br>
+ &nbsp;&nbsp; if (i&gt;=0) {<br>
+ &nbsp;&nbsp;&nbsp; //code=&quot;config['devices'][&quot;+i+&quot;]['val']=&quot;+value_dev_set; <br>
+ &nbsp;&nbsp;&nbsp;&nbsp; code=&quot;queueDevice( &quot;+i+&quot;, &quot;+value_dev_set+&quot;, '00:00:00', 0, 1); &quot;;<br>
+ &nbsp;&nbsp; }<br>
+ &nbsp;&nbsp; return code;<br>
+};</code></p>
+<p>In the two functions above you can see that I added code to read my &quot;device&quot; object and use the available array members for a drop down list n the screen. In the generator file (Blockly.Javascript) you can see that I read the dropdown entry with lookupDeviceByName (a&nbsp;function made by me and also in the myBlocks.js file) and generate the queueDevice command that is availabl in my main LamPI-node.js daemon file. So once the code is &quot;eval()&quot;-uated by LamPI-node it will call that well-known function and the command will be executed.</p>
+<p>Note: The queueDevice() function contains some more parameters than just the index of the device&nbsp;(in the config['devices'] array and its SET value. The other parameters are for future extension and will allow execution of the command after a certain time and/or repeating the action for a number of times.</p>
+<p>The functions found above define my custom LamPI blocks, and are found in the myBlocks.js file in ~/rules directory. Google suggests that there are 2 separate code pieces tat may live in two separate files. Well, since we use Javascript for the screen definitions and also generate Javascript code, we have put both functions in the same myBlocks.js file. This is much better for the readibility of the code and allows easy debugging, changing etc in order to make your code work.<br>
+</p>
+<h2>Making your own custom&nbsp;Block elements</h2>
+<p>If you want to create your own custom block elements, it is adviced tat you use the provided Google Block&nbsp;Factory as a starting point. The block factory allows you to create the visual part of the new custom block without too much trouble after which you only need to provide parts of the code to interface wich your own application. The Block Factory shows the block you are working on, its block interface (see above for devices_set) and the javascript code that is being created (se also above for an example). </p>
+<p>Just cut and paste the code pieces to your own myRules.js file and make sure that file is &quot;sourced&quot; when you execute your own html/js program. And do not forget to make an entry in the blockly toolbox definition to include your new block and attach it to the menu.</p>
+<h2>Making a rule ...</h2>
+<p>This para explains how to make a new rule using the visible editor.</p>
+<h2>Adding&nbsp;your rule to the database.cfg file</h2>
+<p>Every rule that you make is stored in the database. So it is protected against restarts of both client and server. But what if for whatever reason we need to re-initialize the daemon, we would loose all our rules? The solution is to add our precious rules to the &quot;~/config/database.cfg&quot; file so upon an init we would load thee rules to the system.</p>
+<p>The best way to do this is to print&nbsp;the configuration on the screen. You can do thsi from the &quot;config&quot; menu, choose &quot;console&quot; and then print the config. The other method is to use the following url: &quot;http://&lt;your-IP&gt;:8080/config&quot;. The configuration is output to the GUI, but more importantly it is also output to the console file &quot;~/log/PI-node.log&quot;.</p>
+<p>Go to this file and add the complete JSON string to the &quot;~/config/database.cfg&quot; file in the rules section.</p>
+<h1>Notes</h1>
+<p>Although rules work OK in most circumstances, there are situations or things to be careful about.</p>
+<ul>
+  <li>Be careful to make rules for devices that you will remove. The rule wil still be executed, even when the device or sensor is long&nbsp;gone.</li>
+  <li>The editor environment is NOT the run-time environment. Keep in mind that some functions, variables etc are only present in one environment but might not be present in the other. The XML definitions used on define the blocks on the screen are stored together with the excutable code in the database. If you create new block elements we do not know what happens with the ones already reated and whether they are influenced.</li>
+</ul>
+<h1>Examples</h1>
+<p>This chapter explains how to build your own rule, ranging from a simple console logging to a complicated timing example.</p>
+<h2>Example 1:</h2>
+<p>The first example is a simple temperature sensing example&nbsp;for a rule called &quot;ardeche&quot;. We have a temperature sensor&nbsp;lm75-3 defined in the database.cfg file, and when the temperature measured exceeds the 28 degrees (celcius) we &quot;do&quot; the following jrule: write to the console the text: &quot;More than 28 degrees&quot;, and otherwise write to the console the text: &quot;Less than 28 degrees&quot;.</p>
+<p><img src="examples/example_1_01.JPG" width="409" height="153"></p>
+<p>What you will find that the use of this rule is rather limited. The rule will only write to the console and apart from the administrator nobody will read the console of the LamPI-node.js daemon too often.</p>
+<h2>Example 2:</h2>
+<p>Using the example above, there are circumstances where we want to take another type of action than just a console message when the temperature reaches a predefined level. This example exmplains to to swich a device on when the temperature reaches a certain value.<br>
+  Please do not question yourself whether it makes senso to switch lightbulbs as a function of measured temperature ... thisexample merely shows the possibilities of the rule editor and the run-time environment.
+</p>
+<p><img src="examples/example_2_01.JPG" width="402" height="205"></p>
+<p>The example above works as desired: As soon as the temperature measure by sensor &quot;Outside&quot; exceeds 28 degrees Celcius the console will displa a message and the &quot;lamp left&quot; is switched on with value 14 (It is a dimmer).</p>
+<h2>Example 3:</h2>
+<p>However, although the example above works as desired, it has a major drawback; Every time the rules is evaluated - and this is once every 2 seconds - the outcome will make that a 433MHz message is sent to switch the lamp on or off. This may be our intention, but normally we would only like to send a message when the lamp should change state, so once when the temperature increases and once when it drops below 28 degress Celcius.</p>
+<p>So let's make the same example but only send messages to the 433 devices when we need to change status (we left the console messages out):</p>
+<p><img src="examples/example_3_01.JPG" width="494" height="282"></p>
+<p>So when using the rule above, the amount of transmissions over the air is reduced significantly, and apart from doing some &quot;eval&quot; uations we use no critical resources of the computer.</p>
+<h2>Example 4:</h2>
+<p>Switching on the lights in your room when it becomes dark is one of the most used rules in LamPI. Of course it is possible to use the LamPI timers for his purpose, but rules work equally well.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>July 05, 2015</p>
+</body>
+</html>
