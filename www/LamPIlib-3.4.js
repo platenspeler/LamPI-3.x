@@ -778,5 +778,3 @@ function load_database(dbase_cmd)
 	}, 500);		// 1/2 seconds (in millisecs)
 	return(1);
 }
-
-	

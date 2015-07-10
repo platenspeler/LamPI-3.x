@@ -17,14 +17,9 @@ var alarm_interval=   2000;			// Determines how often we scan sensors for change
 var timer_interval=  30000;			// Timer resolution in LamPI timers (crontab) is about 1 minute
 
 var webPort  = 8080;				// The generic http webserver port
-var sockPort = 5000;				// Websockets (gui) (XXX this must become port 5000)
+var sockPort = 5000;				// Websockets (gui)
 var udpPort  = 5001;				// UDP sensors this is port 5001
 var tcpPort  = 5002;				// RAW connected sensors: Port for net raw tcp connections
-
-var zhost = "192.168.1.52";			// IP of local Z-way gateway, in my case: 192.168.2.52
-var dbHost = "localhost";			// localhost, of 192.168.2.11 in my case
-var dbUser = "coco";
-var dbPassword = "coco";
 
 // Variables
 var tcnt = 0;						// transaction counter
@@ -40,9 +35,11 @@ var logDir  = homeDir+"/log"
 var rrdDir  = homeDir+"/rrd"
 var wwwDir  = homeDir+"/www"
 
+var par   = require('./config/params');
 var mysql = require('mysql'); console.log("mySQL loaded");
 var fs    = require("fs"); console.log("fs loaded");
 var strip = require("strip-json-comments"); console.log("strip-json-comments loaded");
+
 
 // --------------------------------------------------------------------------------
 // Logging function
@@ -162,7 +159,7 @@ console.log("All required modules loaded");
 var app = express();
 
 // Re-read the database from the init file database.cfg, temporary suspend all loops
-// XXX move database.cfg to another location
+// 
 app.all('/init', function (req, res, next) {
 	logger('Accessing the init section ...',1);
 	var str = "";
@@ -242,6 +239,13 @@ function readConfig() {
 	return(obj);
 }
 
+function writeConfig(cfile) {
+	logger("writeConfig:: wrinting configuration to file "+cfile,1);
+	var j = JSON.stringify(config);
+	fs.writeFileSync(cfile, j);
+	return;
+}
+
 function printConfig() {
 	var str="";
 	Object.keys(config).forEach(function(key) {
@@ -251,15 +255,45 @@ function printConfig() {
 			str += "<tr>"
 			str += "<td>"+key+"["+j+"]</td>";
 			str += "<td>: "+ config[key][j]['name']+"</td>";
+			str += "<td>, id: "+config[key][j]['id']+"</td>";
 			switch (key) {
-				case "rules":
-					str += "<td>, active: "+config[key][j]['active']+"</td>";
+				case "rooms":
+				break;
+				case "devices":
+					str += "<td>, room: "+config[key][j]['room']+"</td>";
+					str += "<td>, gaddr: "+config[key][j]['gaddr']+"</td>";
+					str += "<td>, uaddr: "+config[key][j]['uaddr']+"</td>";
+					str += "<td>, type: "+config[key][j]['type']+"</td>";
+					str += "<td>, val: "+config[key][j]['val']+"</td>";
+				break;
+				case "scenes":
+				// MGW
 					str += "<tr><td>";
-					str += "<td colspan='2'>, jrule: "+JSON.stringify(config[key][j]['jrule'])+"</td>";
-					str += "<tr><td>";
-					str += "<td colspan='2'>, brule: "+JSON.stringify(config[key][j]['brule'])+"</td>";
-					// As the XML will not show correctlyin a webpage we do on the console
-					console.log("rule stringify "+j+": ",JSON.stringify(config[key][j]));
+					var strips = config[key][j]['seq'].split(",");
+					for (var k=0; k<strips.length; k+=2) {
+						str += "<tr><td>";
+						str += "<td>, ics: "+strips[k]+"</td>";
+						str += "<td>, time: "+strips[k+1]+"</td>";
+						var r = /\d+/;
+						var room = strips[k].match(r);
+						if (strips[k].indexOf('Fa') != -1) {					// XXX Room must exist
+							if (idRoom(room) >= 0)
+								str += "<td>, Room "+config['rooms'][idRoom(room)]['name']+" All Off"+"</td>";
+							continue;
+						}
+						var s = strips[k].indexOf('D');
+						var uaddr = strips[k].substr(s+1,2).match(r);
+						var ind = findDevice(room, uaddr);
+						if (ind >= 0) str += "<td>, "+config['devices'][ind]['name']+"</td>";
+						else str += "<td>, CHECK THE DEVICE, MAY NOT EXTIST"+"</td>";
+					}
+					logger(" ");
+				break;
+				case "timers":
+					str += "<td>, scene: "+config[key][j]['scene']+"</td>";
+					str += "<td>, tstart: "+config[key][j]['tstart']+"</td>";
+					str += "<td>, startd: "+config[key][j]['startd']+"</td>";
+					str += "<td>, endd: "+config[key][j]['endd']+"</td>";
 				break;
 				case "sensors":
 					str += "<td>, addr: "+config[key][j]['address']+"</td>"
@@ -273,11 +307,31 @@ function printConfig() {
 					if (config[key][j]['sensor'].hasOwnProperty('airpressure') )
 						str += "<td>, press: "+config[key][j]['sensor']['airpressure']['val']+"</td>";
 				break;
+				case "rules":
+					str += "<td>, active: "+config[key][j]['active']+"</td>";
+					str += "<tr><td>";
+					str += "<td colspan='3'>, jrule: "+JSON.stringify(config[key][j]['jrule'])+"</td>";
+					str += "<tr><td>";
+					str += "<td colspan='3'>, brule: "+JSON.stringify(config[key][j]['brule'])+"</td>";
+					// As the XML will not show correctlyin a webpage we do on the console
+					console.log("rule stringify "+j+": ",JSON.stringify(config[key][j]));
+				break;
 			}
-			str += "</tr>"
+			str += "</tr>"			
 		}//for
 		str += "<br></table>";				// Between sub objects
 	});
+	// Now print the program parameters as well
+	 
+	str +="<table>";
+	Object.keys(par).forEach(function(key) {
+		
+		str += "<tr>"
+		str += "<td>"+ key +"</td>";
+		str += "<td>: "+ par[key] +"</td>";
+		str += "</tr>";									 
+	});
+	str += "<br></table>";				// Between sub objects	
 	return(str);
 }
 
@@ -288,7 +342,7 @@ function printConfig() {
 // ----------------------------------------------------------------------------
 function zwave_init (cb) {
 	var zwave_init_options = {
-		host: zhost,
+		host: par.zHost,
 		path: '/ZWaveAPI/Data/0',		// To get ALL Z-Wave data, the URL must end with 0
 		port: '8083',
 		method: 'GET',
@@ -321,7 +375,7 @@ function zwave_init (cb) {
 
 // For GETting data changed from a certain moment
 var zwave_upd_options = {
-	host: zhost,
+	host: par.zHost,
 	path: '/ZWaveAPI/Data/'+(Math.floor(Date.now()/1000) - alarm_interval),
 	port: '8083',
 	method: 'GET',
@@ -329,7 +383,7 @@ var zwave_upd_options = {
 };
 
 // Get ONLY updates drom the ZWave controller
-// XXX Strange bug found
+//
 var zwave_upd_cb = function(response) {
 	var str = '';
 	//another chunk of data has been recieved, so append it to `str`
@@ -341,7 +395,7 @@ var zwave_upd_cb = function(response) {
 		var js = JSON.parse(str);
 		
 		Object.keys(js).forEach(function(key) {
-			var pobj = zroot;							// XXX Zroot MUST have been initialize before
+			var pobj = zroot;							// NOTE Zroot MUST have been initialize before
 			var pe_arr = key.split('.');
 			
 			for (var i=i; i< (pe_arr.length-1); i++) {
@@ -483,7 +537,7 @@ server.listen(tcpPort, HOST, function() { 			//'listening' listener
 function checkIP(ip) {
 	var ips = ip.split("."); 
 	ips[0] = ips[0].split("//")[1];			// We know that the ip address starts with "http://"
-	var zips = zhost.split(".");
+	var zips = par.thisHost.split(".");	
 	if ((zips[0] == ips[0]) && (zips[1] == ips[1]) && (zips[2] == ips[2]) ) {
 		logger("checkIP:: client is from local network",1);
 		return(1);
@@ -541,9 +595,9 @@ userver.on("listening", function () {
 //	network
 // ----------------------------------------------------------------------------
 var connection = mysql.createConnection({
-  host     : dbHost ,
-  user     : dbUser ,
-  password : dbPassword ,
+  host     : par.dbHost ,
+  user     : par.dbUser ,
+  password : par.dbPassword ,
   database : 'LamPI'
 });
 
@@ -808,7 +862,6 @@ function createDbase(cb) {
   function (callback) { var r = [];
     for (var i=0; i< config['rules'].length; i++) {
 		var obj = config['rules'][i];
-		console.log("RULES:: i: "+i+", jrule",config['rules']); // XXX
 		obj.jrule = JSON.stringify(config['rules'][i]['jrule']);
 		obj.brule = JSON.stringify(config['rules'][i]['brule']);
  		insertDb("rules", obj, function(cb) { r.push("s"); }); 	
@@ -950,7 +1003,7 @@ function deviceSet (ldev, val) {
 	var type = config['devices'][ldev]['type'];
 	var zval = Math.floor( val * 99 / 32);
 	var opt4set = {
-		host: zhost,
+		host: par.zHost,
 		path: '',
 		port: '8083',
 		method: 'GET',
@@ -1008,7 +1061,7 @@ function deviceGet(ldev,ltype) {
 	var aVal = lampi_admin[dev]['val'];			// NOTE: This array is indexed like the Z-Way(!) devices[] array
 	var newVal, lastUpdate, inValid;
 	var opt4get = {
-		host: zhost,
+		host: par.zHost,
 		path: '/ZWaveAPI/Run/devices['+dev+'].Basic.Get()',
 		port: '8083',
 		method: 'GET',
@@ -1069,7 +1122,6 @@ function deviceGet(ldev,ltype) {
 			else if (( newVal == lVal ) && ( aVal != lVal )) { 
 				logger ("Y X Y, updating device "+dev+" to zVal: "+newVal,1);
 				lampi_admin[dev]['val'] = newVal;				
-				// XXX Do we need to update the LamPI database?
 			}
 			// Gui Action
 			// The LamPI gui value lVal is different from the administrative value and Z-Wave measured value newVal
@@ -1214,9 +1266,9 @@ function findDevice (room, uaddr) {
 	return(-1);
 }
 
-// Find index
+// Find index on room and id
 function idDevice (room, id) {
-	logger("findDevice:: length: "+config['devices'].length+", room: "+room+", id: "+id,2);
+	logger("idDevice:: length: "+config['devices'].length+", room: "+room+", id: "+id,2);
 	var i;
 	for (i=0; i < config['devices'].length; i++) {
 		if ((config['devices'][i]['room'] == room ) && (config['devices'][i]['id'] == id )) { break; }
@@ -1225,6 +1277,7 @@ function idDevice (room, id) {
 	return(-1);
 }
 
+// select on gaddr + uaddr
 function gaddrDevice (gaddr, uaddr) {
 	logger("gaddrDevice:: length: "+config['devices'].length+", gaddr: "+gaddr+", uaddr: "+uaddr,2);
 	var i;
@@ -1251,6 +1304,22 @@ function findScene (name) {
 	return(-1);
 }
 
+// --------------------------------------------------------------------------------
+// ROOM helper functions
+// --------------------------------------------------------------------------------
+function idRoom (id) {
+	var i;
+	for (i=0; i < config['rooms'].length; i++) {
+		if (config['rooms'][i]['id'] == id ) {
+			return(i);
+		}
+	}
+	return(-1);
+}
+  
+// --------------------------------------------------------------------------------
+// SENSOR helper functions
+// --------------------------------------------------------------------------------
 function addrSensor (address, channel) {
 	logger("addrSensor:: address: "+address+", channel: "+channel,2);
 	if (config['sensors'] == undefined) return -1;
@@ -1264,18 +1333,6 @@ function addrSensor (address, channel) {
 	return(-1);
 }
 
-//function addrWeather (address, channel) {
-//	logger("addrWeather:: address: "+address+", channel: "+channel,2);
-//	var i;
-//	for (i=0; i < config['weather'].length; i++) {
-//		if ((config['weather'][i]['address'] == address ) && (config['weather'][i]['channel'] == channel )) {
-//			break;
-//		}
-//	}
-//	if (i < config['weather'].length) return(i);
-//	return(-1);
-//}
-
 // --------------------------------------------------------------------------------
 // Delete a value based on id !! from the (config) array
 function delFromArray(arr, element) {
@@ -1288,8 +1345,8 @@ function delFromArray(arr, element) {
 
 // --------------------------------------------------------------------------------
 // Update a value in the (config) array based on id !! 
-// XXX Name must be update TO array
-function updFromArray(arr, element) {
+// 
+function updInArray(arr, element) {
 	var i;
 	for (i=0; i<arr.length; i++) {
 		if (arr[i]['id'] == element['id'] ) { arr[i] = element; break; }
@@ -1445,7 +1502,7 @@ function dbaseHandler(cmd, args, socket) {
 		break;
 		case 'store_scene':					// Process updated scene
 			updateDb("scenes", args, function(result) { logger("store_scenes finished OK "+result,1); });
-			updFromArray(config['scenes'],args);
+			updInArray(config['scenes'],args);
 		break;
 		case 'add_timer':
 			insertDb("timers", args, function(result) { logger("add_timer finished OK "+result,1); });
@@ -1457,7 +1514,7 @@ function dbaseHandler(cmd, args, socket) {
 		break;
 		case 'store_timer':
 			updateDb("timers", args, function(result) { logger("store_timers finished OK "+result,1); });
-			updFromArray(config['timers'],args);
+			updInArray(config['timers'],args);
 		break;
 		case 'add_handset':
 			insertDb("handsets", args, function(result) { logger("add_handset finished OK "+result,1); });
@@ -1514,7 +1571,7 @@ function dbaseHandler(cmd, args, socket) {
 			delFromArray(config['users'],args);
 		case 'store_user':
 			updateDb("users", args, function(result) { logger("store_user finished OK "+result,1); });
-			updFromArray(config['users'],args);
+			updInArray(config['users'],args);
 		break;
 		case 'add_sensor':
 			insertDb("sensors", args, function(result) { logger("add_sensor finished OK "+result,1); });
@@ -1536,7 +1593,7 @@ function dbaseHandler(cmd, args, socket) {
 			insertDb("rules", upd, function(result) { logger("add_rule finished OK "+result,1); });
 		break;
 		case 'store_rule':
-			updFromArray(config['rules'],args);
+			updInArray(config['rules'],args);
 			var upd = { 
 			name:  args.name, 
 			id:    args.id,
@@ -1577,7 +1634,7 @@ function dbaseHandler(cmd, args, socket) {
 			// Generic update part
 			updateDb("settings", args, function(result) { 
 				logger("store_settings finished OK "+result,1); 
-				updFromArray(config['settings'],args);
+				updInArray(config['settings'],args);
 				var lroot = {};
 				lroot.settings = config['settings'];
 				var msg = { tcnt: tcnt++ , type: "json", action: "upd_config", message: lroot }; 
@@ -2035,7 +2092,7 @@ function sensorHandler(buf, socket) {
 }// sensorHandler
 
 // --------------------------------------------------------------------------------
-// WEATHER Handlers with RRDTOOL
+// SENSOR Handlers with RRDTOOL
 // The db parameter contains full file name, based on name!!! of the sensor!
 // So you can shuffle a sensor in location as long as the name stays the same
 // --------------------------------------------------------------------------------
@@ -2072,8 +2129,29 @@ function createSensorDb(db,buf,socket) {
 }
 
 // -------------------------------------------------------------------------------
+// SCENE HANDLER
+// XXX Needs more work
+// -------------------------------------------------------------------------------
+function sceneHandler(buf, socket) {
+	switch (buf.cmd) {
+		case 'run_scene':
+			logger("sceneHandler:: run scene selected",1);
+			// MGW
+			var scene = buf.message;
+			queueScene(scene);
+		break;
+		case 'cancel_scene':
+			logger("sceneHandler:: cancel scene selected",1);
+		break;
+		default:
+			logger("sceneHandler:: Command not recognized, "+buf.cmd,1);
+	}
+}// sceneHandler
+
+
+// -------------------------------------------------------------------------------
 // SETTING HANDLER
-// Needs more work
+// XXX Needs more work
 // -------------------------------------------------------------------------------
 function settingHandler(buf, socket) {
 	switch (buf.cmd) {
@@ -2091,7 +2169,7 @@ function settingHandler(buf, socket) {
 
 // -------------------------------------------------------------------------------
 // SOCKET HANDLER: Handle incoming messages over the socket
-// 	This is a generic fuction to read messages from socket. The separate gui/weather specific
+// 	This is a generic fuction to read messages from socket. The separate gui/sensor specific
 //	functions are found above.
 // The data variable is a json string.
 // -------------------------------------------------------------------------------
@@ -2130,7 +2208,7 @@ function socketHandler(data,socket) {
 		case 'console':		// request can be: "logs", "zlogs", "sunrisesunset", "clients", "rebootdaemon"
 			consoleHandler(buf.request, socket);
 		break;
-		case 'dbase':							// cmd can be: delete_scene, etc etc
+		case 'dbase':							// cmd can be: delete_device, etc etc
 			dbaseHandler(buf.cmd, buf.message, socket);
 		break;
 		case 'energy':							// cmd can be: energy
@@ -2185,15 +2263,15 @@ function socketHandler(data,socket) {
 			if (socket.type == "ws") { var ret = socket.send(JSON.stringify(response)); }
 		break;
 		case 'scene':
-			logger("socketHandler:: scene received",2);
-			// XXX TBD
+			logger("socketHandler:: scene command received",2);
+			sceneHandler(buf, socket);
 		break;
 		case 'setting':										// Several settings from gui
 			logger("socketHandler:: setting received: "+buf.cmd,2);
-			settingHandler(buf, socket)
+			settingHandler(buf, socket);
 		break;
 		case 'user':
-			logger("socketHandler:: user received",2);
+			logger("socketHandler:: user command received",1);
 		break;
 		case 'weather':
 			logger("socketHandler:: weather received, type: "+buf.type+", addr:chan: "+buf.address+":"+buf.channel,1);
@@ -2209,14 +2287,15 @@ function socketHandler(data,socket) {
 
 // --------------------------------------------------------------------------------
 // Queue a scene string.
-// put the scene in the run queue, in parts based on the individual device commands
+// put the command of the scene in the run queue, in parts based on the individual device commands
 // XXX At the moment only ICS commands are queued -> must change
+// parameter scene is a scene object
 // --------------------------------------------------------------------------------
 function queueScene(scene) {
 	// This means that ics strings have a time component in the scene array. Make sure
 	// every timer is copied on the queue as well
-	var splits;
-	splits = scene.split(",");
+	var cmds = scene.seq;
+	var splits = cmds.split(",");
 	for (var k=0; k< splits.length; k+=2) {
 		logger("queueScene item: "+(k/2)+", val: "+splits[k]+", time: "+splits[k+1],1);
 		var tmp = splits[k+1].split(":");
@@ -2296,7 +2375,7 @@ var queue = new function() {
 // XXX Todo: We can put whatever task we want in the queue, including thermostat, emails etc etc.
 
 function queueHandler() {
-	var task = queue.qpop();
+	var task = queue.qpop();		
 	while ((task != null) && (task.length > 0)) {				// Might be more than one task runnable
 		if (debug>=2) console.log("queueHandler:: pop task: ",task);
 		for (var i=0; i< task.length; i++) {					// For every scene runnable after pop(), could be 0
@@ -2306,8 +2385,13 @@ function queueHandler() {
 				case "gui":										// We use this fake name for separate ICS commands
 					cmds = task[i].seq.split(",");				// Get all ICS commands in the scene, could be allOff
 				break;
+				// If this is a scene, split all separate cmds and execute
+				case "scene":
+					// cmds = task[i].seq.split(",");
+					logger("queueHandler:: scene found",1);
 				default:
 					// Lookup scene or task and Send to connected sockets
+					logger("queueHandler:: executing: "+task[i].name,1);
 					var index = findScene(task[i].name);
 					cmds = config['scenes'][index].seq.split(",") ;
 				break;
@@ -2325,7 +2409,7 @@ function queueHandler() {
 					message: cmds[j]
 				};
 				//icsHandler(data);								// Fills out missing JSON fields. We do not specify socket as 2nd arguments
-			}	socketHandler(JSON.stringify(data)); 			//XXX Should be socketHandler to be more generic!
+			}	socketHandler(JSON.stringify(data)); 			// generic handle function
 		}
 		task = queue.qpop();									// Next pop
 	}
@@ -2696,7 +2780,7 @@ function poll_loop() {
 // Also, as the alarm loop has finest timing granularity, we read the ready queue for runnable commands!
 // ? Maybe start with binding functions to changed values
 //
-// XXX Put the rest of the function in the callback function of http.request!
+// TBD Put the rest of the function in the callback function of http.request!
 //		so that we do ONLY execute when http.request is successful
 function alarm_loop()
 {
@@ -2729,6 +2813,7 @@ function alarm_loop()
 	  })
 	  req.end();
 	  // XXX Alarm sensors are still too static, need global configuration in database.cfg
+	  // maybe make an alarm type "ALARM" in sensors
 	  var alarm1 = devices[9].instances[0].commandClasses[48].data[1].level.value;
 	  if (alarm1 === true) {
 		console.log("Fibaro ALARM");
