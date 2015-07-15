@@ -12,10 +12,18 @@
 <h2>Screen Layout</h2>
 <p>The editor screen has the following layout: At the right - or anywhere else if defined by the CSS file in use- is the menu area. There are 5  standard commands recognized:</p>
 <ol>
-  <li><img src="menu/menu_run_01.JPG" width="112" height="38"> - Run a rule on the local editor system. Since the editor does not always have the same functions available as the daemon (LamPI-node.js runs without a GUI) some functions may not run&nbsp;as expected or not run at all. For initial debugging this function is OK.</li>
-  <li><img src="menu/menu_activate_01.JPG" width="110" height="39"> - This buttons will activate or de-activate the current rule (the current rule is always&nbsp;yellow or otherwise colored by the hover css attribute). So in the example below you can see that &quot;effe&quot; is active. If you want to de-activate &quot;effe&quot;, first make it the current rule to work on (click on &quot;effe&quot;) and then click on &quot;Activate&quot; to de-activate the rule. When activating or de-activating the rule, the whole rule will be backed-up to the MySQL database.</li>
-  <li><img src="menu/menu_store_01.JPG" width="113" height="40"> - Store the current rule to the database. When pressing the store button the system will show a popup window with the current generated jrule and the brule generated that are&nbsp;stored in the database. If you want to load the rule whene (re-)initializing the database, make sure to cut and paste these 2 values in the &quot;~/config/database.cfg&quot; json database file.</li>
-  <li><img src="menu/menu_new_01.JPG" width="113" height="42"> - Make a new rule and put it an the end of the header list. Please remember to save your work in the current rule first before making a new rule or the work on the screen you're working on will be lost.</li>
+  <li><img src="menu/menu_run_01.JPG" width="112" height="38"> - Run a rule on the local editor system. Since the editor does not always have the same functions available as the daemon (LamPI-node.js runs without a GUI) some functions may not run&nbsp;as expected or not run at all. For initial debugging this function is OK.<br>
+    <br>
+  </li>
+  <li><img src="menu/menu_activate_01.JPG" width="110" height="39"> - This buttons will activate or de-activate the current rule (the current rule is always&nbsp;yellow or otherwise colored by the hover css attribute). So in the example below you can see that &quot;effe&quot; is active. If you want to de-activate &quot;effe&quot;, first make it the current rule to work on (click on &quot;effe&quot;) and then click on &quot;Activate&quot; to de-activate the rule. When activating or de-activating the rule, the whole rule will be backed-up to the MySQL database.<br>
+    <br>
+  </li>
+  <li><img src="menu/menu_store_01.JPG" width="113" height="40"> - Store the current rule to the database. When pressing the store button the system will show a popup window with the current generated jrule and the brule generated that are&nbsp;stored in the database. If you want to load the rule whene (re-)initializing the database, make sure to cut and paste these 2 values in the &quot;~/config/database.cfg&quot; json database file.<br>
+    <br>
+  </li>
+  <li><img src="menu/menu_new_01.JPG" width="113" height="42"> - Make a new rule and put it an the end of the header list. Please remember to save your work in the current rule first before making a new rule or the work on the screen you're working on will be lost.<br>
+    <br>
+  </li>
   <li><img src="menu/menu_delete_01.JPG" width="111" height="41"> -&nbsp;Delete the curent rule.</li>
 </ol>
 <p>In the header section all rules that are defined are displayed. In the example below that is &quot;cv-room&quot;, &quot;console&quot; and &quot;effe&quot;. By pressing one of these buttons, the active screen loads with the corresponding rule. The yellow hover defines which rule is visible on the screen at that moment and being worked on. The red border outline of a button tells us that the corresponding rule is active in the LamPI-node.js daemon.</p>
@@ -168,7 +176,7 @@ queueDevices(0,'off','00:00:0:00',0,1); <br>
 </table>
 <p>&nbsp;</p>
 <h2>And what happens under the hood?</h2>
-<p>Under the hood we use the standard available blockly functions provided by Google and we also have our own blockly defnitions put in a dedicated file: /home/pi/www/rules/myBlocks.js. For every custom Blockly element we have to define 2 functions: a definition file to support the editor in creating our object and a generator file to help generating the right javascript code once we include our own blockly in LamPI.</p>
+<p>Under the hood we use the standard available blockly functions provided by Google and we also have our own blockly defnitions put in a dedicated file: /home/pi/www/rules/myBlocks.js. For every custom Blockly element we have to define two functions: (1) a definition file to support the editor in creating our object and (2) a generator file to help generating the right javascript code once we include our own blockly in LamPI.</p>
 <p><code>// ------------------------------------------------------------<br>
   // 3.<br>
   Blockly.Blocks['devices_set'] = {<br>
@@ -214,8 +222,8 @@ this.setColour(280);<br>
 <h2>Making your own custom&nbsp;Block elements</h2>
 <p>If you want to create your own custom block elements, it is adviced tat you use the provided Google Block&nbsp;Factory as a starting point. The block factory allows you to create the visual part of the new custom block without too much trouble after which you only need to provide parts of the code to interface wich your own application. The Block Factory shows the block you are working on, its block interface (see above for devices_set) and the javascript code that is being created (se also above for an example). </p>
 <p>Just cut and paste the code pieces to your own myRules.js file and make sure that file is &quot;sourced&quot; when you execute your own html/js program. And do not forget to make an entry in the blockly toolbox definition to include your new block and attach it to the menu.</p>
-<h2>Making a rule ...</h2>
-<p>This para explains how to make a new rule using the visible editor.</p>
+<h1>Making a rule ...</h1>
+<p>This section explains how to make a new rule using the visible editor.</p>
 <h2>Adding&nbsp;your rule to the database.cfg file</h2>
 <p>Every rule that you make is stored in the database. So it is protected against restarts of both client and server. But what if for whatever reason we need to re-initialize the daemon, we would loose all our rules? The solution is to add our precious rules to the &quot;~/config/database.cfg&quot; file so upon an init we would load thee rules to the system.</p>
 <p>The best way to do this is to print&nbsp;the configuration on the screen. You can do thsi from the &quot;config&quot; menu, choose &quot;console&quot; and then print the config. The other method is to use the following url: &quot;http://&lt;your-IP&gt;:8080/config&quot;. The configuration is output to the GUI, but more importantly it is also output to the console file &quot;~/log/PI-node.log&quot;.</p>
@@ -227,7 +235,7 @@ this.setColour(280);<br>
   <li>The editor environment is NOT the run-time environment. Keep in mind that some functions, variables etc are only present in one environment but might not be present in the other. The XML definitions used on define the blocks on the screen are stored together with the excutable code in the database. If you create new block elements we do not know what happens with the ones already reated and whether they are influenced.</li>
 </ul>
 <h1>Examples</h1>
-<p>This chapter explains how to build your own rule, ranging from a simple console logging to a complicated timing example.</p>
+<p>This chapter explains how to build your own rule, ranging from a simple console logging to a complicated timing example. Each example can be started with &quot;http://&lt;your-IP&gt;/rules.</p>
 <h2>Example 1:</h2>
 <p>The first example is a simple temperature sensing example&nbsp;for a rule called &quot;ardeche&quot;. We have a temperature sensor&nbsp;lm75-3 defined in the database.cfg file, and when the temperature measured exceeds the 28 degrees (celcius) we &quot;do&quot; the following jrule: write to the console the text: &quot;More than 28 degrees&quot;, and otherwise write to the console the text: &quot;Less than 28 degrees&quot;.</p>
 <p><img src="examples/example_1_01.JPG" width="409" height="153"></p>

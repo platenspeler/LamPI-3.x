@@ -9,8 +9,10 @@
 <h1>LamPI Introduction</h1>
 <p>The full table of contents for ALL LamPI documentation is &lt;<a href="LamPI_ToC.html"><strong>HERE</strong></a>&gt;. 
 Please start reading on that page when you finished reading this page.</p>
+<p><img src="UserGuide/screenshots/wordle.png" width="662" height="430" alt=""></p>
 <h1>Skins and Look and Feel</h1>
 <p>Click on any of the images here to see a large version of the screenshot. LamPI Gui layout scales with your screen, and there are many ways to configure the LamPI screens to your taste.</p>
+<p><img src="UserGuide/screenshots/room_screen_grey_2.JPG" width="894" height="689"></p>
 <p><a href="UserGuide/screenshots/room_screen_black.JPG"><img src="UserGuide/screenshots/room_screen_black_xs.jpg" alt="Black skin scalable" width="228" height="156" hspace="2" vspace="2"></a><a href="UserGuide/screenshots/room_screen_wood.JPG"><img src="UserGuide/screenshots/room_screen_wood_xs.jpg" alt="" width="228" height="156" hspace="2" vspace="2"></a><a href="UserGuide/screenshots/room_screen_sea.JPG"><img src="UserGuide/screenshots/room_screen_sea_xs.jpg" width="228" height="155" hspace="2" vspace="2"></a><a href="UserGuide/screenshots/room_screen_linen.JPG"><img src="UserGuide/screenshots/room_screen_linen_xs.jpg" width="228" height="155" hspace="2" vspace="2"></a></p>
 <p>&nbsp;</p>
 <p>You can find LamPI GIT repository on <a href="https://github.com/platenspeler">https://github.com/platenspeler</a>, and the documentation on <a href="http://platenspeler.github.io">http://platenspeler.github.io</a></p>
@@ -42,8 +44,8 @@ Please start reading on that page when you finished reading this page.</p>
 <h1>Rules Editor</h1>
 <p>As from LamPI release 3.3 we offer a set of Blockly elements to help the user define his/her own rules in LamPI. Read the separate section on Rules<a href="Rules_Manual/index.html"> &lt;HERE&gt;</a>. LamPI Rules offer the use a graphical interface to define rules based on temperature, humidity, time of day, Sunset or any other sensor value and based on these reading define actions in LamPI to be taken.</p>
 <p>All sensors can be used in queries and actions include setting devices values , showing alerts on the screen or logging values in the log file.</p>
-<p>&nbsp;</p>
-<p><a href="Rules_Manual/screenshots/sunset_1.JPG"><img src="Rules_Manual/screenshots/sunset_1.JPG" width="663" height="400"></a></p>
+<p><a href="Rules_Manual/screenshots/sunset_1.JPG"><img src="Rules_Manual/screenshots/sunset_1.JPG" width="1041" height="669"></a></p>
+<p>The content of the screen above was enlarged&nbsp; little bit to enhance redibiliy. The message&nbsp;in the message area&nbsp;would normally fit.</p>
 <h1>LamPI History</h1>
 <p>The goal of my project was to provide an easy interface to the family to control the lights in our house. We had klikaanklikuit.nl switches and we have an iPad (and some Android phones and Laptops) and want to control our light switches with an easy-to-use GUI interface. This meant that I needed at least 2 components: A component that would control transmitter and receiver and handle low-level device commands, and a GUI in JavaScript/jQuery that would handle the human interaction. In order to store configuration information and for timing commands and unattended use, we would also need a daemon process serving in the background as well as a database (written in MySQL) to store configuration information.</p>
 <p>Although I would expect that you like to use the complete package, it is quite good possible to only use the RaspberryPI transmitter and receiver shell executables (see below)</p>
@@ -143,13 +145,14 @@ Please start reading on that page when you finished reading this page.</p>
 <p>Click <a href="planned.html">&lt;HERE&gt;</a> for a list of known issues, possible being resolved in future releases</p>
 <p>&nbsp;</p>
 <h1>Acknowledgements</h1>
-<p>Thanks to everybode that contributed in some way to making LamPI possible. Either by providing libraries or pieces of code, commenting by email or on a forum etc etc. Herewith a list of technology adpted (unfortunately the list will probably NOT be complete). I like to gather all info on this page, so if I forgot someone please sed me an email.</p>
+<p>Thanks to everybody that contributed in some way to making LamPI possible. Either by providing libraries or pieces of code, commenting by email or on a forum etc etc. Herewith a list of technology adpted (unfortunately the list will probably NOT be complete). I like to gather all info on this page, so if I forgot someone please sed me an email.</p>
 <ul>
   <li>Blockly - Google</li>
   <li>Steel series gauges - https://github.com/HanSolo/SteelSeries-Canvas</li>
-  <li>rrdtool</li>
+  <li>rrdtool - making nice charts of almost everything</li>
   <li>wiringPI - http://www.wiringpi.com; Gordon Henderson</li>
   <li>touch punch - a jQuery&nbsp;UI hack to make it respond to touch (on mobile devices). By Dave Furfero, on http://touchpunch.furf.com/</li>
+  <li>gridster - A solutiont o put grids on the screen (tiles/metro/grids etc).</li>
 </ul>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
