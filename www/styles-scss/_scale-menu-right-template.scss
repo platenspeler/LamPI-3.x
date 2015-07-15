@@ -7,7 +7,7 @@
 	body {
 		font-family: comic sans ms; 
 		background:$main_bg_color;
-		color:$dialog_fg_color;
+		color:$main_msg_color;
  	}
 		
 	table {
@@ -22,7 +22,11 @@
 	td {
 /*		height: 38px; */
 	}
-		
+	
+	ul, ol {
+		list-style: none;
+	}
+	
 	p {
  		font-family:"Times New Roman";
  		font-size:20px;
@@ -345,7 +349,19 @@
 		width: 35px;
 		margin: 1px;
 	}
-		
+
+/* Grid and Widget defnitions */
+
+	.widget {
+		background-color:$dbutton_bg_color;
+	}
+	
+	.widget:hover {
+		background-color:$button_hover_bg_color;
+	}
+	
+
+	
 /* Devices definitions */
 	
 	/* This dlabels descripts the text label left of a switch/dimmer device */
@@ -377,6 +393,7 @@
 		
 	.dbuttons:hover {
 		font-weight: bold;
+		color:$button_hover_fg_color;
 		background-color:$button_hover_bg_color;
 	}
 		
@@ -592,7 +609,35 @@
 		/*      */
 	}
 
-
+/* Widget Slider : The indicator */
+	
+	.slider-widget {
+		margin-top: 10px;
+		background:#3E4;							/* XXX left side of the bar */
+		width:90%;									/* was 100px;
+		height:4px;
+		margin-left:2px;
+		padding-top:2px;
+		margin-right:1px;
+		border-radius:3px;
+	}
+	.slider-widget .ui-slider {
+	
+	}
+	.slider-widget .ui-slider-range {
+		background:#dimmer_background;							/* This is the right part from handle to max */
+	}
+	.slider-widget .ui-slider-handle {
+		background:url(./slider-mini2.png) no-repeat;	/* this is the slider marker symbol. 
+/*    	background:none;					*/
+		overflow:hidden; 
+    	position:absolute;
+    	border-style:none;
+		/* border-color: $dimmer_background;  */
+	}
+	.slider-widget .ui-widget-content { 
+		/*      */
+	}
 
 /* Settings, various sich as files definitions etc. */
 	

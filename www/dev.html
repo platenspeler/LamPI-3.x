@@ -8,23 +8,7 @@
 //
 // Version 1.0, Aug 20, 2013. Working version for ICS-1000. Initial configuration hardcoded in backend_main.php
 // Version 1.1, Sep 10, 2013. Added initial support for scenes, and implemented basic timer functions.
-// Version 1.2, Sep 12, 2014. Added Backup/Restore and implemented timer daemon 
 //
-// Version 2.0, Jun 15, 2014. Support for Z-Wave added
-// Version 2.1, Jul 31, 2014 Smart Meter support
-//
-// Version 2.6, Jan 25, 2015 New .css  template design, several bug fixes in LamPI-x.x.js
-// Version 3.0, Mar 01, 2015 Use JS and Websockets, remove "old" ajax where possible
-// Version 3.2, Jun 21, 2015 Change weather to sensors and use more JSON
-// Version 3.3, Jul 01, 2015 Start using LamPIlib functions to limit code duplication between pages
-//
-// This is the code to animate the front-end of the application. The main screen is divided in 3 regions:
-// #gui_header: Here are the buttons for selecting the active rooms 
-// #gui_content: The main screen where user can change the values of the active devices for the curently
-//		active room. For the moment, the devices can have 2 types: switches and dimmers (see below)
-// #gui_mssages: This is the area where the function message("text") will output its messages
-// #gui_menu: This is the right side of the screen where we have the main menu where user can select the 
-//		main activities: <home> <rooms> <scenes> <timers> <settings>
 -->
 
 	<title>LamPI 3.4</title>
@@ -33,6 +17,8 @@
     <link rel="icon" type="image/png" href="favicon.png">
 	<script src="jquery-1.11.2.js"></script>
 	<script src="jquery-ui-1.11.2/jquery-ui.js"></script>
+    <script src="jqueryPunch/touch-punch.min.js"></script>
+    
     <script src="steel/tween-min.js"></script>
     <script src="LamPIlib-3.4.js"></script>
     <script src="LamPI-3.4.js"></script> 

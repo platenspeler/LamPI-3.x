@@ -36,7 +36,7 @@ Blockly.Blocks['text_length'] = {
 // CONTROLS
 // ----------------------------------------------------------------------------
 
-// 1
+// 1 Control When
 Blockly.Blocks['controls_when'] = {
   init: function() {
     this.setHelpUrl('http://www.example.com/');
@@ -55,6 +55,53 @@ Blockly.JavaScript['controls_when'] = function(block) {
   var dropdown_name = block.getFieldValue('NAME');
   // TODO: Assemble JavaScript into code variable.
   var code = '...';
+  return code;
+};
+
+
+// 2. Stop Rule
+Blockly.Blocks['controls_stoprule'] = {
+  init: function() {
+    this.setHelpUrl('http://www.example.com/');
+    this.setColour(105);
+    this.appendDummyInput()
+        .appendField("stop rule");
+    this.setPreviousStatement(true);
+    this.setTooltip('Stop the current rule (change in database)');
+  }
+};
+
+Blockly.JavaScript['controls_stoprule'] = function(block) {
+  // TODO: Assemble JavaScript into code variable.
+	var code = ' ;"stopRule" ';
+	return code;
+};
+
+// 3. Timeout rule for specific time
+//
+Blockly.Blocks['controls_timeout'] = {
+  init: function() {
+    this.setHelpUrl('http://www.example.com/');
+    this.setColour(105);
+    this.appendDummyInput()
+        .appendField("Timeout: ")
+        .appendField(new Blockly.FieldTextInput("hh"), "offset_hh")
+        .appendField(":")
+        .appendField(new Blockly.FieldTextInput("mm"), "offset_mm")
+        .appendField(":")
+        .appendField(new Blockly.FieldTextInput("ss"), "offset_ss");
+    this.setPreviousStatement(true, "null");
+    this.setTooltip('');
+  }
+};
+
+Blockly.JavaScript['controls_timeout'] = function(block) {
+  var text_offset_hh = block.getFieldValue('offset_hh');
+  var text_offset_mm = block.getFieldValue('offset_mm');
+  var text_offset_ss = block.getFieldValue('offset_ss');
+  // TODO: Assemble JavaScript into code variable.
+  var tim = ' ('+text_offset_hh+'*3600+ '+text_offset_mm+'*60 + '+text_offset_ss+') ';
+  var code = ' timeOut='+tim ;
   return code;
 };
 
@@ -172,8 +219,43 @@ Blockly.JavaScript['devices_switch'] = function(block) {
   return [code, Blockly.JavaScript.ORDER_FUNCTION_CALL];
 };
 
+// 1. Dimmers
+Blockly.Blocks['devices_dimmer'] = {
+  init: function() {
+    this.setHelpUrl('http://www.westenberg.org/');
+    this.setColour(270);
+	var str = [];
+	for (var i=0; i<devices.length;i++) {
+		if (devices[i].type == "dimmer")
+			str.push( [ devices[i]['name'], devices[i]['name']+"" ] );
+	}
+    this.appendDummyInput()
+        //.setCheck("String")			// Only if type is not appendDummyInput
+		.appendField('dimmer')			// Make null if type is any
+		.appendField(new Blockly.FieldDropdown( str ), "dimmer_1");
+    this.setOutput(true, "Number");
+    this.setTooltip('Sets dimmer value');
+  }
+};
+
+//
+Blockly.JavaScript['devices_dimmer'] = function(block) {
+  var statements_dimmer = Blockly.JavaScript.statementToCode(block, 'dimmer');
+  var dropdown_dimmer_1 = block.getFieldValue('dimmer_1');
+  // TODO: Assemble JavaScript into code variable.
+  var code = '';
+  console.log("dropdown: <"+dropdown_dimmer_1+">");
+  console.log("statements_sens: <"+statements_dimmer+"> ");
+
+  var i = lookupDeviceByName(dropdown_dimmer_1);
+  if (i>=0) {
+	 code="config['devices']["+i+"]['val']"; 
+  }
+  return [code, Blockly.JavaScript.ORDER_FUNCTION_CALL];
+};
+
 // ------------------------------------------------------------
-// 3.
+// 3. Set a device value
 Blockly.Blocks['devices_set'] = {
   init: function() {
     this.setHelpUrl('http://www.westenberg.org/');
@@ -183,7 +265,7 @@ Blockly.Blocks['devices_set'] = {
 		str.push( [ devices[i]['name'], devices[i]['name']+"" ] );
 	}
     this.appendValueInput("dev_set")
-        .setCheck("String")			// Only if type is not appendDummyInput
+        .setCheck(["String","Number"])			// Only if type is not appendDummyInput
 		.appendField("set: ")
 		.appendField(new Blockly.FieldDropdown( str ), "set_1")
 	this.setPreviousStatement(true, "String");
@@ -355,6 +437,5 @@ Blockly.JavaScript['text_alert'] = function(block) {
 	var value_console = Blockly.JavaScript.valueToCode(block, 'console', Blockly.JavaScript.ORDER_NONE) || '\'\'';
 	var value_input   = Blockly.JavaScript.statementToCode(block, 'do');
 	var code = 'msg = { tcnt:1, type:"raw", action:"alert", message:" '+value_console+' " }; broadcast(JSON.stringify(msg), null); ';
-	
 	return code;
 };

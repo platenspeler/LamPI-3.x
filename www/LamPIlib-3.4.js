@@ -32,10 +32,58 @@
 // ----------------------------------------------------------------------------------------
 // VARIABLES
 //
+var healthcount = 5;					// Needs to be above 0 to show activity
+var healthtime = 10000;					// milliseconds between activation of health pulse
 var use_energy = 0;						// Initialize the value on 0
 var loginprocess=false;					// Is there a login process going on?
-		
 
+// ----------------------------------------------------------------------------
+// s_STATE variables. They keep track of current room, scene and setting
+// The s_screen variable is very important for interpreting the received messages
+// of the server. 
+// State changes of device values need be forwarded to the active screen
+// IF the variable is diaplayed on the screen
+//
+
+var s_screen = 'config';				// Active screen: 1=room, 2=scene, 3=timer, 4=config, 5=sensors, 6=energy, 7=grid (tiles)
+var s_scene_id =1;
+var s_timer_id = 1;
+var s_handset_id = 1;
+var s_sensor_id = '';					// Init empty
+var s_energy_id = 0;					// Init empty
+var s_setting_id = 0;
+var s_recorder = '';					// recording of all user actions in a scene. 
+var s_recording = 0;					// Set to 1 to record lamp commands
+var s_room_id =1;						// First room. If equal 0, we are in tiles mode!
+
+// -----------------------------------------------------------------------------
+// Set limits for the program for using resources
+//
+var max_rooms = 16;										// Max nr of rooms. ICS-1000 has 8
+var max_scenes = 16;									// max nr of scenes. ICS-1000 has 20
+var max_devices = 16;									// max nr. of devices per room. ICS-1000 has 6
+var max_timers = 16;
+var max_handsets = 8;
+var max_sensors = 8;									// USED! Maximum number of sensors receivers
+
+// Actually, sum of timers and scenes <= 20 for ICS-1000
+// 
+
+// Some day we should move all these into the lroot
+//
+var lroot={};			// XXX just like in the LamPI-node.js program we need a root object
+var rooms={};			// For most users, especially novice this is the main/only screen
+var devices={};			// Administration of room devices (lamps or switches)
+var scenes={};			// Series of device actions that are grouped and executed together
+var timers={};			// Timing actions that work on a defined scene
+var brands={};			// All brands of equipment that is recognized by the daemon
+var handsets={};		// Handsets or transmitters of code. Action/Impuls, Klikaanklikuit supported
+var weather={};			// The administration of weather receivers, and their last values
+var sensors = {};
+var energy={};			// Energy sensors and values
+var settings={};		// Set debug level and backup/restore the configuration
+var rules={};
+var users={};			// Use later to make user specific profiles
 
 
 // ----------------------------------------------------------------------------------------
@@ -79,6 +127,11 @@ function message(txt,lvl,tim)
 function isFunction(possibleFunction) {
   return typeof(possibleFunction) === typeof(Function);
 }
+
+// Supportive functions
+Array.prototype.contains = function(element){
+    return this.indexOf(element) > -1;
+};
 
 // ----------------------------------------------------------------------------------------
 //
@@ -147,15 +200,16 @@ function find_device(rm_id, dev_id) {
 
 // Find the uaddr addr which is used on a physical level
 //
-function lookup_uaddr(rm_id, dev_id) {
-	for (var j = 0; j<devices.length; j++ ) {
-  		var device_id = devices[j]['uaddr'];
-		var room_id = devices[j]['room'];	
-       	if (( room_id == rm_id ) && ( device_id == dev_id )) {
+function lookup_uaddr(rm_id, uaddr) {
+	for (var j= 0; j<devices.length; j++ ) {
+       	if (( devices[j]['room'] == rm_id ) && ( devices[j]['uaddr'] == uaddr )) {
 			return(j);
 		}
 	}
-	logger("lookp_uaddr:: No index in devices found for room: "+rm_id+", dev id: "+dev_id,1);
+	logger("lookup_uaddr:: No index in devices "+devices.length+" found for room: "+rm_id+", uaddr: "+uaddr,1);
+	for (var i =0; i<devices.length; i++) {
+		logger("lookup_addr:: device "+i+", room: "+devices[i]['room']+", uaddr: "+devices[i]['uaddr'],1);
+	}
 	return(-1);		
 }
 
@@ -240,8 +294,7 @@ function askForm(dialogText, okFunc, cancelFunc, dialogTitle) {
 		$popUp.popup("open");
 	}
   
-  // jQuery UI style of dialog
-  
+  // jQuery UI style of dialog 
 	else {
 		$('<div style="padding: 10px; max-width: 500px; word-wrap: break-word;">'+dialogText+'</div>').dialog({
 			draggable: false,
@@ -276,6 +329,64 @@ function askForm(dialogText, okFunc, cancelFunc, dialogTitle) {
 		// logger(" name: "+name.val);
 	}
 } // askForm end
+
+
+
+// ----------------------------------------------------------------------------
+// Alert Box
+// Difference from alert() is that this does not stop program execution of other
+// threads. Also, breaks in lines not with \n but with </br>
+//
+function myAlert(msg, title) {
+
+  $('<div style="padding:10px; min-width:350px; max-width:800px; min-height:400px; max-height:500px; overflow:scroll; word-wrap:break-word;">'+msg+'</div>').dialog({
+    draggable: false,
+    modal: true,
+    resizable: false,
+    width: 'auto',
+    title: title || 'Confirm',
+    minHeight: 75,
+	dialogClass: 'askform',
+    buttons: {
+      OK: function () {
+        //if (typeof (okFunc) == 'function') {
+         // setTimeout(okFunc, 1);
+        //}
+        $(this).dialog('destroy');
+      }
+    }
+  });
+}
+
+
+// ----------------------------------------------------------------------------
+// Dialog Box, confirm/cancel
+//
+function myConfirm(dialogText, okFunc, cancelFunc, dialogTitle) {
+  $('<div style="padding: 10px; max-width: 500px; word-wrap: break-word;">' + dialogText + '</div>').dialog({
+    draggable: false,
+    modal: true,
+    resizable: false,
+    width: 'auto',
+    title: dialogTitle || 'Confirm',
+    minHeight: 75,
+	dialogClass: 'askform',
+    buttons: {
+      OK: function () {
+        if (typeof (okFunc) == 'function') {
+          setTimeout(okFunc, 50);
+        }
+        $(this).dialog('destroy');
+      },
+      Cancel: function () {
+        if (typeof (cancelFunc) == 'function') {
+          setTimeout(cancelFunc, 50);
+        }
+        $(this).dialog('destroy');
+      }
+    }
+  });
+}
 
 
 
@@ -367,6 +478,33 @@ function init_websockets() {
 				myAlert("Server msg:: "+rcv.message);
 				// also .scene would be possible for a scene to start when the alarm is in effect
 			break;
+			//
+			// Console functions; messages that relate to the console option in the config section
+			case 'console':
+					logger("console message received"+rcv.message,2);
+					myAlert("<br>"+rcv.message,rcv.request+" Output");
+			break;
+			// Support for energy systems is tbd
+			case 'energy':
+				if (!use_energy) { use_energy = true; init_menu(s_setting_id); }
+				logger("Energy message, kw_act_use: "+rcv.kw_act_use,1);
+				energy['kw_hi_use']	=rcv.kw_hi_use;
+				energy['kw_lo_use']	=rcv.kw_lo_use;
+				energy['kw_hi_ret']	=rcv.kw_hi_ret;
+				energy['kw_lo_ret']	=rcv.kw_lo_ret;
+				energy['gas_use']	=rcv.gas_use;
+				energy['kw_act_use']=rcv.kw_act_use;
+				energy['kw_act_ret']=rcv.kw_act_ret;
+				energy['kw_ph1_use']=rcv.kw_ph1_use;
+				energy['kw_ph2_use']=rcv.kw_ph2_use;
+				energy['kw_ph3_use']=rcv.kw_ph3_use;
+			break;
+			// Function graph only can be called by sensor.js or energy.js but just in case
+			// Both functions must use the same interface and parameters!
+			case 'graph':
+				logger("rcv:: graph response received, ",1);
+				if (typeof display_graph == 'function') display_graph(rcv.gtype, rcv.gperiod);
+			break;
 			// Update messages can contain updates of devices, scenes, timers or settings.
 			// And this is list is sorted on urgency as well. changes in device values need to be
 			// reflected on the dashboard immediately.
@@ -387,11 +525,13 @@ function init_websockets() {
 						devices[ind]['val']=val;
 						if ((room == s_room_id) && (s_screen == 'room')) {
 							activate_room(s_room_id);
+						} else if (['g_grid','g_all','g_room','g_devices'].contains(s_screen )) {
+							update_grid(ind);		// XXX Need to be more specific use s_screen
 						}
 					break;
 					case 'raw':
 						var msg    = rcv.message;		// The message in ICS format e.g. "!RxDyFz"
-						logger("onmessage:: read upd message. Type is: "+type,1);
+						logger("onmessage:: read upd message. Type is: "+type+", msg: "+msg,1);
 						var pars = parse_int(msg);	// Split into array of integers
 													// This function works for normal switches AND dimmers
 													// Only for dimmers string is longer !RxxDxxFdPxx
@@ -411,10 +551,14 @@ function init_websockets() {
 							else {
 								val = pars[2];
 							}
-							logger("onmessage:: room: "+room+", device: "+uaddr+", val: "+val+", ind: "+ind,2);
+							logger("onmessage:: room: "+room+", uaddr: "+uaddr+", val: "+val+", ind: "+ind+", scrn: "+s_screen,1);
 							devices[ind]['val']=val;
+							// Passing info to the running program
 							if ((room == s_room_id) && (s_screen == 'room')) {
 								activate_room(s_room_id);
+							} else if (['g_grid','g_all','g_room','g_devices'].contains(s_screen )) {
+								//init_grid(s_screen);		// XXX Need to be more specific use s_screen
+								update_grid(ind);
 							}
 						}//if
 					break;
@@ -432,117 +576,43 @@ function init_websockets() {
 					message("action: "+action+", tcnt: "+tcnt+", mes: "+msg+", type: "+type,1);
 				}
 			break;
-			// If we receive a sensors message, we scan the incoming message based
-			// on the addr/channel combination and look those up in the sensors array.
-			// If the sensors station is not present in the array, we will not show its values !!!
-			// The sensors stations that we allow for receiving are specified in the 
-			// database.cfg file (and in the database).
-			case 'weather':	
-				alert("UNEXPECTED WEATHER MESSAGE RECEIVED");
-				var j;
-				// Compare address and channel to identify a weather sensor
-				// Decided not to use the name for this :-)
-				for (j = 0; j<weather.length; j++ ) {
-       				if (( weather[j]['address'] == rcv.address ) &&
-						( weather[j]['channel'] == rcv.channel )) {
-						// return value of the object
-						break;
-					}
-				}
-				// if we found a match, j will be smaller than length of array
-				// So we have the record that partly describes the current sensor
-				// and partly needs to be filled with the latest sensor values received.
-				if (j<weather.length) {
-						weather[j]['temperature']	=rcv.temperature;
-						weather[j]['humidity']		=rcv.humidity;
-						weather[j]['airpressure']	=rcv.airpressure;
-						weather[j]['windspeed']		=rcv.windspeed;
-						weather[j]['winddirection']	=rcv.winddirection;
-						weather[j]['rainfall']		=rcv.rainfall;
-						var msg="";
-						if (debug >=2)
-						{
-							msg += "Weather "+weather[j]['name']+"@ "+weather[j]['location'];
-							msg += ": temp: "+weather[j]['temperature'];
-							msg += ", humi: "+weather[j]['humidity']+"%<br\>";
-							
-							logger("Weather "+weather[j]['name']+"@"+weather[j]['location']
-								+": temp: "+weather[j]['temperature']
-								+", humi: "+weather[j]['humidity']+"%");
-						}
-						message(msg);
-				}
-			break;
-			// Generic sensor messages, such as connected one wire systems to the RasPI
-			// At the moment most wire sensors are in fact further treated as sensors sensors.
-			case 'sensor':
-				logger("Sensor message from "+rcv.address+":"+rcv.channel,1);
-				var j;
-				// Compare address and channel to identify a sensors sensor
-				// Decided not to use the name for this :-)
-				for (j = 0; j<sensors.length; j++ ) {
-       				if (( sensors[j]['address'] == rcv.address ) &&
-						( sensors[j]['channel'] == rcv.channel )) {
-						break;// return value of the object
-					}
-				}
-				// if we found a match, j will be smaller than length of array
-				if (j<sensors.length) {
-					if (rcv.hasOwnProperty('temperature')) sensors[j]['sensor']['temperature']['val']=rcv.temperature;
-					if (rcv.hasOwnProperty('humidity')) sensors[j]['sensor']['humidity']['val']		 =rcv.humidity;
-					if (rcv.hasOwnProperty('airpressure')) sensors[j]['sensor']['airpressure']['val']=rcv.airpressure;
-					if (rcv.hasOwnProperty('windspeed')) sensors[j]['sensor']['windspeed']['val']=rcv.windspeed;
-					if (rcv.hasOwnProperty('winddirection')) sensors[j]['sensor']['winddirection']['val']=rcv.winddirection;
-					if (rcv.hasOwnProperty('rainfall')) sensors[j]['sensor']['railfall']['val']=rcv.railfall;
-						
-					//sensors[j]['winddirection']	=rcv.winddirection;
-					//sensors[j]['rainfall']		=rcv.rainfall;
-						
-					var msg="";
-					if (debug >=2) {
-						msg += "Sensor "+sensors[j]['name']+"@ "+sensors[j]['location'];
-						msg += ": temp: "+sensors[j]['temperature'];
-						msg += ", humi: "+sensors[j]['humidity']+"%<br\>";
-						
-						logger("Sensor "+sensors[j]['name']+"@"+sensors[j]['location']
-							+": temp: "+sensors[j]['temperature']
-							+", humi: "+sensors[j]['humidity']+"%");
-					}
-					message(msg);
-				}
-			break;
-			// Support for energy systems is tbd
-			case 'energy':
-				if (!use_energy) { use_energy = true; init_menu(s_setting_id); }
-				logger("Energy message, kw_act_use: "+rcv.kw_act_use,1);
-				energy['kw_hi_use']	=rcv.kw_hi_use;
-				energy['kw_lo_use']	=rcv.kw_lo_use;
-				energy['kw_hi_ret']	=rcv.kw_hi_ret;
-				energy['kw_lo_ret']	=rcv.kw_lo_ret;
-				energy['gas_use']	=rcv.gas_use;
-				energy['kw_act_use']=rcv.kw_act_use;
-				energy['kw_act_ret']=rcv.kw_act_ret;
-				energy['kw_ph1_use']=rcv.kw_ph1_use;
-				energy['kw_ph2_use']=rcv.kw_ph2_use;
-				energy['kw_ph3_use']=rcv.kw_ph3_use;
-			break;
-			//
-			// Console functions; messages that relate to the console option in the config section
-			case 'console':
-					logger("console message received"+rcv.message,2);
-					myAlert("<br>"+rcv.message,rcv.request+" Output");
-			break;
-			// Function graph only can be called by sensor.js or energy.js but just in case
-			// Both functions must use the same interface and parameters!
-			case 'graph':
-				logger("rcv:: graph response received, ",1);
-				if (typeof display_graph == 'function') display_graph(rcv.gtype, rcv.gperiod);
-			break;
+
 			// List all users and "jump" (back) to the setting page
 			case 'list_user':
 				logger("list_user message received",1);
 				users = rcv.message;
 				activate_setting("2b");						// XXX Hardcoded setting!
+			break;
+			case 'load_database':
+				logger("Receiving load_database message",2);
+				lroot = rcv.response;						// LamPI Root object
+				rooms = rcv.response['rooms'];			// Array of rooms
+				devices = rcv.response['devices'];		// Array of devices			
+				scenes = rcv.response['scenes'];
+				timers = rcv.response['timers'];
+				handsets = rcv.response['handsets'];
+				settings = rcv.response['settings'];
+				brands = rcv.response['brands'];
+				weather = rcv.response['sensors'];		// XXX MGW we want the id and name values
+				//energy = rcv.response['energy'];
+				sensors = rcv.response['sensors'];
+				rules = rcv.response['rules'];
+				
+				init();									// init must be here before localstorage to work
+					
+				// If there is local storage, fill it with the received values
+				if (typeof(Storage) !== undefined) {
+					localStorage.setObject('rooms',rooms);
+					localStorage.setObject('devices',devices);
+					localStorage.setObject('scenes',scenes);
+					localStorage.setObject('timers',timers);
+					localStorage.setObject('handsets',handsets);
+					localStorage.setObject('settings',settings);
+					localStorage.setObject('brands',brands);
+					localStorage.setObject('sensors',sensors);
+				}
+				message("database received: #rooms: "+rooms.length+", #devices:"+devices.length);
+
 			break;
 			// The login message coming from the server tells us whether the user credentials
 			// are sufficient. If so, the level of trust is reported.
@@ -629,36 +699,43 @@ function init_websockets() {
   					'Confirm Login'
 				); // askFor
 			break;
-			case 'load_database':
-				logger("Receiving load_database message",2);
-				
-				rooms = rcv.response['rooms'];			// Array of rooms
-				devices = rcv.response['devices'];		// Array of devices			
-				scenes = rcv.response['scenes'];
-				timers = rcv.response['timers'];
-				handsets = rcv.response['handsets'];
-				settings = rcv.response['settings'];
-				brands = rcv.response['brands'];
-				weather = rcv.response['sensors'];		// XXX MGW we want the id and name values
-				//energy = rcv.response['energy'];
-				sensors = rcv.response['sensors'];
-				rules = rcv.response['rules'];
-				
-				init();									// init must be here before localstorage to work
-					
-				// If there is local storage, fill it with the received values
-				if (typeof(Storage) !== undefined) {
-					localStorage.setObject('rooms',rooms);
-					localStorage.setObject('devices',devices);
-					localStorage.setObject('scenes',scenes);
-					localStorage.setObject('timers',timers);
-					localStorage.setObject('handsets',handsets);
-					localStorage.setObject('settings',settings);
-					localStorage.setObject('brands',brands);
-					localStorage.setObject('sensors',sensors);
+			// Generic sensor messages, such as connected one wire systems to the RasPI
+			// At the moment most wire sensors are in fact further treated as sensors sensors.
+			case 'sensor':
+				logger("Sensor message from "+rcv.address+":"+rcv.channel,1);
+				var j;
+				// Compare address and channel to identify a sensors sensor
+				// Decided not to use the name for this :-)
+				for (j = 0; j<sensors.length; j++ ) {
+       				if (( sensors[j]['address'] == rcv.address ) &&
+						( sensors[j]['channel'] == rcv.channel )) {
+						break;// return value of the object
+					}
 				}
-				message("database received: #rooms: "+rooms.length+", #devices:"+devices.length);
-
+				// if we found a match, j will be smaller than length of array
+				if (j<sensors.length) {
+					if (rcv.hasOwnProperty('temperature')) sensors[j]['sensor']['temperature']['val']=rcv.temperature;
+					if (rcv.hasOwnProperty('humidity')) sensors[j]['sensor']['humidity']['val']		 =rcv.humidity;
+					if (rcv.hasOwnProperty('airpressure')) sensors[j]['sensor']['airpressure']['val']=rcv.airpressure;
+					if (rcv.hasOwnProperty('windspeed')) sensors[j]['sensor']['windspeed']['val']=rcv.windspeed;
+					if (rcv.hasOwnProperty('winddirection')) sensors[j]['sensor']['winddirection']['val']=rcv.winddirection;
+					if (rcv.hasOwnProperty('rainfall')) sensors[j]['sensor']['railfall']['val']=rcv.railfall;
+						
+					//sensors[j]['winddirection']	=rcv.winddirection;
+					//sensors[j]['rainfall']		=rcv.rainfall;
+						
+					var msg="";
+					if (debug >=2) {
+						msg += "Sensor "+sensors[j]['name']+"@ "+sensors[j]['location'];
+						msg += ": temp: "+sensors[j]['temperature'];
+						msg += ", humi: "+sensors[j]['humidity']+"%<br\>";
+						
+						logger("Sensor "+sensors[j]['name']+"@"+sensors[j]['location']
+							+": temp: "+sensors[j]['temperature']
+							+", humi: "+sensors[j]['humidity']+"%");
+					}
+					message(msg);
+				}
 			break;
 			case 'upd_config':							// Update the configuration with new data, might be partial tree
 				logger("rcv:: upd_config message received",1);
@@ -679,6 +756,47 @@ function init_websockets() {
 					}
 				})
 				activate(s_screen);
+			break;
+			// If we receive a sensors message, we scan the incoming message based
+			// on the addr/channel combination and look those up in the sensors array.
+			// If the sensors station is not present in the array, we will not show its values !!!
+			// The sensors stations that we allow for receiving are specified in the 
+			// database.cfg file (and in the database).
+			case 'weather':	
+				alert("UNEXPECTED WEATHER MESSAGE RECEIVED");
+				var j;
+				// Compare address and channel to identify a weather sensor
+				// Decided not to use the name for this :-)
+				for (j = 0; j<weather.length; j++ ) {
+       				if (( weather[j]['address'] == rcv.address ) &&
+						( weather[j]['channel'] == rcv.channel )) {
+						// return value of the object
+						break;
+					}
+				}
+				// if we found a match, j will be smaller than length of array
+				// So we have the record that partly describes the current sensor
+				// and partly needs to be filled with the latest sensor values received.
+				if (j<weather.length) {
+						weather[j]['temperature']	=rcv.temperature;
+						weather[j]['humidity']		=rcv.humidity;
+						weather[j]['airpressure']	=rcv.airpressure;
+						weather[j]['windspeed']		=rcv.windspeed;
+						weather[j]['winddirection']	=rcv.winddirection;
+						weather[j]['rainfall']		=rcv.rainfall;
+						var msg="";
+						if (debug >=2)
+						{
+							msg += "Weather "+weather[j]['name']+"@ "+weather[j]['location'];
+							msg += ": temp: "+weather[j]['temperature'];
+							msg += ", humi: "+weather[j]['humidity']+"%<br\>";
+							
+							logger("Weather "+weather[j]['name']+"@"+weather[j]['location']
+								+": temp: "+weather[j]['temperature']
+								+", humi: "+weather[j]['humidity']+"%");
+						}
+						message(msg);
+				}
 			break;
 			default:
 				message("Unknown message: action: "+action+", tcnt: "+tcnt+", mes: "+msg+", type: "+type);

@@ -30,16 +30,14 @@ var loops = [];						// Keep track of running loop id's
 var config={};						// This is the overall LamPI configuration array root
 var lampi_admin=[];
 
-var homeDir = "/home/pi";
-var logDir  = homeDir+"/log"
-var rrdDir  = homeDir+"/rrd"
-var wwwDir  = homeDir+"/www"
-
 var par   = require('./config/params');
 var mysql = require('mysql'); console.log("mySQL loaded");
 var fs    = require("fs"); console.log("fs loaded");
 var strip = require("strip-json-comments"); console.log("strip-json-comments loaded");
 
+var logDir  = par.homeDir+"/log"
+var rrdDir  = par.homeDir+"/rrd"
+var wwwDir  = par.homeDir+"/www"
 
 // --------------------------------------------------------------------------------
 // Logging function
@@ -232,7 +230,7 @@ app.use('/alarm', alarmRouter);
 // Read the standard database configuration file and return the config array object
 
 function readConfig() {
-	var dbCfg = homeDir+"/config/database.cfg";
+	var dbCfg = par.homeDir+"/config/database.cfg";
 	var ff = fs.readFileSync(dbCfg, 'utf8');
 	var obj = JSON.parse(strip(ff));
 	if (debug>=3) { logger("readConfig:: config read: ",3); console.log(obj); }
@@ -723,7 +721,7 @@ function createDbase(cb) {
 	// in other case, edit the database table by hand!! If the table exists, we do not overwrite
 	// its cnotent.
 	function (callback) {
-		queryDbase('CREATE TABLE IF NOT EXISTS users(id INT, descr CHAR(128), name CHAR(20), login CHAR(20), passw CHAR(32), class INT )',function(err, ret) { 
+		queryDbase('CREATE TABLE IF NOT EXISTS users(id INT, descr CHAR(128), type CHAR(32), name CHAR(20), login CHAR(20), passw CHAR(32), class INT )',function(err, ret) { 
 			var u = [];
 			if (!err) {
 				queryDbase('SELECT * FROM users', function(err, ret, fields) {
@@ -754,21 +752,21 @@ function createDbase(cb) {
 	},
 	function (callback) {
 		queryDbase('DROP TABLE IF EXISTS devices',function(err, ret) { 
-			queryDbase('CREATE TABLE devices(id CHAR(3), descr CHAR(128), uaddr CHAR(3), gaddr CHAR(12), room CHAR(12), name CHAR(20), type CHAR(12), val INT, lastval INT, brand CHAR(20) )',function(err, ret) {																																	
+			queryDbase('CREATE TABLE devices(id CHAR(3), descr CHAR(128), uaddr CHAR(3), gaddr CHAR(12), room CHAR(12), name CHAR(20), type CHAR(32), val INT, lastval INT, brand CHAR(20) )',function(err, ret) {																																	
 				callback(err,'devices made');
 			});
 		});
 	},
   function(callback) {
 	queryDbase('DROP TABLE IF EXISTS scenes',function(err, ret) { 
-		queryDbase('CREATE TABLE scenes(id INT, descr CHAR(128), val INT, name CHAR(20), seq CHAR(255) )',function(err, ret) {
+		queryDbase('CREATE TABLE scenes(id INT, descr CHAR(128), val INT, name CHAR(20), type CHAR(32), seq CHAR(255) )',function(err, ret) {
 			callback(err,"scenes made");
 		});
 	});
   },
   function (callback) {
 	queryDbase('DROP TABLE IF EXISTS timers',function(err, ret) { 
-		queryDbase('CREATE TABLE timers(id INT, descr CHAR(128), name CHAR(20), scene CHAR(20), tstart CHAR(20), startd CHAR(20), endd CHAR(20), days CHAR(20), months CHAR(20), skip INT )',function(err, ret) {
+		queryDbase('CREATE TABLE timers(id INT, descr CHAR(128), name CHAR(20), type CHAR(32), scene CHAR(20), tstart CHAR(20), startd CHAR(20), endd CHAR(20), days CHAR(20), months CHAR(20), skip INT )',function(err, ret) {
 			callback(err,'timers made');
 		});
 	});
@@ -810,7 +808,7 @@ function createDbase(cb) {
   },
   function (callback) {
     queryDbase('DROP TABLE IF EXISTS rules',function(err, ret) { 
-		queryDbase('CREATE TABLE rules(id INT, descr CHAR(128), name CHAR(20), active CHAR(1), jrule TEXT(65000), brule TEXT(65000) )',function(err,ret) {
+		queryDbase('CREATE TABLE rules(id INT, descr CHAR(128), name CHAR(20), type CHAR(32), active CHAR(1), jrule TEXT(65000), brule TEXT(65000) )',function(err,ret) {
   		callback(null,'rules made');
 		});
   	});
@@ -1586,6 +1584,7 @@ function dbaseHandler(cmd, args, socket) {
 			var upd = { 
 				name: args.name, 
 				id:args.id, 
+				type:"rule",
 				descr: args.descr,
 				jrule: JSON.stringify(args.jrule),
 				brule: JSON.stringify(args.brule)
@@ -1596,6 +1595,7 @@ function dbaseHandler(cmd, args, socket) {
 			updInArray(config['rules'],args);
 			var upd = { 
 			name:  args.name, 
+			type: "rule",
 			id:    args.id,
 			active:args.active,
 			descr: args.descr,
@@ -2373,46 +2373,74 @@ var queue = new function() {
 // As from that moment on the config['devices'] will be in memory and always available
 // XXX At the moment, for gui only ICS raw coded commands are stored in Queue
 // XXX Todo: We can put whatever task we want in the queue, including thermostat, emails etc etc.
-
+// task = { name: STRING, seq: STRING } 
+//
 function queueHandler() {
 	var task = queue.qpop();		
 	while ((task != null) && (task.length > 0)) {				// Might be more than one task runnable
 		if (debug>=2) console.log("queueHandler:: pop task: ",task);
-		for (var i=0; i< task.length; i++) {					// For every scene runnable after pop(), could be 0
+		for (var i=0; i< task.length; i++) {					// For every scene runnable after pop(), could be 0 or N
 			var cmds;
 			if (debug>=1) console.log("\t\tqueueHandler:: processing task: ",task[i]);
 			switch (task[i].name) {
 				case "gui":										// We use this fake name for separate ICS commands
 					cmds = task[i].seq.split(",");				// Get all ICS commands in the scene, could be allOff
+					// For each cmd in the seq separately call the handler
+					for (var j = 0; j<cmds.length; j=j+2) {
+						var data = {
+							tcnt: ""+tcnt++ ,
+							type: "raw",
+							action: "gui",						// actually the class of the action
+							cmd:   "",							// Optional ics messages, otherwise kaku, zwave, livolo etc.
+							gaddr: "",							// Optional
+							uaddr: "",							// Optional
+							val:   "",							// Optional
+							message: cmds[j]
+						};
+					//icsHandler(data);							// Fills out missing JSON fields. We do not specify socket as 2nd arguments
+					};	
+					socketHandler(JSON.stringify(data)); 		// generic handle function
 				break;
-				// If this is a scene, split all separate cmds and execute
-				case "scene":
+				case "scene":									// If this is a scene, split all separate cmds and execute
 					// cmds = task[i].seq.split(",");
 					logger("queueHandler:: scene found",1);
-				default:
+					
+				case "rule":
+					// seq contains the info we are looking for (I guess).
+					logger("queueHandler:: Exucuting rule: "+task[i].seq.id+", "+task[i].seq.cmd,2);
+					switch ( task[i].seq.cmd ) {	
+						case "active":
+							config['rules'][task[i].seq.id].active = task[i].seq.val ;
+						break;
+						default:
+							logger("queueHandler:: rule command unrecognized: "+task[i].seq.cmd,1);
+					}
+				break;
+				default: // name of a scene, not a fixed name
 					// Lookup scene or task and Send to connected sockets
 					logger("queueHandler:: executing: "+task[i].name,1);
 					var index = findScene(task[i].name);
 					cmds = config['scenes'][index].seq.split(",") ;
+					// For each cmd in the seq separately call the handler
+					for (var j = 0; j<cmds.length; j=j+2) {
+						var data = {
+							tcnt: ""+tcnt++ ,
+							type: "raw",
+							action: "gui",						// actually the class of the action
+							cmd:   "",							// Optional ics messages, otherwise kaku, zwave, livolo etc.
+							gaddr: "",							// Optional
+							uaddr: "",							// Optional
+							val:   "",							// Optional
+							message: cmds[j]
+						};
+					//icsHandler(data);							// Fills out missing JSON fields. We do not specify socket as 2nd arguments
+					}	
+					socketHandler(JSON.stringify(data)); 		// generic handle function
 				break;
-			}
-			// For each cmd in the seq separately call the handler
-			for (var j = 0; j<cmds.length; j=j+2) {
-				var data = {
-					tcnt: ""+tcnt++ ,
-					type: "raw",
-					action: "gui",								// actually the class of the action
-					cmd:   "",									// Optional ics messages, otherwise kaku, zwave, livolo etc.
-					gaddr: "",									// Optional
-					uaddr: "",									// Optional
-					val:   "",									// Optional
-					message: cmds[j]
-				};
-				//icsHandler(data);								// Fills out missing JSON fields. We do not specify socket as 2nd arguments
-			}	socketHandler(JSON.stringify(data)); 			// generic handle function
-		}
+			}//switch
+		}//for
 		task = queue.qpop();									// Next pop
-	}
+	}//while
 	if (debug>=2) queue.qprint();
 }
 
@@ -2420,13 +2448,24 @@ function queueHandler() {
 // RULE HANDLER Loop with interval
 //
 function ruleHandler() {
+	if (config['rules'] == undefined ) {
+		logger("ruleHandler:: ERROR rules not defined",1);
+		return;
+	}
 	for (var i = 0; i< config['rules'].length; i++) {
 		if (config['rules'][i].active == "Y") {
 			logger("ruleHandler:: rule "+config['rules'][i]['name']+" is active",2);
 			try {
 				logger("ruleHandler:: eval "+config['rules'][i]['name'],1);
 				logger("ruleHandler:: "+config['rules'][i]['jrule'],2);
-				eval( config['rules'][i]['jrule'] );
+				var val = eval( config['rules'][i]['jrule'] );
+				logger ("ruleHandler:: eval rule "+config['rules'][i]['name']+" returned: "+val,1);
+				if (val == "stopRule") config['rules'][i].active = "N"; // User now has to activate rule first 
+
+				if (val === parseInt(val, 10)) { 
+					config['rules'][i].active = "N"; 
+					queue.qinsert({ ticks: Number(val)+getTicks(), name: "rule", seq: {id: i, cmd: "active", val:"Y" } });
+				};
 			}
 			catch (e) {
 				logger("ruleHandler:: Error evaluating rule "+config['rules'][i]['name']+", error: "+e,1);

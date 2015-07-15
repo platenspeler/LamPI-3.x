@@ -193,7 +193,7 @@ function start_Rules()
 						rules[s_rule_id].name = ret[0];
 						//myAlert("<br>rule: "+rules[s_rule_id].name+"<br>jrule: <br>"+rules[s_rule_id].jrule
 						//					+"<br><br>brule: <br>"+JSON.stringify(rules[s_rule_id].brule));
-						myAlert("rule:: "+JSON.stringify(rules[s_rule_id]));
+						myAlert('rule:: <pre><code>'+JSON.stringify(rules[s_rule_id].jrule,null,2)+'</code></pre>');
 						send2daemon("dbase","store_rule", rules[s_rule_id]);
 						init_rules();
 						return(1);	//return(1);
@@ -388,12 +388,14 @@ function init_blockly() {
 		toolbox += '<block type="controls_repeat_ext"></block>';
 		toolbox += '<block type="controls_whileUntil"></block>';
 		toolbox += '<block type="controls_when"></block>';
+		toolbox += '<block type="controls_stoprule"></block>';
+		toolbox += '<block type="controls_timeout"></block>';
 	toolbox += '</category>';
 	
 	toolbox += "<category name='logic'>";
 		toolbox += '<block type="logic_compare"></block>';
-		toolbox += '<block type="math_number"></block>';
 		toolbox += '<block type="math_arithmetic"></block>';
+		toolbox += '<block type="math_number"></block>';
 	toolbox += '</category>';
 	
 	toolbox += "<category name='text'>";
@@ -412,6 +414,7 @@ function init_blockly() {
 		
 	toolbox += "<category name='devices'>";
 		toolbox += '<block type="devices_switch"></block>';
+		toolbox += '<block type="devices_dimmer"></block>';
 		toolbox += '<block type="devices_set"></block>';
 	toolbox += '</category>';
 	

@@ -3,6 +3,8 @@
 var os = require('os');
 var par = module.exports = {};
 
+par.homeDir = process.env.HOME || '/home/pi'
+
 par.dbHost = process.env.DBHOST || 'localhost';
 par.dbUser = process.env.DBUSER || 'coco';
 par.dbPassword = process.env.PASSWD || 'coco';

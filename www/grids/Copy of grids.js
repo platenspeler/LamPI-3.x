@@ -431,20 +431,8 @@ function filter_grid(widgets, gScreen) {
 		for (var i=0; i<lroot['handsets'].length; i++) widgets.push(lroot['handsets'][i]);
 	  break;
 	  case "g_sensors":
-	    // As sensors might have multiple su sensors, put each one in the widget list
 		logger("filter_grid:: g_sensors adding", 1);
-		for (var i=0; i<lroot['sensors'].length; i++) {
-			 var j=0;
-			var len = lroot['sensors'][i]['sensor'].length;
-			for ( var key in lroot['sensors'][i]['sensor'] ) {
-				var o={};
-				jQuery.extend(o,lroot['sensors'][i]);				// copy NOT by reference
-				var sKey = Object.keys(o['sensor'])[j++];
-				o['sensor'] = {};
-				o['sensor'][sKey] = lroot['sensors'][i]['sensor'][sKey] ;		// sKey eg temperature
-				widgets.push(o);
-			}
-		}//for
+		for (var i=0; i<lroot['sensors'].length; i++) widgets.push(lroot['sensors'][i]);
 	  break;
 	  default: 
 	  	logger("filter_grid:: gScreen id not recognized: "+gScreen[si],1);
@@ -458,21 +446,25 @@ function filter_grid(widgets, gScreen) {
 // Make the grid based on criteria in gScreen array and make widget.
 //
 
-function make_grid(widgets) {
+function make_grid(widgets, gScreen) {
 
+  var widgets = [];
   // Based on the parameter received we fill the grid
-  for (var si=0; si<widgets.length; si++) {
+  for (var si=0; si<gScreen.length; si++) {
+	logger("init_grid:: Filtering "+gScreen[si],1);
+	switch(gScreen[si]) {
+	  case "g_devices":
+		for (var i=0; i<lroot['devices'].length; i++)
+		{
+		  var gridId = lroot['devices'][i]['room']+lroot['devices'][i]['id'];	// Devices start their id with a 'D' so all id are like xxDyy	
+	  	  var device_name = lroot['devices'][i]['name'];
+	  	  var device_val = lroot['devices'][i]['val'];
+	  	  var room_id = lroot['devices'][i]['room'];
+	  	  var widget = "";
+	  	  widget += '<li class="widget" id='+i+'><table>';
 	  
-	logger("make_grid:: widget: "+si+", name: "+widgets[si].name+", type:"+widgets[si]['type'],1);
-	var widget = "";
-	widget += '<li class="widget" id='+si+'><table>';
-	
-	switch(widgets[si]['type']) {
-
-		case 'switch':
-			var gridId = widgets[si]['room']+widgets[si]['id'];	// Devices start their id with a 'D' so all id are like xxDyy
-			var device_name = widgets[si]['name'];
-			var device_val = widgets[si]['val'];
+		  switch(lroot['devices'][i]['type']) {
+		  case 'switch':
 			widget += '<tr class="devrow switch">' ;
 			widget += '<th colspan="2">'+device_name+'</th>';
 			widget += '</tr><tr>'
@@ -481,87 +473,47 @@ function make_grid(widgets) {
 			var but_hov = (device_val ==0?'':'hover');
 			widget += '<td><input type="submit" id="'+gridId+'S" value= "'+but_val+'" class="dbuttons '+but_hov+'">,</td>';
 			widget += '</tr>';
-		break;
-		case 'dimmer':
-		    var gridId = widgets[si]['room']+widgets[si]['id'];	// Devices start their id with a 'D' so all id are like xxDyy
-			// Fill each widget with the sa,e standard content based on devices (or tbd sensors).
-			var device_name = widgets[si]['name'];
-			var device_val = widgets[si]['val'];
+		  break;
+		  case 'dimmer':
+		// Fill each widget with the sa,e standard content based on devices (or tbd sensors).
 			widget += '<tr class="devrow dimrow">' ;
-			widget += '<th colspan="2">'+device_name+'</th>';
+			widget += '<th colspan="2">'+device_name+'</th>'
 			widget += '</tr><tr>';
 			widget += '<td width="20%"><image width="25" height="25" src="/styles/images/lamp.png"> </image></td>';
 			widget += '<td><div id="' +gridId + 'D" class="slider slider-widget dimmer"></div></td>';
 			widget += '</tr>';
-		break;
-		case 'thermostat':
-		    var gridId = widgets[si]['room']+widgets[si]['id'];	// Devices start their id with a 'D' so all id are like xxDyy
-			var device_val = widgets[si]['val'];
-			var device_name = widgets[si]['name'];
-			widget += '<tr class="devrow dimrow">';
-			widget += '<th colspan="3">'+device_name+'</th>';
+		  break;
+		  case 'thermostat':
+			but_val = device_val;
+			widget += '<tr class="devrow dimrow">' ;
+			widget += '<th colspan="3">'+device_name+'</th>'
 			widget += '</tr><tr>';
 			widget += '<td><image width="25" height="25" src="/styles/images/thermometer.png"> </image></td>';
-			widget += '<td><input type="submit" id="'+gridId + 'T" value= "'+device_val +"\u00B0"+'" class="dbuttons thermostat '+but_hov+'">,</td>';
+			widget += '<td><input type="submit" id="'+gridId + 'T" value= "'+but_val +"\u00B0"+'" class="dbuttons thermostat '+but_hov+'">,</td>';
 			widget += '</tr>';
 			message("thermostat");
-		break;
-		case 'sensor':
-			logger("make_grid:: sensors ",1);
-			var sKey = Object.keys(widgets[si]['sensor'])[0]; 
-			var sUnit = "";
-			var sLbl = "";
-			switch (sKey) {
-				case "temperature":
-					sUnit = "\u00B0";
-					sLbl = "Temp: "
-				break;
-				case "airpressure":
-					sUnit = "hPa";
-					sLbl = "Baro: "
-				break;
-				case "humidity":
-					sUnit = "%";
-					sLbl = "Humi: "
-				break;
-				case "luminescense":
-					sUnit = "Lum";
-					sLbl = "Lumi: "
-				break;
-				default:
-			};
-			var device_val = widgets[si]['sensor'][sKey]['val'];
-			console.log("make_grid:: sensor key: ",sKey+", device_val: "+device_val);
-			var device_name = widgets[si]['name'];
-			widget += '<tr class="devrow switch">';
-			widget += '<th colspan="2">'+device_name+'</th>';
-			widget += '</tr><tr>';
-			widget += '<td><image width="25" height="25" src="/styles/images/sensor.png"> </image></td>';
-			widget += '<td>'+sLbl+'<input type="submit" id="S'+widgets[si]['id']+'" value= "'+device_val+sUnit+'" class="dbuttons '+'"></td>';
-			widget += '</tr>';
-		break;
-		default:
-			message("init_grid:: device type "+widgets[si]['type']+" not recognized");
-		break;
-	  }//switch
+		  break
+		  default:
+			message("init_grid:: device type "+lroot['devices'][i]['type']+" not recognized");
+		  break;
+		  }//switch
 	  
-	  widget += '</table></li>'
-	  //widgets.push(gridster.add_widget(widget, 1, 1));	// Tis is the actual code to make a widget
-	  gridster.add_widget(widget, 1, 1);
+		  widget += '</table></li>'
+		  widgets.push(gridster.add_widget(widget, 1, 1));	// Tis is the actual code to make a widget
+		  
+		  var label ="#"+gridId; 
+		  var slidid="#"+gridId+"D";				// # is for DIV, D to recognize dimmer
 	  	
 		  // This function initialization must be AFTER putting the slider on the screen (otherwise will not work).
 		  // function can be executed LONG after initialization. Therefore ALL variabls need to be
 		  // dynamic and generated from the parameters passed from the .slider() function.
 		  $(function() {
-			var gridId = widgets[si]['room']+widgets[si]['id'];	// Devices start their id with a 'D' so all id are like xxDyy
-			var label ="#"+gridId; 
-			var slidid="#"+gridId+"D";				// # is for DIV, D to recognize dimmer
 			logger("Starting Grid Widget Slider function for slider: "+slidid,2);
 			$( slidid ).slider({
 			  range: "max",
 			  min: 0,
 			  max: 31,
-			  value: widgets[si]['val'],
+			  value: lroot['devices'][i]['val'],
     		  slide: function( event, ui ) {
       			$( slidid ).val( ui.value );
 			  },
@@ -581,7 +533,16 @@ function make_grid(widgets) {
 			  }
 			});// slider (every slider its own definition)
 	      }); // function
+	    }//for every device
+	  break;
 	
+	  case "g_sensor":
+	  	logger("filter_grid:: Start making sensor array",1);
+	  break;
+  
+	  default:
+		logger("init_grid:: Unknown widget to display: "+gScreen[si],1);
+	}// switch
   }//for
   return (widgets);
 }
@@ -629,7 +590,7 @@ function init_grid(gScreen,gSort) {
   widgets = filter_grid(widgets, gScreen);			// Select all relevant items from system and put in array widgets
   widgets = sort_grid(widgets, gSort)				// Sort the widgets array based on criteria in gSort
   logger("make_grid:: Counting "+widgets.length+" widgets",1);
-  widgets = make_grid(widgets);
+  widgets = make_grid(widgets, gScreen);
     
   if (debug>2) console.log( $(".gridster ul").data("gridster").serialize() );
   return($(".gridster ul").data("gridster").serialize() );

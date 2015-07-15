@@ -56,53 +56,7 @@ var skin = "";											// settings[4]['val'] or localStorage get ('skin')
 var debug = "1";										// debug level. Higher values >0 means more debug
 var alarmStatus = "2";									// Set default to relaxed
 
-var healthcount = 5;									// Needs to be above 0 to show activity
-var healthtime = 10000;									// milliseconds between activation of health pulse
 
-// ----------------------------------------------------------------------------
-// s_STATE variables. They keep track of current room, scene and setting
-// The s_screen variable is very important for interpreting the received messages
-// of the server. 
-// State changes of device values need be forwarded to the active screen
-// IF the variable is diaplayed on the screen
-//
-var s_screen = 'room';									// Active screen: 1=room, 2=scene, 3=timer, 4=config
-var s_room_id =1;										// Screen room_id
-var s_scene_id =1;
-var s_timer_id = 1;
-var s_handset_id = 1;
-var s_sensor_id = '';									// Init empty
-var s_energy_id = 0;									// Init empty
-var s_setting_id = 0;
-var s_recorder = '';									// recording of all user actions in a scene. 
-var s_recording = 0;									// Set to 1 to record lamp commands
-
-// -----------------------------------------------------------------------------
-// Set limits for the program for using resources
-//
-var max_rooms = 16;										// Max nr of rooms. ICS-1000 has 8
-var max_scenes = 16;									// max nr of scenes. ICS-1000 has 20
-var max_devices = 16;									// max nr. of devices per room. ICS-1000 has 6
-var max_timers = 16;
-var max_handsets = 8;
-var max_sensors = 8;									// USED! Maximum number of sensors receivers
-
-// Actually, sum of timers and scenes <= 20 for ICS-1000
-// 
-var lroot={};			// XXX just like in the LamPI-node.js program we need a root object
-var rooms={};			// For most users, especially novice this is the main/only screen
-var devices={};			// Administration of room devices (lamps or switches)
-var moods={};			// NOT USED
-var scenes={};			// Series of device actions that are grouped and executed together
-var timers={};			// Timing actions that work on a defined scene
-var brands={};			// All brands of equipment that is recognized by the daemon
-var handsets={};		// Handsets or transmitters of code. Action/Impuls, Klikaanklikuit supported
-var weather={};			// The administration of weather receivers, and their last values
-var sensors = {};
-var energy={};			// Energy sensors and values
-var settings={};		// Set debug level and backup/restore the configuration
-var rules={};
-var users={};
 
 // ---------------------------------------------------------------------------------
 //	This function waits until the document DOM is ready and then 
@@ -405,7 +359,7 @@ function start_LAMP(){
 						// Add the device to the array
 						// So what are the variables returned by the function???
 						if (debug > 2) alert(" Dialog returned val_1,val_2: " + ret);		
-						var newscene = { id: ind, name: ret[0], val: "0", seq: "" };
+						var newscene = { id: ind, name: ret[0], type: "scene", val: "0", seq: "" };
 						scenes.push(newscene);			// Add record newdev to devices array
 						send2daemon("dbase","add_scene", newscene);
 						// And add the line to the #gui_devices section, Go to the new scene
@@ -610,6 +564,7 @@ function start_LAMP(){
 						var newtimer = {
 							id: ind,
 							name: ret[0],
+							type: "timer",
 							scene: "",
 							tstart: "00:00:00",
 							startd: "01/01/13",
@@ -1095,6 +1050,7 @@ function start_LAMP(){
 						var newsensors = {
 							id: ind,
 							name: sensors_name,
+							type: "sensor",
 							brand: "",
 							addr: sensors_addr,
 							unit: "0",
@@ -1665,64 +1621,6 @@ function activate (s_screen) {
 			activate_setting(s_setting_id);
 		break;
 	}
-}
-
-
-
-// ----------------------------------------------------------------------------
-// Alert Box
-// Difference from alert() is that this does not stop program execution of other
-// threads. Also, breaks in lines not with \n but with </br>
-//
-function myAlert(msg, title) {
-
-  $('<div style="padding:10px; min-width:350px; max-width:800px; min-height:400px; max-height:500px; overflow:scroll; word-wrap:break-word;">'+msg+'</div>').dialog({
-    draggable: false,
-    modal: true,
-    resizable: false,
-    width: 'auto',
-    title: title || 'Confirm',
-    minHeight: 75,
-	dialogClass: 'askform',
-    buttons: {
-      OK: function () {
-        //if (typeof (okFunc) == 'function') {
-         // setTimeout(okFunc, 1);
-        //}
-        $(this).dialog('destroy');
-      }
-    }
-  });
-}
-
-
-// ----------------------------------------------------------------------------
-// Dialog Box, confirm/cancel
-//
-function myConfirm(dialogText, okFunc, cancelFunc, dialogTitle) {
-  $('<div style="padding: 10px; max-width: 500px; word-wrap: break-word;">' + dialogText + '</div>').dialog({
-    draggable: false,
-    modal: true,
-    resizable: false,
-    width: 'auto',
-    title: dialogTitle || 'Confirm',
-    minHeight: 75,
-	dialogClass: 'askform',
-    buttons: {
-      OK: function () {
-        if (typeof (okFunc) == 'function') {
-          setTimeout(okFunc, 50);
-        }
-        $(this).dialog('destroy');
-      },
-      Cancel: function () {
-        if (typeof (cancelFunc) == 'function') {
-          setTimeout(cancelFunc, 50);
-        }
-        $(this).dialog('destroy');
-      }
-    }
-  });
 }
 
 
@@ -2401,7 +2299,6 @@ function activate_room(new_room_id, selectable)
 					if (selectable == "Del")
 						slid += '<td><input type="checkbox" id="'+device_id+'c" name="cb'+device_id+'" value="yes" class="dbuttons"></td>';	
 					slid += '<td colspan="2"><label for="'+device_id+'Fd">'+device_name+'</label>';
-					//slid += '<input type="number" data-type="range" style="min-width:32px;" id="'+device_id+'Fd" name="'+device_id+'Fl" value="'+device_val+'" min=0 max=31 data-highlight="true" data-mini="false" data-theme="b" class="ddimmer"/></td>';
 					slid += '<input type="number" data-type="range" style="min-width:32px;" id="'+device_id+'Fd" name="'+device_id+'Fl" value="'+device_val+'" min=0 max=31 data-highlight="true" data-mini="false" class="ddimmer"/></td>';
 					slid += '<td><input type="submit" id="'+device_id+'F0'+'" value= "OFF" class="dbuttons off_button'+offbut+'" />';
 					slid += '<input type="submit" id="'+device_id+'F1'+'" value= "ON" class="dbuttons on_button'+onbut+'" /></td>';
@@ -5791,6 +5688,7 @@ function handle_device(id,val)
 	// NOTE: This function now ONLY works correct for the ICS-1000 device. If we like
 	// to work with other technologies such as Zwave we need a translation between buttons and device codes
 	// specific for such a device.
+	//
 	var str = "";
 	var action = "";
 	var cmdString = "";	

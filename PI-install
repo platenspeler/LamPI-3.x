@@ -155,6 +155,16 @@ install_lampi()
 	cd $HOMEDIR/transmitters/kaku; make; sudo make install
 	cd $HOMEDIR/transmitters/lights; make; sudo make install
 	cd $HOMEDIR/transmitters/kopou; make; sudo make install    
+
+	# Database setup
+    # mysql -u root -p
+    # <password>
+    # CREATE DATABASE LamPI ;
+    # USE LamPI ;
+    # CREATE USER 'coco'@'localhost' IDENTIFIED BY 'coco';
+    # GRANT ALL PRIVILEGES ON LamPI.* TO 'coco'@'localhost' ;
+    # FLUSH PRIVILEGES ;
+    # quit
 }
 
 
@@ -238,7 +248,7 @@ setup_cron()
         // MASTER
         if [ "$1" == "-m" ]; then
 			echo "Setting up contab with PI-run for manager"
-            echo "*   * * * * cd $HOMEDIR/scripts && sh ./PI-node > /dev/null 2>&1"	>> /tmp/effe
+            echo "*   * * * * . $HOME/.profile; cd $HOMEDIR/scripts && sh ./PI-node > /dev/null 2>&1"	>> /tmp/effe
 			echo "*   * * * * cd $HOMEDIR/scripts && sh ./PI-rcv > /dev/null 2>&1"	>> /tmp/effe
 			echo "0   2 * * * cd $HOMEDIR/scripts && sh ./PI-log > /dev/null 2>&1"	>> /tmp/effe
 			echo "*/2 * * * * cd $HOMEDIR/scripts && sh ./PI-1w > /dev/null 2>&1"	>> /tmp/effe
@@ -251,7 +261,7 @@ setup_cron()
         // ZWAVE 
         elif [ "$1" == "-z" ]; then
 			echo "Setting up contab for Zway Gateway"
-            #echo "*   * * * * cd $HOMEDIR/scripts && sh ./PI-node	> /dev/null 2>&1"	>> /tmp/effe
+            #echo "*   * * * * . $HOME/.profile; cd $HOMEDIR/scripts && sh ./PI-node	> /dev/null 2>&1"	>> /tmp/effe
 			echo "0   2 * * * cd $HOMEDIR/scripts && sh ./PI-log	> /dev/null 2>&1"	>> /tmp/effe
         
         // SLAVE
@@ -312,93 +322,14 @@ setup_wlan()
 # -----------------------------------------------------------------------------------------------------
 #
 #
-install_jasper()
+install_speech()
 {
-	JHOME=$HOMEDIR/jasper.src
-    mkdir $JHOME
-	sudo apt-get install vim git-core espeak python-dev python-pip bison libasound2-dev libportaudio-dev python-pyaudio --yes
-    
-    cd $JHOME
-    wget http://downloads.sourceforge.net/project/cmusphinx/sphinxbase/0.8/sphinxbase-0.8.tar.gz
-	wget http://downloads.sourceforge.net/project/cmusphinx/pocketsphinx/0.8/pocketsphinx-0.8.tar.gz
-	tar -zxvf sphinxbase-0.8.tar.gz
-	tar -zxvf pocketsphinx-0.8.tar.gz
-    
-    echo -n "Configuring sphinxbase, press <ENTER> to start" ; read a
-    cd $JHOME/sphinxbase-0.8/
-	./configure --enable-fixed
-	make
-	sudo make install
+	// Based on Google speech, by Steven Hickson
+    wget –no-check-certificate “http://goo.gl/KrwrBa” -O PiAUISuite.tar.gz
+    tar -xvzf PiAUISuite.tar.gz
+    cd PiAUISuite/Install/
+    sudo ./InstallAUISuite.sh
 
-	echo -n "Configuring pocketsphinx, press <ENTER> to start" ; read a
-	cd $JHOME/pocketsphinx-0.8/
-	./configure
-	make
-	sudo make install
-    
-    sudo apt-get install subversion autoconf libtool automake gfortran g++ --yes
-    
-    echo -n "Configuring CMUCLMTK, press <ENTER> to start" ; read a
-    echo "Installing CMUCLMTK"
-    cd $JHOME
-    svn co https://svn.code.sf.net/p/cmusphinx/code/trunk/cmuclmtk/
-	cd cmuclmtk/
-	sudo ./autogen.sh && sudo make && sudo make install
-	cd ..
-    
-    cd $JHOME
-    wget http://distfiles.macports.org/openfst/openfst-1.3.3.tar.gz
-	wget https://mitlm.googlecode.com/files/mitlm-0.4.1.tar.gz
-	wget https://m2m-aligner.googlecode.com/files/m2m-aligner-1.2.tar.gz
-	wget https://phonetisaurus.googlecode.com/files/phonetisaurus-0.7.8.tgz
-	wget http://phonetisaurus.googlecode.com/files/g014b2b.tgz
-    
-    echo -n "Configuring openfst, press <ENTER> to start" ; read a
-    cd $JHOME
-    cd openfst-1.3.3/
-	sudo ./configure --enable-compact-fsts --enable-const-fsts --enable-far --enable-lookahead-fsts --enable-pdt
-	sudo make install # come back after a really long time
-
-	echo -n "Configuring mm2-aligner, press <ENTER> to start" ; read a
-    cd $JHOME
-    cd m2m-aligner-1.2/
-	sudo make
-    
-    echo -n "Configuring ,itlm, press <ENTER> to start" ; read a
-    cd $JHOME
-    cd mitlm-0.4.1/
-	sudo ./configure
-	sudo make install
-    
-    echo -n "Configuring phonetisaurus, press <ENTER> to start" ; read a
-    cd $JHOME
-    cd phonetisaurus-0.7.8/
-	cd src
-	sudo make
-    
-    sudo cp $JHOME/m2m-aligner-1.2/m2m-aligner /usr/local/bin/m2m-aligner
-	sudo cp $JHOME/phonetisaurus-0.7.8/phonetisaurus-g2p /usr/local/bin/phonetisaurus-g2p
-    
-    cd $JHOME
-	cd g014b2b/
-	./compile-fst.sh
-    cd $JHOME
-    mv $JHOME/g014b2b $JHOME/phonetisaurus
-
-	# ----------------------------------------------------------------------------------
-	# Jasper Client
-    #
-    JCLIENT=/home/pi/jasper
-    cd ~
-    echo -n "Configuring jasper client, press <ENTER> to start" ; read a
-    
-    git clone https://github.com/jasperproject/jasper-client.git jasper
-    sudo pip install --upgrade setuptools
-	sudo pip install -r jasper/client/requirements.txt
-    
-
-	echo "Do not forget to edit /etc/modprobe.d/alsa-base.conf and change <options snd-usb-audio index=0>"
-    echo "and run sudo alsa force-reload"
 }
 
 # -----------------------------------------------------------------------------------------------------
@@ -414,7 +345,7 @@ install_node()
 #	wget http://nodejs.org/dist/v0.10.30/node-v0.10.30-linux-arm-pi.tar.gz
 #	tar -xvzf node-v0.10.30-linux-arm-pi.tar.gz
 #	node-v0.10.2-linux-arm-pi/bin/node --version
-#	NODE_JS_HOME=/home/pi/node-v0.10.2-linux-arm-pi ; export NODE_JS_HOME
+#	NODE_JS_HOME=$HOME/node-v0.10.2-linux-arm-pi ; export NODE_JS_HOME
 #	PATH=$PATH:$NODE_JS_HOME/bin
     
     wget http://node-arm.herokuapp.com/node_latest_armhf.deb
@@ -431,77 +362,13 @@ install_node()
 #	npm install --save http
     npm install --save connect
     npm install --save serve-static
-#	npm install --save node-mysql
     npm install --save mysql
     npm install --save async
 #	npm install --save child_process
     npm install --save suncalc
     npm install --save strip-json-comments
     npm install --save request
-}
-
-# -----------------------------------------------------------------------------------------------------
-# Install RRDTOOL bindings. This function will ONLY be
-# executed if user chooses "R" in the main program 
-#
-install_rrdtool()
-{
-	# Cleanup first all old sources
-    echo "Cleaning up installation directories for rrdtool"
-	sudo rm -rf /tmp/rrdbuild
-    sudo rm -rf /usr/local/src/rrdtool-1.4.7
-    sudo rm -rf /opt/rrdtool-1.4.7
-    sudo rm -rf /usr/local/src/php-5.3.5/ext
-    
-    echo "Downloading dependent software"
-    sudo apt-get -y install python-smbus
-    sudo apt-get -y install python-dev
-    
-    # Download and Install the sources
-	echo -n "Downloading rrdtool, press <ENTER> to start" ; read a
-	sudo mkdir -p /usr/local/src/rrdtool-1.4.7
-	cd /usr/local/src/rrdtool-1.4.7
-	sudo wget http://oss.oetiker.ch/rrdtool/pub/rrdtool-1.4.7.tar.gz
-	sudo tar -zxvf rrdtool-1.4.7.tar.gz
-	cd rrdtool-1.4.7
-	mkdir /tmp/rrdbuild
-	export BUILD_DIR=/tmp/rrdbuild
-	# sudo mkdir /opt/rrdtool-1.4.7
-	# export INSTALL_DIR=/opt/rrdtool-1.4.7
-    export INSTALL_DIR=/usr
-    
-    echo -n "Configuring rrdtool, press <ENTER> to start" ; read a
-	./configure --prefix=$INSTALL_DIR 
-    
-    echo -n "Making rrdtool, press <ENTER> to start" ; read a
-	make
-	sudo make install
-
-	sudo mkdir -p /usr/local/src/php-5.3.5/ext
-	cd /usr/local/src/php-5.3.5/ext
-    
-    echo -n "Installing php_rrdtool, press <ENTER> to start "; read a
-	wget http://oss.oetiker.ch/rrdtool/pub/contrib/php_rrdtool.tar.gz
-	tar -zxvf php_rrdtool.tar.gz
-	cd rrdtool
-
-	echo -n "Configuring php_rrdtool, press <ENTER> to start "; read a
-	sudo phpize
-	sudo ./configure --with-rrdtool=$INSTALL_DIR --with-php-config=/usr/bin/php-config
-    
-    echo -n "Making php_rrdtool, press <ENTER> to start "; read a
-    # Now we need to do some substitutions for PHP 5.4
-    # function_entry needs to be replaced with zend_function_entry, and pval with zval
-    #
-    sudo sed "s|function_entry|zend_function_entry|g" rrdtool.c > /tmp/effe
-    sudo mv rrdtool.c rrdtool.org
-    sudo sed "s|pval|zval|g" /tmp/effe > rrdtool.c
-
-	sudo make
-	sudo make install
-    
-    echo "Do not forget to add crontab for adding graphs"
-    echo "Especially for automated rrdtool graph options in ~/www/graphs/temperature.html"
+#   npm install --save os
 }
 
 
@@ -530,9 +397,8 @@ do
     printf "M: LamPI master node\n"
     printf "S: LamPI Slave node\n"
     printf "Z: Z-Wave gateway\n"
-    printf "R: Rrdtool graphics support (obsolete, do not use)\n"
     printf "N: Install Node.js support\n"
-    printf "V: Voice support, meet Jasper\n"
+    printf "V: Voice support, speech\n"
     printf "E: Energy Smart Metering Support\n\n"
     printf "Q: Quit the installer\n\n"
     printf "Please enter your answer + <ENTER> to continue: "
@@ -553,9 +419,6 @@ do
 	elif [ "$a" == "N" ]; then
 		echo "Installing Node.js"
    	 	install_node
-	elif [ "$a" == "R" ]; then
-    	echo "Installing rrdtool support"
-		install_rrdtool
 	elif [ "$a" == "S" ]; then
 		echo "Installing a LamPI Slave Node"
 		install_linux
@@ -567,7 +430,7 @@ do
 		isdone="Y"
 	elif [ "$a" == "V" ]; then
 		echo "Configuring LamPI Voice Support"
-		install_jasper
+		install_speech
 	elif [ "$a" == "Z" ]; then
 		echo "Installing a Z-Way Gateway Node"
 		install_zway

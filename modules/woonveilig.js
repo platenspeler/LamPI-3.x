@@ -4,17 +4,14 @@
 //
 
 console.log("Starting woonveilig module");
-
+var par		= require('../config/params');
 var http    = require('http');
 var async   = require('async');
 var request = require('request');
 
 var debug = 1;
 
-// Woonveilig login data
-var whost = '192.168.2.113';
-var wlogin= "platenspeler";
-var wpassw= "Apeldoorn16";
+// Woonveilig login data in ../config/para,.js or in environment setting in ~/.profile !!!
 
 // --------------------------------------------------------------------------------
 // Logging function
@@ -37,11 +34,11 @@ function logger(txt,lvl) {
 // As we set module.exports, we can call the function directly with the "require" value
 //
 var wv_options = {
-		host: whost,
-		path: 'http://'+whost+'/action/panelCondGet',
+		host: par.wHost,
+		path: 'http://'+par.wHost+'/action/panelCondGet',
 		port: '80',
 		method: 'GET',
-		auth: wlogin + ':' + wpassw,
+		auth: par.wLogin + ':' + par.wPasswd,
 		headers: { 'Content-Type': 'application/json' }
 	};
 
@@ -53,7 +50,7 @@ exports.wvStatus = function(cb) {
 	console.log("wvStatus started");
 	async.series([
 		function (callback) {
-			wv_options.path = 'http://' + whost + '/action/panelCondGet';
+			wv_options.path = 'http://' + par.wHost + '/action/panelCondGet';
 			console.log("wv_options.path: "+wv_options.path);
 				
 			http.request(wv_options, function(response) {
@@ -101,14 +98,14 @@ exports.wvSet = function(par, cb) {
 	console.log("wvSet started par: "+par);
 	async.series([
 		function (callback) {
-			wv_options.path = 'http://' + whost + '/action/panelCondPost ';
+			wv_options.path = 'http://' + par.wHost + '/action/panelCondPost ';
 			console.log("wv_options.path: "+wv_options.path);
 			
 			request({
-    			url: 'http://' + whost + '/action/panelCondPost ',
+    			url: 'http://' + par.wHost + '/action/panelCondPost ',
     			method: "POST",
 				json: true,   // <--Very important!!!
-				auth: { 'user': wlogin , 'pass': wpassw , 'sendImmediately': false },
+				auth: { 'user': par.wLogin , 'pass': par.wPasswd , 'sendImmediately': false },
 				//body: { mode: ""+par }
 				form: { mode: ""+par }
 			}, function (error, response, body){
@@ -137,10 +134,10 @@ exports.wvSiren = function(par, cb) {
 			console.log("wv_options.path: "+wv_options.path);
 			
 			request({
-    			url: 'http://' + whost + '/action/sndSirenPost ',
+    			url: 'http://' + par.wHost + '/action/sndSirenPost ',
     			method: "POST",
 				json: true,   // <--Very important!!!
-				auth: { 'user': wlogin , 'pass': wpassw , 'sendImmediately': false },
+				auth: { 'user': par.wLogin , 'pass': par.wPasswd , 'sendImmediately': false },
 				form: { sndsiren_onoff: ""+par }
 			}, function (error, response, body){
 			    // console.log(response);

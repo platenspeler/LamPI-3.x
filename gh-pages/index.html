@@ -9,21 +9,26 @@
 <h1>LamPI Introduction</h1>
 <p>The full table of contents for ALL LamPI documentation is &lt;<a href="LamPI_ToC.html"><strong>HERE</strong></a>&gt;. 
 Please start reading on that page when you finished reading this page.</p>
+<h1>Skins and Look and Feel</h1>
+<p>Click on any of the images here to see a large version of the screenshot. LamPI Gui layout scales with your screen, and there are many ways to configure the LamPI screens to your taste.</p>
 <p><a href="UserGuide/screenshots/room_screen_black.JPG"><img src="UserGuide/screenshots/room_screen_black_xs.jpg" alt="Black skin scalable" width="228" height="156" hspace="2" vspace="2"></a><a href="UserGuide/screenshots/room_screen_wood.JPG"><img src="UserGuide/screenshots/room_screen_wood_xs.jpg" alt="" width="228" height="156" hspace="2" vspace="2"></a><a href="UserGuide/screenshots/room_screen_sea.JPG"><img src="UserGuide/screenshots/room_screen_sea_xs.jpg" width="228" height="155" hspace="2" vspace="2"></a><a href="UserGuide/screenshots/room_screen_linen.JPG"><img src="UserGuide/screenshots/room_screen_linen_xs.jpg" width="228" height="155" hspace="2" vspace="2"></a></p>
-<p>Click on any of the images here to see a large version of the screenshot. LamPI Gui layout scales with your screen, and there are many ways to configure the LamPI screens to your taste.<br>
-</p>
-<p>You can find its GIT repository on <a href="https://github.com/platenspeler">https://github.com/platenspeler</a>, and the documentation on <a href="http://platenspeler.github.io">http://platenspeler.github.io</a></p>
+<p>&nbsp;</p>
+<p>You can find LamPI GIT repository on <a href="https://github.com/platenspeler">https://github.com/platenspeler</a>, and the documentation on <a href="http://platenspeler.github.io">http://platenspeler.github.io</a></p>
 <p>LamPI is a Home Automation project for switching equipment in your house over 434 MHz transmitters/receivers on a RaspberryPI. As of release 2.0 LamPI offers  support for Z-Wave devices. Support for Z-Wave 868MHz devices is implemented with a separate Raspberry bridge computer using the Razberry board. Please read more on Z-Wave support &lt;<a href="Zwave/RazBerry/zwave_gateway.html"><strong>Here</strong></a>&gt;</p>
-<h2>Control your lights and switches</h2>
-<p>This is where I initially developed LamPI for. It will control your light switches and your dimmers and your other switches as well (if you want LamPI can switch your stereo or microwave too). </p>
+<h1>Control your Devices</h1>
+<p>This is where I initially developed LamPI for. It will control your light switches and your dimmers and your other switches as well (if you want LamPI can switch your stereo or microwave too). It also controls your radiators (Z-Wave) and other devices.</p>
 <p><img src="UserGuide/screenshots/room_screen_grey.JPG" width="899" height="582" /></p>
 <p>The screen above is one of the main screens of LamPI, and should give you a taste of what LamPI is about. As you see, the GUI interface is designed to operate (and manage) all tasks for the connected devices and minimize the need for manual changing of configuration files etc. let alone making configuration changes at compile time.</p>
-<h2>LamPI Mobile</h2>
+<h1>LamPI Grid View (beta)</h1>
+<p>Strting release 3.4 LamPI contains a Metro-like grid or tile interface. Although not all functions are avaiable using this interface, it does contain all devices on one screen and offers the user a selection of type of devices, locals and user selectable settings to determine what is on the screen with these tiles.</p>
+<p><a href="UserGuide/screenshots/tile_widget_01.JPG"><img src="UserGuide/screenshots/tile_screen_01.JPG" width="829" height="562"></a></p>
+<p>Users can change the shape an size of each of the widgets which will then allow them to make better selections of changes to the devices. Click on the image above in oder to see the same screen but then where the &quot;corner&quot; widget has been resized to make changes to the device.</p>
+<h1>LamPI Mobile</h1>
 <p>LamPI GUI works fine over mobile. However, you may want to select a layout which is specially designed for mobile devices. It is easy to work on a mobile devie if you create a mobile.html file or so which will do all the layout stuff for you. The LamPI mobile layout makes use of jQuery Mobile libraries and can be used on any screen (mobile or PC screen).</p>
 <p><a href="UserGuide/screenshots/mobile_grey_1.JPG"><img src="UserGuide/screenshots/mobile_grey_1.JPG" width="412" height="500"></a></p>
 <p>Here you see an image of the mobile screen (on my PC). The GUI will scale to the device that you are using. As you can see, the menu on th eright has moved to the top row and its functions are now selectable with a (one) menu button. In principle, all colors (also those used by jQuery Mobile) can be changed by the user by altering the corresponsing .css file.</p>
 <p>The&nbsp;mobile interface works better with touch devices such as mobile phones etc than the classic interface which is optimised for mouse usage. Other than that, both work OK on almost every machine and it is a matter of taste which interface has your preference. On my iPad I still prefer the classic jQuery UI interface over the mobile interface.</p>
-<h2>Weather and Energy Sensors</h2>
+<h1>Sensors, weather and energy</h1>
 <p>Recently, support for weather sensors was added to LamPI. In principle the LamPI-receiver process can be taught to detect a wide variety of temperature, humidity, rain and wind sensors. For the weather gauge widgets I used existing libraries such as the &quot;steel&quot; library of Gerrit Grunwald and Mark Crossley. If the configuration file contains definitions for supported weather sensors, then the menu will automatically display an option to view/select weather info.</p>
 <p>Actually, what you see below is just a small example of what &quot;steel&quot; can do for your project. The library is highly customizable so you can make your own background, color an other settings if you like.</p>
 <p>What you see below is weather support. It does support weather sensors of UPM that transmit temperature and humidity values back to the LamPI-deamon.php process which are then broadcast to all connected clients. And as you see, the client will display the temperature (top row) for outside, the extension of our home and the living room. On the second row it will display the humidity for these three rooms. The definitions of sensors are found in the  configuration file &quot;database.cfg&quot;.</p>
@@ -34,7 +39,7 @@ Please start reading on that page when you finished reading this page.</p>
 <p>For general sensors and the special energy sensors LamPI has a separate program to chart/graphs the various sensors over time. When clicking on the dials of the sensor screen in LamPI GUI, a new screen opens where users can specify their own combination of sensors and make a graphs of these sensors (plotted against time).</p>
 <p><a href="Graphs_Manual/graphs/temperature_1.JPG"><img src="Graphs_Manual/graphs/temperature_1.JPG" width="684" height="444"></a></p>
 <p>&nbsp;</p>
-<h1>LamPI Rules</h1>
+<h1>Rules Editor</h1>
 <p>As from LamPI release 3.3 we offer a set of Blockly elements to help the user define his/her own rules in LamPI. Read the separate section on Rules<a href="Rules_Manual/index.html"> &lt;HERE&gt;</a>. LamPI Rules offer the use a graphical interface to define rules based on temperature, humidity, time of day, Sunset or any other sensor value and based on these reading define actions in LamPI to be taken.</p>
 <p>All sensors can be used in queries and actions include setting devices values , showing alerts on the screen or logging values in the log file.</p>
 <p>&nbsp;</p>
@@ -142,7 +147,9 @@ Please start reading on that page when you finished reading this page.</p>
 <ul>
   <li>Blockly - Google</li>
   <li>Steel series gauges - https://github.com/HanSolo/SteelSeries-Canvas</li>
+  <li>rrdtool</li>
   <li>wiringPI - http://www.wiringpi.com; Gordon Henderson</li>
+  <li>touch punch - a jQuery&nbsp;UI hack to make it respond to touch (on mobile devices). By Dave Furfero, on http://touchpunch.furf.com/</li>
 </ul>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
