@@ -57,8 +57,16 @@ queueDevices(0,'off','00:00:0:00',0,1); <br>
     <td>This is a standard block</td>
   </tr>
   <tr>
-    <td><img src="blocks/freq_1.JPG" width="198" height="55"></td>
+    <td><img src="blocks/freq_1.JPG" width="201" height="55"></td>
     <td>This is a LamPI block.</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/controls_stoprule_01.JPG" width="99" height="38"></td>
+    <td>Stop Rule, Will stop execution of the rule (indefinately)</td>
+  </tr>
+  <tr>
+    <td><img src="blocks/controls_timeout_01.JPG" width="249" height="40"></td>
+    <td>Timeout, a LamPI block. It will suspend the rule for the coming period of time as specified by the hh:mm:ss specification</td>
   </tr>
 </table>
 <h3>logic</h3>
@@ -238,9 +246,15 @@ this.setColour(280);<br>
 <h2>Example 4:</h2>
 <p>Switching on the lights in your room when it becomes dark is one of the most used rules in LamPI. Of course it is possible to use the LamPI timers for his purpose, but rules work equally well.</p>
 <p><img src="screenshots/sunset_2.JPG" width="533" height="302"></p>
+<p>And there is a little variation on the &quot;stop rule&quot; action thich is shown below: The Timout action will specify a period of time in which the rule will NOT be active and will be activated again after that period of time. In the situation below, the rule will be disabled for a period of 2 minute, and then enable again (followed be a period of 2 minutes timeout etc etc etc).</p>
+<p><img src="screenshots/sunset_3.JPG" width="525" height="299"></p>
+<p>In this case, the &quot;else&quot; part should have been omitted and it is there for the sole purpose of showing any progress on the console. The &quot;Timout&quot; rule however is NOT constrained to be used in the &quot;do&quot; clause only, although in most cases one would not need to use the &quot;else&quot; clause in these kind of rules</p>
+<h2>Example 5:</h2>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
+<p>&nbsp;</p>
+<h5>last updated:</h5>
 <p>July 05, 2015</p>
 </body>
 </html>

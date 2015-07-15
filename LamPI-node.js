@@ -2462,7 +2462,7 @@ function ruleHandler() {
 				logger ("ruleHandler:: eval rule "+config['rules'][i]['name']+" returned: "+val,1);
 				if (val == "stopRule") config['rules'][i].active = "N"; // User now has to activate rule first 
 
-				if (val === parseInt(val, 10)) { 
+				if (val === parseInt(val, 10)) { 			// delay!!
 					config['rules'][i].active = "N"; 
 					queue.qinsert({ ticks: Number(val)+getTicks(), name: "rule", seq: {id: i, cmd: "active", val:"Y" } });
 				};
