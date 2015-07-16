@@ -11,7 +11,7 @@ SCRIPTDIR="/home/pi/scripts"; export SCRIPTDIR
 LOGDIR="/home/pi/log"; export LOGDIR
 #
 cd $LOGDIR
-for i in LamPI-daemon LamPI-gate PI-rcv PI-run PI-1w PI-rht03 PI-i2c PI-gate PI-node TemPI PI-energy
+for i in PI-rcv PI-1w PI-rht03 PI-i2c PI-node TemPI PI-energy
 do
 	mv $LOGDIR/$i.3.log $LOGDIR/$i.4.log
 	mv $LOGDIR/$i.2.log $LOGDIR/$i.3.log
@@ -27,19 +27,12 @@ done
 chmod 664 $LOGDIR/*.log
 sudo chgrp www-data $LOGDIR/*.log
 
-# Kill PHP based daemons. crontab will restart them or we do manually below.
-pkill php
-# Kill the LamPI-receiver
-pkill LamPI-receiver
-#
-
 #
 # Restart the daemons
 #
 cd $SCRIPTDIR
 
 ./PI-node -r
-#./PI-run -r
 #./PI-rcv -r
 
 # echo "PI-log:: All log files moved"

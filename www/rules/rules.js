@@ -59,7 +59,7 @@ var murl='/';											// For Phonegap and Ajax usage, build a url. DO NOT CHAN
 // 
 //
 var skin = "";
-var debug = 2;										// debug level. Higher values >0 means more debug
+var debug = 1;										// debug level. Higher values >0 means more debug
 var persist = "1";										// Set default to relaxed
 var mysql = "1";										// Default is using mySQL
 var cntrl = "1";										// ICS-1000== 0 and Raspberry == 1
@@ -174,26 +174,21 @@ function start_Rules()
 				// send rules to database
 				var cmd="store_rule";
 				var message = rules[s_rule_id];
-							// Now ask for a new for the new room
-			// The for asks for 2 arguments, so maybe we need to make a change later
-			// and make the function askForm more generic
-			var frm='<form><fieldset>'
-				+ '<p>You like to save rule ' + s_rule_id + '. Please specify name for your new room</p>'
-				+ '<label for="val_1">Name: </label>'
-				+ '<input type="text" name="val_1" id="val_1" value="'+rules[s_rule_id].name
-				+ '" class="text ui-widget-content ui-corner-all" />'
-				+ '</fieldset></form>';
+				// Now ask for a new for the new room
+				// The for asks for 2 arguments, so maybe we need to make a change later
+				// and make the function askForm more generic
+				var frm='<form><fieldset>'
+					+ '<p>You like to save rule ' + s_rule_id + '. Please specify name for your this rule</p>'
+					+ '<label for="val_1">Name: </label>'
+					+ '<input type="text" name="val_1" id="val_1" value="'+rules[s_rule_id].name
+					+ '" class="text ui-widget-content ui-corner-all" />'
+					+ '</fieldset></form>';
 				askForm(
 					frm,
-					// Create
 					function (ret) {
-						// OK Func, need to get the value of the parameters Add the device to the array
-						// SO what are the variables returned by the function???
-						if (debug > 2) alert(" Dialog returned Name,Type: " + ret);	
-						rules[s_rule_id].name = ret[0];
-						//myAlert("<br>rule: "+rules[s_rule_id].name+"<br>jrule: <br>"+rules[s_rule_id].jrule
-						//					+"<br><br>brule: <br>"+JSON.stringify(rules[s_rule_id].brule));
-						myAlert('rule:: <pre><code>'+JSON.stringify(rules[s_rule_id].jrule,null,2)+'</code></pre>');
+						rules[s_rule_id].name = ret[0];	// Name of the rule (XXX any criteria?)
+						if (debug>=2) 
+							myAlert('rule:: <pre><code>'+JSON.stringify(rules[s_rule_id].jrule,null,2)+'</code></pre>');
 						send2daemon("dbase","store_rule", rules[s_rule_id]);
 						init_rules();
 						return(1);	//return(1);
@@ -203,7 +198,7 @@ function start_Rules()
 							init_rules();
 						return(1); // Avoid further actions for these radio buttons 
   					},
-  					'Confirm Create'
+  					'Confirm Save Rule'
 				); // askForm
 			break;
 			case "T4":						// New ..

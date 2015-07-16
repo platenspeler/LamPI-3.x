@@ -27,7 +27,7 @@ Object.keys(ifaces).forEach(function (ifname) {
       console.log(ifname + ':' + alias, iface.address);
 	  par.thisHost = iface.address;	// this single interface has multiple ipv4 addresses, pick last one ...
 	} else {
-	  par.thisHost = iface.address;	// this interface has only one ipv4 adress
+	  par.thisHost = iface.address;	// this interface has only one ipv4 adress, we take it
     }
   });
 });

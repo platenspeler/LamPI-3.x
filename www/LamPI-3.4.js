@@ -782,7 +782,7 @@ function start_LAMP(){
 							addr: handset_addr,
 							unit: "0",
 							val: "0",
-							type: "switch",
+							type: "handset",
 							scene: ""						// we should start with empty Scene
 						}
 						handsets.push(newhandset);			// Add record newdev to devices array
@@ -3662,7 +3662,6 @@ function activate_handset(hset)
 					+ '</td>'
 					+ '<td colspan="2"><input type="input"  id="Fl'+handset_id+'" value= "'+handset_name+'" class="dlabels"> addr: '+handset_addr+'</td>' 
 					+ '<td>'
-					// + '<input type="submit" id="Fc'+handset_id+'" value="STOP" class="dbuttons">'
 					+ '<input type="submit" id="Fe'+handset_id+'" value="Store" class="dbuttons"></td>'
 					+ '</thead>'
 					;
@@ -3674,7 +3673,6 @@ function activate_handset(hset)
 			// Output the buttons for this handset
 			// Test for empty array
 			if (handset_scene != "")  {	
-			  //alert("Handset "+handset_name+", scene: <"+handset_scene+">");	// XXX
 			  
 			  var handset_split = handset_scene.split(',');			// If NO elements found, it still retuns empty array!!
 			  for (var k = 0; k < handset_split.length; k+=2 )

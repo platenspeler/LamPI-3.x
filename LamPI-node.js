@@ -310,7 +310,7 @@ function printConfig() {
 					str += "<tr><td>";
 					str += "<td colspan='3'>, jrule: "+JSON.stringify(config[key][j]['jrule'])+"</td>";
 					str += "<tr><td>";
-					str += "<td colspan='3'>, brule: "+JSON.stringify(config[key][j]['brule'])+"</td>";
+					str += "<td colspan='3'>, brule: <pre><code>"+JSON.stringify(config[key][j]['brule'])+"</code></pre></td>";
 					// As the XML will not show correctlyin a webpage we do on the console
 					console.log("rule stringify "+j+": ",JSON.stringify(config[key][j]));
 				break;
@@ -320,10 +320,8 @@ function printConfig() {
 		str += "<br></table>";				// Between sub objects
 	});
 	// Now print the program parameters as well
-	 
 	str +="<table>";
-	Object.keys(par).forEach(function(key) {
-		
+	Object.keys(par).forEach(function(key) {	
 		str += "<tr>"
 		str += "<td>"+ key +"</td>";
 		str += "<td>: "+ par[key] +"</td>";
@@ -801,7 +799,7 @@ function createDbase(cb) {
   },
   function (callback) {
 	queryDbase('DROP TABLE IF EXISTS sensors',function(err, ret) { 
-		queryDbase('CREATE TABLE sensors(id INT, descr CHAR(128), name CHAR(20), location CHAR(20), brand CHAR(20), address CHAR(20), channel CHAR(8), type CHAR(32), caps CHAR(64), sensor CHAR(255) )',function(err,ret) {
+		queryDbase('CREATE TABLE sensors(id INT, descr CHAR(128), name CHAR(20), room CHAR(12), location CHAR(20), brand CHAR(20), address CHAR(20), channel CHAR(8), type CHAR(32), caps CHAR(64), sensor CHAR(255) )',function(err,ret) {
 			callback(null,'sensors made');
 		});
 	});
@@ -1416,8 +1414,7 @@ function consoleHandler(request, socket) {
 	var list="";					// Conrains response string with html newline <br> added
 	switch (request) {
 		case "logs":
-			exec('tail -30 /home/pi/log/PI-node.log', function (error, stdout, stderr) {
-			//exec('ls www/styles', function (error, stdout, stderr) {
+			exec('tail -30 '+logDir+'/PI-node.log', function (error, stdout, stderr) {
 				if (error === null) { list += stdout.split("\n").join("<br>") + "<br><br>" + stderr; }
 				else  { list += "<br>  CONSOLE ERROR:   "+ error + "     <br>  " + stderr; }
 				var response = {
@@ -1450,7 +1447,7 @@ function consoleHandler(request, socket) {
 		case "rebootdaemon":
 			list="<br>Rebooting Node Daemon Now<br><br>this will take a minute<br>";
 			setTimeout(function(){
-				exec('nohup /home/pi/scripts/PI-node -r &', function (error, stdout, stderr) {
+				exec('nohup '+par.homeDir+'/scripts/PI-node -r &', function (error, stdout, stderr) {
 				});
 			}, 2000);
 		break;
@@ -1756,8 +1753,8 @@ function graphHandler(buf,socket) {
 	var valStack="";
 	var width = '750'; var height='500';		// Image is 3 by 2, and should be resizable at the client side
 	var graphName, valUnit;
-	var rrd_dir='/home/pi/rrd/db/';				// Database directory
-	var output='/home/pi/www/graphs/';
+	var rrd_dir=par.homeDir+'/rrd/db/';				// Database directory
+	var output=par.homeDir+'/www/graphs/';
 	var rrd_db='e350.rrd';						// Database filename
 	var graphColor = ["ff0000","111111","00ff00","0000ff","ff00ff","666666","00ffff","ff3399","ffff00"];
 	
@@ -1952,6 +1949,7 @@ function icsHandler(buf, socket) {
 			if (i>=0) {
 				var h = config['handsets'][i];
 				switch (h.type ) {
+					case "handset":
 					case "scene":
 						var scene = h.scene;
 						queueScene(scene);
@@ -2457,11 +2455,11 @@ function ruleHandler() {
 			logger("ruleHandler:: rule "+config['rules'][i]['name']+" is active",2);
 			try {
 				logger("ruleHandler:: eval "+config['rules'][i]['name'],1);
-				logger("ruleHandler:: "+config['rules'][i]['jrule'],2);
+				logger("ruleHandler:: "+config['rules'][i]['jrule'],3);
 				var val = eval( config['rules'][i]['jrule'] );
-				logger ("ruleHandler:: eval rule "+config['rules'][i]['name']+" returned: "+val,1);
+				logger ("ruleHandler:: eval rule "+config['rules'][i]['name']+" returned: "+val,3);
+				
 				if (val == "stopRule") config['rules'][i].active = "N"; // User now has to activate rule first 
-
 				if (val === parseInt(val, 10)) { 			// delay!!
 					config['rules'][i].active = "N"; 
 					queue.qinsert({ ticks: Number(val)+getTicks(), name: "rule", seq: {id: i, cmd: "active", val:"Y" } });

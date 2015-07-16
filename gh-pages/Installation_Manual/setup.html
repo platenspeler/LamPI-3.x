@@ -17,16 +17,16 @@
   <li>Have your Raspberry upgraded to the latest version</li>
   <li>Have your Linux repository updated</li>
   <li>Upgrade your Linux to the latest version</li>
+  <li>Install the node system (NEEDED)</li>
   <li>Install wiringPi library (NEEDED)</li>
   <li>Install MySQL</li>
-  <li>Install PHP</li>
   <li>Install C compiler</li>
-  <li>FTP, NFS or other filetransfer capabilities</li>
+  <li>FTP, NFS or other file transfer capabilities</li>
 </ul>
 <p>For the software to work you also need:</p>
 <ul>
   <li>Install a jQuery 1.11.2 library in your webroot (~/www in my case) or use the one that I included on github</li>
-  <li>Of install jQuery Mobile if you plan to run on an Android or other mobile device</li>
+  <li>Install jQuery UI if you run LamPI on a PC or tablet or install jQuery Mobile if you plan to run on an Android or other mobile device</li>
 </ul>
 <p>If you like to automate most of the installation (and you probably want to), please visit the page of <a href="PI-install.html">PI-install</a>.</p>
 <h1>What Platform(s) does LamPI run on?</h1>
@@ -47,7 +47,7 @@
 <p>&nbsp;</p>
 <h1>LamPI Installation</h1>
 <p>Of course we all like to use our RaspberryPI for multiple tasks. Reality is: If you need to rely on the Raspberry + LamPI combo to switch your lighting and other devices reliably, then you must seriously consider reserving a RaspberryPI device for JUST DOING THAT and nothing else.</p>
-<p>Therefore, I decided to make the configuration and installation locations for LamPI really simple: Put everything in the LamPI homedirectory or one of its subdirectories. Of course it is quite good possible to use other locations, but I must warn you, unless you are an experienced user it will be difficult to get everything up and running so why not use the pi homedirectory and its subdirectories ~/www, ~/config, ~/scripts, ~/exe and ~/receivers?</p>
+<p>Therefore, I decided to make the configuration and installation locations for LamPI really simple: Put everything in the LamPI homedirectory or one of its subdirectories. Of course it is quite good possible to use other locations, but I must warn you, unless you are an experienced user it will be difficult to get everything up and running so why not use the pi home directory and its subdirectories ~/www, ~/config, ~/scripts, ~/exe and ~/receivers?</p>
 <h1>Starting the System</h1>
 <p>This short chapter describes the basic and minimal steps to take to get LamPI up and running. </p>
 <ul>
@@ -63,13 +63,43 @@
 <p><code><em><strong>vi ~/config/database.cfg</strong></em></code></p>
 <p>The database.cfg file contains a readable jSon description of the LamPI configuration. It is possible to change database.cfg with a simple text editor (and unfortunately for some complex settings you must) and its content is used to initialize the MySQL database which is queried upon program setup. In the &quot;Config&quot; menu of the application you can set several parameters and you can make backups and do restores from xxxxxx.cfg files in the ~/config directory.</p>
 <p>This way, you can make a backup of YOUR database.cfg file and do restores as well if you messed up for whatever reason.</p>
-<h2>2. Start the daemon</h2>
-<p>Wthou the daemon running, LamPI will not have a database and will not run correctly. Start the ~/daemon/LamPI-node.js with the following command:</p>
+<p>&nbsp;</p>
+<h2>2. Startup Parameters</h2>
+<p>The &quot;LamPI-node.js&quot; file reads its program parameters from a special file in &quot;~/config/params.js&quot;. Since parameters are specific to the running program you need to change the standard values to those that match your setup of the program.</p>
+<p><code><em><strong>vi ~/config/params.js</strong></em></code></p>
+<p> It is possible to specify the parameters directly in the file OR (and that is preferred) use the environment variables of your system to specify these parameters. The latter is easy: Just edit your &quot;~/.profile&quot;&nbsp;file and sepcify the value of the parameter. This is safer also, in case you distribute the files from one machine to the other.</p>
+<p><code><em><strong>nano </strong></em></code> <code><em><strong>~/.profile</strong></em></code></p>
+<p>and edit for example the parameters of the alarm system, Z-Wave IP gateway and MySQL credentials by adding these lines to the .profile file.</p>
+<p><code># set PATH so it includes user's private scripts if it exists<br>
+  if [ -d &quot;$HOME/scripts&quot; ] ; then<br>
+  &nbsp;
+PATH=&quot;$HOME/scripts:$PATH&quot;<br>
+fi</code><br>
+</p>
+<p><code>WLOGIN=&quot;your_login_name&quot;; export WLOGIN<br>
+  WPASSWD=&quot;your_password&quot;; export WPASSWD<br>
+  WHOST=&quot;192.168.2.101&quot;; export WHOST</code></p>
+<p><code>ZHOST=&quot;192.168.2.51&quot;; export ZHOST</code></p>
+<p><code>DBLOGIN=&quot;your_login_name&quot;; export DBLOGIN<br>
+DBPASSWD=&quot;your_password&quot;; export DBPASSWD<br>
+DBHOST=&quot;192.168.2.80&quot;; export DBHOST</code><br>
+</p>
+<p>Most important parameters are:</p>
+<ul>
+  <li>IP address and user credentials of the MySQL database</li>
+  <li>IP address of the Z-Wave gateway (if any)</li>
+  <li>etc</li>
+</ul>
+<p>&nbsp;</p>
+<h2>3. Start the daemon</h2>
+<p>Wthout the daemon running, LamPI will not have a database and will not run correctly. Start the ~/daemon/LamPI-node.js with the following command:</p>
 <p><code><em><strong>cd  ~/scripts; ./PI-node -i</strong></em></code></p>
 <p>Check whether LamPI will start correctly now and read the database. At anytime you can see the output of the LamPI-node.js  process by inspecting the log-file. A good way to do this is with the following command:</p>
 <p><code><em><strong>tail -f ~/log/PI-node.log</strong></em></code></p>
-<h2>&nbsp;</h2>
-<h2>3. Loading a new configuration file</h2>
+<p>Each time you need to restart the LamPI daemon, use the following command:</p>
+<p><code><em><strong>./PI-node -r</strong></em></code></p>
+<p>&nbsp;</p>
+<h2>4. Loading a new configuration file</h2>
 <p>If you mess up or add new devices to your system, then it is of-course possible to add devices to the system with the GUI. But if you made a regular backup of your &quot;~/config/database.cfg&quot; file, it is easier to just restore the system should for whatever reason your database fail.</p>
 <p>You can load a configuration file on more than one way:</p>
 <ol>
