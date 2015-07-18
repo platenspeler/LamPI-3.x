@@ -1,20 +1,17 @@
 // LamPI, Javascript/jQuery GUI for controlling 434MHz devices (e.g. klikaanklikuit, action, alecto)
 // Author: M. Westenberg (mw12554 @ hotmail.com)
-// (c) M. Westenberg, all rights reserved
+// (c) M. Westenberg 2014-2015, all rights reserved
 //
 // Contributions:
 //
 // Version 1.6, Nov 10, 2013. Implemented connections, started with websockets option next (!) to .ajax calls.
 // Version 1.7, Dec 10, 2013. Work on the mobile version of the program
-// Version 1.8, Jan 18, 2014. Start support for (weather) sensors
-// Version 1.9, Mar 10, 2014, Support for wired sensors and logging, and internet access ...
-// Version 2.0, Jun 15, 2014, Initial support for Z-Wave devices through Razberry slave device.
-// Version 2.1, Jul 31, 2014, Support for Energy sensor (Smart Meter).
-// Version 2.1, Jul 31, 2014 Smart Meter support
-// Version 2.2, Sep 15, 2014 Support for Z-Wave switches and dimmers
-// Version 2.4, Oct 15, 2014 More .css work, Z-Wave daemon on the Z-Wave hub to read switch status
+// ...
+// Version 2.7, Jan 31, 2015 scalable skins, localStorage for skin storage
+// Version 3.0, Mar 01, 2015 Switch to JS and Websockets (remove PHP in ajax frontend), use REST API where possible
+// Version 3.1, May 26, 2015 Connect alarm panel to settings/config screen
 //
-// This is the code to animate the front-end of the application. The main screen is divided in 3 regions:
+// This is the code to animate the front-end of the application. 
 //
 // Copyright, Use terms, Distribution etc.
 // =========================================================================================
@@ -36,42 +33,11 @@
 //    along with LamPI.  If not, see <http://www.gnu.org/licenses/>.
 //
 //
-// #gui_header: Here are the buttons for selecting the active rooms 
-// #gui_content: The main screen where user can change the values of the active devices for the curently
-//		active room. For the moment, the devices can have 2 types: switches and dimmers (see below)
-// #gui_mssages: This is the area where the function message("text") will output its messages
-// #gui_menu: This is the right side of the screen where we have the main menu where user can select the 
-//		main activities: <home> <rooms> <scenes> <timers> <settings>
-//
-// Function init, Initialises variables as far as needed
-// NOTE:: VAriables can be changed in the index.html file before calling start_LAMP
-//
-// DIV class="class_name"  corresponds to .class_name in CSS
-// DIV id="id_name" corresponds to #id_name above
-//
-
-// DESIGN NOTES
-//
-// The Javascript file uses both the jQuery UI for the regular web based execution
-// as well as the jQuery Mobile functions for Android/PhoneGAP.
-// Unfortunately, widgets, functions etc differ between these two libraries (which is a SHAME).
-// It is expected that jQueryUI and jQmobile will merge in next release.
-// Therefore, I did not make separate files but one file with conditional execution of dialogs etc.
-// Meanwhile, this file will support both libs for their separate purposes.
-
-
-// ----------------------------------------------------------------------------
-// SETTINGS!!!
-// XXX: For adaptation to jqmobile changed all pathnames of backend to absolute URL's
-//
-var fake=0;												// Set to 1 if we fake communication 
-
-//
 // WebSocket definitions
 //
 var w_url = location.host; 								// URL of webserver
-var w_svr = 'LamPI-daemon.php';							// webserver filename
-var w_port = '5000'; 									// port
+var w_svr = 'LamPI-node.js';							// webserver filename
+var w_port = '5000'; 									// port, should make this one dynamic!
 var w_uri;
 var w_sock;												// Socket variable
 var w_tcnt = 0;											// Transaction counter
@@ -81,139 +47,16 @@ var w_tcnt = 0;											// Transaction counter
 // The three settings below determine what GUI libraries to use
 // and how to communicate with the daemon.
 //
-var phonegap=0;											// Phonegap setting, init to no phonegap
 var jqmobile=0;											// This specifies what jQuery library file be used
-var dynamicIP=1;										// Use a static IP for daemon or a dynamicIP (standard)
 var murl='/';											// For Phonegap and Ajax usage, build a url. DO NOT CHANGE!
 
 // ----------------------------------------------------------------------------
 // 
-//
-var skin = "";
+var skin = "";											// settings[4]['val'] or localStorage get ('skin')
 var debug = "1";										// debug level. Higher values >0 means more debug
-var persist = "1";										// Set default to relaxed
-var mysql = "1";										// Default is using mySQL
-var cntrl = "1";										// ICS-1000== 0 and Raspberry == 1
-var use_weather = "0";
-var use_energy = "0";									// Initial value is 0
-var loginprocess=false;									// Is there a login process going on?
+var alarmStatus = "2";									// Set default to relaxed
 
-// ----------------------------------------------------------------------------
-// s_STATE variables. They keep track of current room, scene and setting
-// The s_screen variable is very important for interpreting the received messages
-// of the server. 
-// State changes of device values need be forwarded to the active screen
-// IF the variable is diaplayed on the screen
-//
-var s_screen = 'room';									// Active screen: 1=room, 2=scene, 3=timer, 4=config
-var s_controller = murl + 'frontend_rasp.php';			// default device handles transmits to the lamps/devices
-var s_room_id =1;										// Screen room_id
-var s_scene_id =1;
-var s_timer_id = 1;
-var s_handset_id = 1;
-var s_weather_id = '';									// Init empty
-var s_energy_id = 0;									// Init empty
-var s_setting_id = 0;
-var s_recorder = '';									// recording of all user actions in a scene. 
-var s_recording = 0;									// Set to 1 to record lamp commands
 
-// -----------------------------------------------------------------------------
-// Set limits for the program for using resources
-//
-var max_rooms = 16;										// Max nr of rooms. ICS-1000 has 8
-var max_scenes = 16;									// max nr of scenes. ICS-1000 has 20
-var max_devices = 16;									// max nr. of devices per room. ICS-1000 has 6
-var max_timers = 16;
-var max_handsets = 8;
-var max_weather = 8;									// Maximum number of weather stations receivers
-
-// Actually, sum of timers and scenes <= 20 for ICS-1000
-
-// The jSON data structure returned in the appmsg result from a "load" action
-// containd 3 arrays. appmsg['rooms'] and appmsg['devices'] and appmsg['scenes'];
-// The two vars below are loaded with the two sub-arrays.
-// Up to 16 rooms and 16 devices (ASCII) can be used for the ICS-1000
-//
-// ROOMS
-// rooms contains an array of key value pairs. Each key is a room id number, 
-// and each value is a room name string.
-// example: rooms[0]['id'] == 1 and rooms[0][''] == "living"
-//
-// DEVICES 
-// The devices var contains the devices read during the init_dbase call
-//
-// SWITCHES
-// Switches can be implemented straightforward by making two buttons for each lamp for OFF and ON.
-// The value in the devices database is either 0 or 1 for switches
-// We can use the value of the button to do further action.
-//
-// DIMMERS
-// Dimmers are inplemented with slider elements. Sliders are an elegant way to select the value for
-// a dimmed lamp. However, sliders do have a problem in jquery: They are created and destroyed but
-// having more than one active on dynamic variables is difficult.
-// We could start with the max of devices and create upfront so many sliders which we then bind
-// based on their index on the screen to the element of our choice. This seems to be the best way, as
-// it re-uses sliders (memory efficient) and gives us an easy way to read their values.
-// In html: For each slider we need to set the class to .sliders and the index to id.
-//
-// SLIDERS (gui only)
-// For buttons this is not necessary, but for sliders we may need to keep a shadow
-// administration to handle declarations, bindings etc
-// Each device object on screen is a <tr> row in a table
-// First <td> cntains the device label, value="human device name",
-// 		id="device id used by ICS-100, so D1-D16"
-// Second <td> contains for switch the value="ON" and id="device id" 
-//				Contains for dimmer the id="device_id"+"Fd" (dimmer), value updated by user
-// Third <td> contains for switch the value=0 and id="device_id" 
-//				Contains for dimmer the id="device_id"+"Fl" (label), value updated by jquery
-//				Value is read by slider object, by converting the calling object id of the dimmer
-//				in <td> 2 to the corresponding id of the label in the third <td>
-//
-// MOODS
-// There are moods (related to rooms) and there are scenes. Moods are scenes without any timing set for 
-// the individual device commands. For the moment we do support scenes and not yet moods (as we can model 
-// them as scenes with a timer value of 0
-//
-// SCENES
-// Scenes are a set of device commands that are recorded, given a name and then stored on the ICS-100 
-// or on a webserver. The user can recall valid scenes and use them to apply a lighting scene 
-// to his/her house. Individual commands in scenes are timed (in moods all device commands fire at once).
-// Scenes are initially loaded by the functions init_dbase()
-// The GUI allows for making a new scene or deleting or changing an exiting scene.
-// There are a combined total of 32 timers and/or scenes allowed for the ICS-1000
-// Scenes consist of a list of ICS commands with by timing records in between.
-// commands, and timers are are comma separated 
-// 
-// The ICS 1000 stores the scene strings based on a scene name (!!!)
-// In case of a store scene command, scnes with the same name are overwritten
-//
-// TIMERS
-// Timers are a special kind of scenes. In fact, it is a scene with a timer attached to it. 
-// It will make that the chain of device commands will start executing at some specified moment in time.
-// Timers are quite complex, as we can program timer events in many, many ways
-//
-// SETTINGS
-//
-//
-// BRANDS
-//
-//
-// HANDSETS
-//
-// WEATHER
-// Weather sensor messages coming from 440MHz transmitters or local devices on one of the Raspberries
-// on the local network are forwarded to the LamPI_daemon.php process and then forwarded to all clients.
-//
-var rooms={};			// For most users, especially novice this is the main/only screen
-var devices={};			// Administration of room devices (lamps or switches)
-var moods={};			// NOT USED
-var scenes={};			// Series of device actions that are grouped and executed together
-var timers={};			// Timing actions that work on a defined scene
-var brands={};			// All brands of equipment that is recognized by the daemon
-var handsets={};		// Handsets or transmitters of code. Action/Impuls, Klikaanklikuit supported
-var weather={};			// The administration of weather receivers, and their last values
-var energy={};			// Energy sensors and values
-var settings={};		// Set debug level and backup/restore the configuration
 
 // ---------------------------------------------------------------------------------
 //	This function waits until the document DOM is ready and then 
@@ -226,7 +69,16 @@ var settings={};		// Set debug level and backup/restore the configuration
 //
 function start_LAMP(){
 //	
+// What to do on reload or user closing page
+	$(window).on('beforeunload', function(){
+		logger("beforeunload closing the socket");
+    	w_sock.close();
+	});
+
 //  $(document).ready(function(){
+// This function loads first before anything else. All definitions and actions
+// in this function will be finished before the page is officially considered to be loaded.
+//
   $(window).load(function(){
 
 	// One of the difficult things here is the load_database function.
@@ -252,27 +104,27 @@ function start_LAMP(){
 
 // --------------------------------------------------------------------------
 //
-// Handle the Header Room (HR) selection buttons
+// Handle the Header Room (HR) selection buttons (which room)
 //
 	$("#gui_header").on("click", ".hr_button", function(e){
-		e.preventDefault();
-//		e.stopPropagation();
-		selected = $(this);
+			e.preventDefault();
+			e.stopPropagation();
+			selected = $(this);
 						
-		value=$(this).val();								// Value of the button
-		id = $(e.target).attr('id');						// should be id of the button (array index substract 1)
-		$( '.hr_button' ).removeClass( 'hover' );
-		$( this ).addClass ( 'hover' );
-		activate_room(id);
+			value=$(this).val();								// Value of the button
+			id = $(e.target).attr('id');						// should be id of the button (array index substract 1)
+			$( '.hr_button' ).removeClass( 'hover' );
+			$( this ).addClass ( 'hover' );
+			activate_room(id);
 	}); 
 
 // --------------------------------------------------------------------------
 //	
-// Handle Command Room (CR) buttons
+// Handle Command Room (CR) buttons (new, delete)
 //
 	$("#gui_header").on("click", ".cr_button", function(e){
 		e.preventDefault();
-//		e.stopPropagation();
+		e.stopPropagation();
 		selected = $(this);
 		$( '.cr_button' ).removeClass( 'hover' );
 		$( this ).addClass ( 'hover' );
@@ -291,15 +143,15 @@ function start_LAMP(){
 			while (ind <= max_rooms) { 
 				for (var i=0; i< rooms.length; i++) {
 					if ( ( rooms[i]['id'] == ind )) {		// We found this index is used!
-						break; 								// for
+						break; 								// exit for loop
 					}
 				}
-					// If we are here, then we did not find device with id == "D"+ind
-					// So the ind is unused, we use it
+				// If we are here, then we did not find device with id == "D"+ind
+				// So the ind is unused, we use it
 				if (i == rooms.length){		
 					break; // while
 				}
-					ind++;
+				ind++;
 			}
 			// Now we have an index either empty slot in between room records, or append the current array
 			if ( ind > max_rooms ) {
@@ -323,17 +175,15 @@ function start_LAMP(){
 						// OK Func, need to get the value of the parameters
 						// Add the device to the array
 						// SO what are the variables returned by the function???
-						if (debug > 2) alert(" Dialog returned Name,Type: " + ret);		
-							
+						if (debug > 2) alert(" Dialog returned Name,Type: " + ret);	
 						var newroom = {
 							id: ind,
 							name: ret[0]
 						}
 						rooms.push(newroom);			// Add record newdev to devices array
 						s_room_id = ind;				// Make the new room the current room
-						console.log(newroom);
 						
-						send_2_dbase("add_room", newroom);
+						send2daemon("dbase","add_room", newroom);
 						// And add the line to the #gui_devices section
 						// Go to the new room
 						// activate_room(new_room_id);
@@ -343,18 +193,15 @@ function start_LAMP(){
 						
 					// Cancel	
   					}, function () {
-							activate_room (s_room_id);
+							activate_room(s_room_id);
 						return(1); // Avoid further actions for these radio buttons 
   					},
   					'Confirm Create'
 			); // askForm
-			
-			
 		break;
 			
-		// Need this to delete a room
+		// DELETE a room
 		case "Del":
-			
 				var list = [];
 				var str = '<label for="val_1">Delete Room: </label>'
 						+ '<select id="val_1" value="val_1" >' ;   // onchange="choice()"
@@ -374,7 +221,6 @@ function start_LAMP(){
 					+ str
 					+ '<br />'
 					+ '</fieldset></form>';
-					
 				askForm(
 					frm,
 					// Create
@@ -396,40 +242,31 @@ function start_LAMP(){
 								return(0);
 							}
 						}
-						
 						// Remove the room from the array. removed is array of removed array elements
 						var removed = rooms.splice(i ,1);		
 						// If we deleted the current room, maake the current room the first room in array
 						if (s_room_id == room_id) s_room_id = rooms[0]['id'];
-						if ( persist > 0 ) {
-							console.log(removed[0]);
-							// Remove the room from MySQL
-							send_2_dbase("delete_room", removed[0]);
-							if (debug>1)
-								alert("Removed from dbase:: id: " + removed[0]['id'] + " , name: " + removed[0]['name']);
-						}
 						
+						logger(removed[0],2);
+						// Remove the room from MySQL
+						send2daemon("dbase","delete_room", removed[0]);
+						if (debug>=2)
+							alert("Removed from dbase:: id: " + removed[0]['id'] + " , name: " + removed[0]['name']);
 						// 
 						init_rooms("init");						// As we do not know which room will be first now
 						return(1);	//return(1);
 						
 					// Cancel	
   					}, function () {
-							activate_room (s_room_id);
+							activate_room(s_room_id);
 						return(1); // Avoid further actions for these radio buttons 
   					},
   					'Confirm Delete Room'
 				); // askForm
-	
-				
 				// Popup: Are you sure? If Yes: delete row
 				// Are we sure that all devices in the room are deleted as well?
-				
 		break;
-			
 		case "Help":
-		// Help
-			
 			helpForm('Room',"This form allows you to control the lighting in a particular room " 
 				+ "Select the room that you like to control with the buttons in the top header area " 
 				+ "For every device in the room, whether dimmer or switch, users can change the light "
@@ -443,11 +280,9 @@ function start_LAMP(){
 			);
 			$( '.cr_button' ).removeClass( 'hover' );
 		break;
-			
 		}
 		$( this ).removeClass ( 'hover' );
 	});
-
 
 // --------------------------------------------------------------------------------
 // SCENE	
@@ -455,7 +290,7 @@ function start_LAMP(){
 //
 	$("#gui_header").on("click", ".hs_button", function(e){
 		e.preventDefault();
-//		e.stopPropagation();
+		e.stopPropagation();
 		selected = $(this);
 		$( '.hs_button' ).removeClass( 'hover' );
 		$( this ).addClass ( 'hover' );
@@ -464,14 +299,13 @@ function start_LAMP(){
 		activate_scene(id);
 	}); 
 
-
 // -----------------------------------------------------------------------------
 // SCENE
 //	*** Handle the Command Scene (CS) buttons (add, delete, help)
 //
 	$("#gui_header").on("click", ".cs_button", function(e){
 		e.preventDefault();
-//		e.stopPropagation();
+		e.stopPropagation();
 		selected = $(this);
 		$( '.cs_button' ).removeClass( 'hover' );
 		$( this ).addClass ( 'hover' );
@@ -479,15 +313,12 @@ function start_LAMP(){
 		id = $(e.target).attr('id');						// should be id of the button (array index substract 1)
 		switch (id)
 		{	// Add a new scene. So we have to record a sequence
+			// We start with making a new row in the scene array,
+			// give it a name etc. and transfer control to the user
 			case "Add":
-				// We start with making a new row in the scene array,
-				// give it a name etc.
-				// Then we need to transfer control to the user
-				// Find a free scene id:
-				var ind = 1;
-				
-				// Search for a sceneid that is unused between 2 existing scenes
+				// Search for a scene id that is unused between 2 existing scenes
 				// Look for matchins indexes. This is a time-exhausting operation, but only when adding a scene
+				var ind = 1;
 				while (ind <= max_scenes) { 
 					for (var i=0; i< scenes.length; i++) {
 						if ( ( scenes[i]['id'] == ind )) {
@@ -499,7 +330,7 @@ function start_LAMP(){
 					// If we are here, then we did not find scnene id equal to ind 
 					// So the ind is unused, we use it
 					if (i == scenes.length){
-						break; // while
+						break; // break the while
 					}
 					ind++;
 				}//while
@@ -510,8 +341,6 @@ function start_LAMP(){
 				}
 					
 				// Now ask for a name for the new scene
-				// The for asks for 2 arguments, so maybe we need to make a change later
-				// and make the function askForm more generic
 				var frm='<form><fieldset>'
 					+ '<p>You have created scene nr ' + ind + '. Please specify name for your new scene</p>' 
 					//+ '<p>You have created a new scene. Please specify name for your new scene</p>'
@@ -522,7 +351,6 @@ function start_LAMP(){
 					//+ '<label for="type">Type: </label>'
 					//+ '<input type="text" name="type" id="type" value="" class="text ui-widget-content ui-corner-all" />'
 					+ '</fieldset></form>';
-					
 				askForm(
 					frm,
 					// Create
@@ -531,18 +359,10 @@ function start_LAMP(){
 						// Add the device to the array
 						// So what are the variables returned by the function???
 						if (debug > 2) alert(" Dialog returned val_1,val_2: " + ret);		
-							
-						var newscene = {
-							id: ind,
-							name: ret[0],
-							val: "0",
-							seq: ""						// we should start with empty Scene
-						}
+						var newscene = { id: ind, name: ret[0], type: "scene", val: "0", seq: "" };
 						scenes.push(newscene);			// Add record newdev to devices array
-						// console.log(newscene);
-						send_2_dbase("add_scene", newscene);
-						// And add the line to the #gui_devices section
-						// Go to the new scene
+						send2daemon("dbase","add_scene", newscene);
+						// And add the line to the #gui_devices section, Go to the new scene
 						s_scene_id = ind;
 						// activate_scene(new_scene_id);
 						// XXX Better would be just to add one more button and activate it in #gui_header !!
@@ -559,15 +379,13 @@ function start_LAMP(){
 				
 			break;
 				
-			// Remove the current scene. Means: Remove from the scenes
-			// array, and reshuffle the array. 
+			// Remove the current scene. Means: Remove from the scenes array, and reshuffle the array. 
 			// What it means for SQL need to sort out later .....
 			case "Del":
 				
 				var list = [];
 				var str = '<label for="val_1">Delete Scene: </label>'
-						+ '<select id="val_1" value="val_1" >' ;   // onchange="choice()"
-					
+						+ '<select id="val_1" value="val_1" >' ;   // onchange="choice()"	
 				// Allow selection, but first let the user make a choice
 				for (i=0; i< scenes.length; i++) {
 					str += '<option>' + scenes[i]["name"] + '</option>';
@@ -575,13 +393,12 @@ function start_LAMP(){
 				str += '</select>';
 				
 				// The form returns 2 arguments, we only need the 1st one now
-				var frm='<form><fieldset>'
-					+ '<br />You are planning to delete a scene from the system. If you do so, all actions '
+				var frm='<form><fieldset><br>'
+					+  'You are planning to delete a scene from the system. If you do so, all actions '
 					+ 'associated with the scene must be deleted too.\n'
 					+ 'Please start with selecting a scene from the list.<br /><br />'
 					+ str
-					+ '<br />'
-					+ '</fieldset></form>';
+					+ '<br></fieldset></form>';
 					
 				askForm(
 					frm,
@@ -590,26 +407,18 @@ function start_LAMP(){
 						// OK Func, need to get the value of the parameters
 						if (debug > 2) alert(" Dialog returned val_1,val_2: " + ret);		
 						var sname = ret[0];
-						
 						for (var i=0; i< scenes.length; i++) {
-								if (scenes[i]['name'] == sname) {
-									break;
-								}
+							if (scenes[i]['name'] == sname) {
+								break;
+							}
 						}
-						// Is the room empty? Maybe we do not care, everything for scene is IN the record itself
 						var scene_id = scenes[i]['id'];
-						
-						// Remove the scene from the array
 						var removed = scenes.splice(i ,1);		// Removed is an array too, one element only
-						
-						if ( persist > 0 ) {
-							console.log(removed[0]);
-							// Remove the room from MySQL
-							send_2_dbase("delete_scene", removed[0]);
-							if (debug>1)
+						logger(removed[0]);
+						// Remove the room from MySQL
+						send2daemon("dbase","delete_scene", removed[0]);
+						if (debug>1)
 								alert("Removed from dbase:: id: " + removed[0]['id'] + " , name: " + removed[0]['name']);
-						}
-						
 						// 
 						s_scene_id = scenes[0]['id'];				// If there are no scenes, we are in trouble I guess
 						init_scenes("init");						// As we do not know which room will be first now
@@ -622,17 +431,10 @@ function start_LAMP(){
   					},
   					'Confirm Delete Scene'
 				); // askForm
-					
-
+	
 				// Popup: Are you sure?
-				
 				// If Yes: delete row
-
 			break;
-				
-				//
-				// Help for Scene setting
-				//
 			case "Help":
 					helpForm('Scene',"This is the Help screen for Scenes (or sequences if you wish)\n\n"
 						+ "In the header section you see an overview of your scenes defined, "
@@ -644,7 +446,6 @@ function start_LAMP(){
 						);
 					$( '.cs_button' ).removeClass( 'hover' );
 			break;
-				
 			default:
 					alert("Error:: click id " + id + " not recognized");
 			}
@@ -658,7 +459,6 @@ function start_LAMP(){
 		if (jqmobile == 1) {							// Sortable works different for jqmobile, do later
 		
 			// **** XXX SORTABLE NOT IMPLEMENTED FOR JQMOBILE ***
-		
 		}
 		else 
 		{										// jQuery UI Sortable
@@ -673,21 +473,20 @@ function start_LAMP(){
 				// Go over each element and record the id
 				$( "#gui_devices tr" ).each(function( index ) {
 					if ( index != 0) {
-						console.log( index + ": " + $(this ).children().children('.dlabels').attr('id') );
+						logger( index + ": " + $(this ).children().children('.dlabels').attr('id') );
 						// ---YYY--
 						// problem is that we have to change the order in the database
 						// whereas you're never sure which record will be fetched first
 					}
 					else {
-						console.log( index + ": " + "Header" );
+						logger( index + ": " + "Header" );
 					}
 				}); // each
             	//self.sendUpdatedIndex(ui.item);
-        	}//stop function	 
+        	}//stop	 
 		  }).disableSelection();
 		}//else
-	
-		$( this ).removeClass ( 'hover' );
+		$( this ).removeClass( 'hover' );
 	}); // Handler
 
 
@@ -697,7 +496,7 @@ function start_LAMP(){
 	
 	$("#gui_header").on("click", ".ht_button", function(e){
 			e.preventDefault();
-//			e.stopPropagation();
+			e.stopPropagation();
 			selected = $(this);
 			$( '.ht_button' ).removeClass( 'hover' );
 			$( this ).addClass ( 'hover' );
@@ -713,7 +512,7 @@ function start_LAMP(){
 		
 	$("#gui_header").on("click", ".ct_button", function(e){
 		e.preventDefault();
-//		e.stopPropagation();
+		e.stopPropagation();
 		selected = $(this);
 		$( '.ct_button' ).removeClass( 'hover' );
 		$( this ).addClass ( 'hover' );
@@ -721,31 +520,20 @@ function start_LAMP(){
 		id = $(e.target).attr('id');						// should be id of the button (array index substract 1)
 		switch (id)
 		{	
-			// Add a new timer. So we have to record a sequence
 			case "Add":
 				// We start with making a new row in the timer array, give it a name etc.
-				// Then we need to transfer control to the user
-				
-				// Find a free timer id:
 				var ind = 1;
 			
 				// Search for a timerid that is unused between 2 existing timer records
 				// Look for matchins indexes. This is a time-exhausting operation, but only when adding a timer
 				while (ind <= max_timers) { 
 					for (var i=0; i< timers.length; i++) {
-						if ( ( timers[i]['id'] == ind )) {
-						// alert("found this ind: "+ind+" on pos "+i+", );
-						// We found this index is used!
-							break; // for
-						} // if
-					} // for
-					// If we are here, then we did not find timer with ind 
-					// So the ind is unused, we use it
-					if (i == timers.length){
-						break; // while
+						if ( ( timers[i]['id'] == ind )) { break; }
 					}
+					if (i == timers.length){ break; }		// So the ind is unused, we use it
 					ind++;
 				}//while
+				
 				// Now we have an index either empty slot in between timer records, or append the current array
 				if ( ind > max_timers ) {
 					alert("Unable to add more timers");
@@ -772,11 +560,11 @@ function start_LAMP(){
 						// OK Func, need to get the value of the parameters
 						// Add the timer to the array
 						// So what are the variables returned by the function???
-						if (debug > 2) alert(" Dialog returned val_1,val_2: " + ret);		
-							
+						if (debug > 2) alert(" Dialog returned val_1,val_2: " + ret);			
 						var newtimer = {
 							id: ind,
 							name: ret[0],
+							type: "timer",
 							scene: "",
 							tstart: "00:00:00",
 							startd: "01/01/13",
@@ -787,17 +575,15 @@ function start_LAMP(){
 						}
 						timers.push(newtimer);			// Add record newdev to devices array
 
-						send_2_dbase("add_timer", newtimer);
+						send2daemon("dbase","add_timer", newtimer);
 						// And add the line to the #gui_devices section
-						// Go to the new timer
 						// XXX Better would be just to add one more button and activate it in #gui_header !!
-						// init_timers("init");
 						s_timer_id = ind;
 						init_timers ("init");
 						return(1);	
 					// Cancel	
   					}, function () {
-							activate_timer (s_timer_id);
+							activate_timer(s_timer_id);
 						return(1); 					// Avoid further actions for these radio buttons 
   					},
   					'Confirm Create'
@@ -847,13 +633,11 @@ function start_LAMP(){
 						// Remove the timer from the array
 						var removed = timers.splice(i ,1);		// Removed is an array too, one element only
 					
-						if ( persist > 0 ) {
-							console.log(removed[0]);
-							// Remove the timer from MySQL
-							send_2_dbase("delete_timer", removed[0]);
-							if (debug>1)
+						logger(removed[0]);
+						// Remove the timer from MySQL
+						send2daemon("dbase","delete_timer", removed[0]);
+						if (debug>1)
 								alert("Removed from dbase:: id: " + removed[0]['id'] + " , name: " + removed[0]['name']);
-						}
 						s_timer_id=timers[0]['id'];
 						// 
 						init_timers("init");					// As we do not know which timer will be first now
@@ -901,7 +685,7 @@ function start_LAMP(){
 //
 	$("#gui_header").on("click", ".hh_button", function(e){
 			e.preventDefault();
-//			e.stopPropagation();
+			e.stopPropagation();
 			selected = $(this);
 						
 			value=$(this).val();								// Value of the button
@@ -911,8 +695,6 @@ function start_LAMP(){
 			activate_handset(id);
 	}); 
 
-
-
 // -----------------------------------------------------------------------------
 // HANDSET
 //	*** Handle the Command Handset (CH) buttons (add, delete, help)
@@ -921,7 +703,7 @@ function start_LAMP(){
 //
 	$("#gui_header").on("click", ".ch_button", function(e){
 		e.preventDefault();
-//		e.stopPropagation();
+		e.stopPropagation();
 		selected = $(this);
 		$( '.ch_button' ).removeClass( 'hover' );
 		$( this ).addClass ( 'hover' );
@@ -931,8 +713,7 @@ function start_LAMP(){
 		{	
 			// Add a new handset. 
 			case "Add":
-				// We start with making a new row in the handset array,
-				// give it a name etc.
+				// We start with making a new row in the handset array, and give it a name etc.
 				// Then we need to transfer control to the user
 				// Find a free handset id:
 				
@@ -1001,12 +782,12 @@ function start_LAMP(){
 							addr: handset_addr,
 							unit: "0",
 							val: "0",
-							type: "switch",
+							type: "handset",
 							scene: ""						// we should start with empty Scene
 						}
 						handsets.push(newhandset);			// Add record newdev to devices array
-						console.log("Added new handset "+newhandset['name']);
-						send_2_dbase("add_handset", newhandset);
+						logger("Added new handset "+newhandset['name']);
+						send2daemon("dbase","add_handset", newhandset);
 						// And add the line to the #gui_devices section
 						// Go to the new scene
 						s_handset_id = ind;
@@ -1075,16 +856,14 @@ function start_LAMP(){
 								var handset_id = handsets[i]['id'];
 								// Removed is an array too, one element only
 								var removed = handsets.splice(i ,1);
-								if ( persist > 0 ) {
-									console.log(removed[0]);
-									// Remove the room from MySQL
-									send_2_dbase("delete_handset", removed[0]);
-									if (debug>1)
-										myAlert("Removed from dbase:: id: "+removed[0]['id']+" , name: "+removed[0]['name']);
-								}
+								
+								logger(removed[0]);
+								// Remove the room from MySQL
+								send2daemon("dbase","delete_handset", removed[0]);
+								if (debug>1)
+									myAlert("Removed from dbase:: id: "+removed[0]['id']+" , name: "+removed[0]['name']);
 							}
 						}
-						
 						// As we do not know which room will be first now
 						// If there are no handsets, we are in trouble I guess
 						s_handset_id = handsets[0]['id'];
@@ -1101,10 +880,6 @@ function start_LAMP(){
 				
 				// If Yes: delete row
 			break;
-				
-				//
-				// Help for Handset setting
-				//
 			case "Help":
 					helpForm('Handsets',"This is the Help screen for Handsets or Remote controls\n\n"
 						+ "In the header section you see an overview of your handsets defined, "
@@ -1129,7 +904,6 @@ function start_LAMP(){
 		if (jqmobile == 1) {							// Sortable works different for jqmobile, do later
 		
 			// **** SORTABLE NOT IMPLEMENTED FOR JQMOBILE ***
-		
 		}
 		else 
 		{										// jQuery UI Sortable
@@ -1144,13 +918,13 @@ function start_LAMP(){
 				// Go over each element and record the id
 				$( "#gui_devices tr" ).each(function( index ) {
 					if ( index != 0) {
-						console.log( index + ": " + $(this ).children().children('.dlabels').attr('id') );
+						logger( index + ": " + $(this ).children().children('.dlabels').attr('id') );
 						// ---YYY--
 						// problem is that we have to change the order in the database
 						// whereas you're never sure which record will be fetched first
 					}
 					else {
-						console.log( index + ": " + "Header" );
+						logger( index + ": " + "Header" );
 					}
 				}); // each
             	//self.sendUpdatedIndex(ui.item);
@@ -1160,50 +934,43 @@ function start_LAMP(){
 		$( this ).removeClass ( 'hover' );
 	}); // Handler for remotes handsets
 
-
 // ------------------------------------------------------------------------------
-// Weather
-// Handle the Header Weather (=remote) selection buttons
-// This function deals with the weather buttons diaplayed in the header section.
-// If the user selects one of these buttons, the corresponding weather screen is activated.
+// Sensor
+// Handle the Header Sensor (=remote) selection buttons (formerly hw for header-weather)
+// This function deals with the sensor buttons diaplayed in the header section.
+// If the user selects one of these buttons, the corresponding sensor screen is activated.
 //
 	$("#gui_header").on("click", ".hw_button", function(e){
 			e.preventDefault();
-//			e.stopPropagation();
+			e.stopPropagation();
 			selected = $(this);
 						
 			value=$(this).val();								// Value of the button
 			id = $(e.target).attr('id');						// should be id of the button (array index substract 1)
 			$( '.hw_button' ).removeClass( 'hover' );
 			$( this ).addClass ( 'hover' );
-			activate_weather(id);
-	}); // weather
-
+			activate_sensors(id);
+	}); // sensor
 
 // ------------------------------------------------------------------------------
-// Weather
+// Sensors (formerly Weather)
 // Handle the Weather (=remote) selection in the Content area
 // This function deals with the Command Weather (cw) buttons diaplayed in the content section.
-// If the user selects one of these buttons, the corresponding weather action is activated.
+// If the user selects one of these buttons, the corresponding sensors action is activated.
 //
 	$("#gui_content").on("click", ".cw_button", function(e){
 			e.preventDefault();
-//			e.stopPropagation();
+			e.stopPropagation();
 			selected = $(this);
 						
 			value=$(this).val();							// Value of the button
 			id = $(e.target).attr('id');					// should be id of the button (array index substract 1)
 			$( '.cw_button' ).removeClass( 'hover' );
 			$( this ).addClass ( 'hover' );
-			//activate_weather(id);
-			//alert("Clicked Weather Button, id: "+id+", value: "+value);
-			
-			// Based on the row that is clicked, we should be able to determine the
-			// right type of 
-			var win=window.open('graphs/weather.html', '_parent');
-			
+			//activate_sensors(id);
+			var win=window.open('http://'+w_url+'/graphs/sensor.html', '_parent');
 			$( this ).removeClass( 'hover' );
-	}); // weather
+	}); // sensor
 
 
 // ----------------------------------------------------------------------------
@@ -1214,7 +981,7 @@ function start_LAMP(){
 //
 	$("#gui_header").on("click", ".cw_button", function(e){
 		e.preventDefault();
-//		e.stopPropagation();
+		e.stopPropagation();
 		selected = $(this);
 		$( '.cw_button' ).removeClass( 'hover' );
 		$( this ).addClass ( 'hover' );
@@ -1222,43 +989,36 @@ function start_LAMP(){
 		id = $(e.target).attr('id');				// should be id of the button (array index substract 1)
 		switch (id)
 		{	
-			// Add a new Weather station. 
+			// Add a new Sensor station. 
 			case "Add":
-				// We start with making a new row in the weather array,
-				// give it a name etc.
-				// Then we need to transfer control to the user
-				// Find a free weather id:
-				
-				// Search for a handset id that is unused in array of existing handsets
-				// Look for matching indexes. This is a time-exhausting operation, but only when adding a handset
+				// We start with making a new row in the sensors array, give it a name etc.
+				// Search for a sensors id that is unused in array of existing sensors
+				// Look for matching indexes. This is a time-exhausting operation, but only when adding a sensors
 				var ind = 1;
-				while (ind <= max_weather) { 
-					for (var i=0; i< weather.length; i++) {
-						if ( ( weather[i]['id'] == ind )) {
-						// alert("found this ind: "+ind+" on pos "+i+", );
-						// We found this index is used!
-							break; // for
+				while (ind <= max_sensors) { 
+					for (var i=0; i< sensors.length; i++) {
+						if ( ( sensors[i]['id'] == ind )) {
+							break; 	//for			// We found this index is used!
 						} // if
 					} // for
-					// If we are here, then we did not find handset id equal to ind 
 					// So the ind is unused, its free for us to use it
-					if (i == weather.length){
+					if (i == sensors.length){
 						break; // while
 					}
 					ind++;
 				}//while
 				
 				// Now we have an index either empty slot in between scene records, or append the current array
-				if ( ind > max_weather ) {
-					alert("Unable to add more Weather sensors");
+				if ( ind > max_sensors ) {
+					alert("Unable to add more weather sensors");
 					return(-1);
 				}
 				
-				// Now ask for a name for the new handset
+				// Now ask for a name for the new sensors
 				// The for asks for 2 arguments, so maybe we need to make a change later
 				var frm='<form><fieldset>'
 					+ '<br />DRAFT:'
-					+ '<p>You have created weather station nr ' + ind + '. Please specify name</p>' 
+					+ '<p>You have created sensors device nr ' + ind + '. Please specify name</p>' 
 					+ '<label for="val_1">Name: </label>'
 					+ '<input type="text" name="val_1" id="val_1" value="" class="text ui-widget-content ui-corner-all" />'
 					+ '<br /><br />'
@@ -1275,42 +1035,42 @@ function start_LAMP(){
 						// Add the device to the array
 						// So what are the variables returned by the function???
 						if (debug > 2) alert(" Dialog returned val_1,val_2: " + ret);
-						var weather_name = ret[0];
-						var weather_addr = ret[1];
-						for (var i=0; i< weather.length; i++) {
-							if (weather[i]['addr']==weather_addr) {
+						var sensors_name = ret[0];
+						var sensors_addr = ret[1];
+						for (var i=0; i< sensors.length; i++) {
+							if (sensors[i]['addr']==sensors_addr) {
 								break;
 							}
 						}
-						if (i!=weather.length){
-							alert("The weather address "+weather_addr+" is already registered");
+						if (i!=sensors.length){
+							alert("The sensors address "+sensors_addr+" is already registered");
 							return(0);
 						}
-						if (debug>1) alert("New weather on ind: "+ind+", name: "+weather_name+", addr: "+weather_addr);
-						var newweather = {
+						if (debug>=1) alert("New sensor on ind: "+ind+", name: "+sensors_name+", addr: "+sensors_addr);
+						var newsensors = {
 							id: ind,
-							name: weather_name,
+							name: sensors_name,
+							type: "sensor",
 							brand: "",
-							addr: weather_addr,
+							addr: sensors_addr,
 							unit: "0",
 							val: "0",
 							type: "switch",
 							scene: ""						// we should start with empty Scene
 						}
-						weather.push(newweather);			// Add record newdev to devices array
-						console.log("Added new weather "+neweather['name']);
-						send_2_dbase("add_weather", newweather);
-						// And add the line to the #gui_devices section
-						// Go to the new weather
-						s_weather_id = ind;
-						// activate_handset(new_weather_id);
+						sensors.push(newsensors);			// Add record newdev to devices array
+						logger("Added new sensor "+nesensors['name']);
+						send2daemon("dbase","add_sensors", newsensors);
+						// And add the line to the #gui_devices section, and go to the new sensors
+						s_sensor_id = ind;
+						// activate_sensors(new_sensors_id);
 						// XXX Better would be just to add one more button and activate it in #gui_header !!
-						init_weather("init");
+						init_sensors("init");
 						return(1);	//return(1);
 						
 					// Cancel	
   					}, function () {
-							activate_weather (s_weather_id);
+							activate_sensors (s_sensor_id);
 						return(1); // Avoid further actions for these radio buttons 
   					},
   					'Confirm Create'
@@ -1318,7 +1078,7 @@ function start_LAMP(){
 				
 			break;
 				
-			// Remove the current weather. Means: Remove from the weather
+			// Remove the current sensor. Means: Remove from the sensor
 			// array, and reshuffle the array. 
 			// As there are multiple records with the same id, we need to make a 
 			// list first, and after selection delete all records with that id.
@@ -1327,16 +1087,15 @@ function start_LAMP(){
 			case "Del":
 				
 				var list = [];
-				var str = '<label for="val_1">Delete Weather: </label>'
+				var str = '<label for="val_1">Delete Sensor: </label>'
 						+ '<select id="val_1" value="val_1" >' ;   // onchange="choice()"
-				
 				// Allow selection, but first let the user make a choice
 				// Make sure every name only appears once
-				var weather_list=[];
-				for (i=0; i< weather.length; i++) {
-					if ( $.inArray(weather[i]['id'],weather_list) == -1) {
-						str += '<option>' + weather[i]["name"] + '</option>';
-						weather_list[weather_list.length]= weather[i]['id'];
+				var sensors_list=[];
+				for (i=0; i< sensors.length; i++) {
+					if ( $.inArray(sensors[i]['id'],sensors_list) == -1) {
+						str += '<option>' + sensors[i]["name"] + '</option>';
+						sensors_list[sensors_list.length]= sensors[i]['id'];
 					}
 				}
 				str += '</select>';
@@ -1361,46 +1120,41 @@ function start_LAMP(){
 						
 						// There might be more than one record with the same id
 						// We work our way back in the array, so index i remains consistent
-						for (var i=weather.length-1; i>=0; i--) {
-							if (debug>2) alert("working with i: "+i+", weather id: "+weather[i]['name']);
-							if (weather[i]['name'] == sname) {
+						for (var i=sensors.length-1; i>=0; i--) {
+							if (debug>2) alert("working with i: "+i+", sensors id: "+sensors[i]['name']);
+							if (sensors[i]['name'] == sname) {
 								// Is the array empty? Maybe we do not care, 
-								//everything for weather is IN the record itself
-								var weather_id = weather[i]['id'];
+								//everything for sensors is IN the record itself
+								var sensors_id = sensors[i]['id'];
 								// Removed is an array too, one element only
-								var removed = weather.splice(i ,1);
-								if ( persist > 0 ) {
-									console.log(removed[0]);
-									// Remove the handset from MySQL
-									send_2_dbase("delete_weather", removed[0]);
-									if (debug>1)
+								var removed = sensors.splice(i,1);
+								
+								logger(removed[0]);
+								// Remove the sensors from MySQL
+								send2daemon("dbase","delete_sensors", removed[0]);
+								if (debug>1)
 										myAlert("Removed from dbase:: id: "+removed[0]['id']+" , name: "+removed[0]['name']);
-								}
 							}
 						}
 						
-						// As we do not know which weather record will be first now
-						// If there are no weather, we are in trouble I guess
-						s_weather_id = weather[0]['id'];
-						init_weather("init");
+						// As we do not know which sensors record will be first now
+						// If there are no sensors, we are in trouble I guess
+						s_sensor_id = sensors[0]['id'];
+						init_sensors("init");
 						return(1);						
 					// Cancel	
   					}, function () {
-						activate_weather (s_weather_id);
+						activate_sensors (s_sensor_id);
 						return(1); // Avoid further actions for these radio buttons 
   					},
-  					'Confirm Delete Handset'
+  					'Confirm Delete sensor'
 				); // askForm
 				// Popup: Are you sure?
 				
 				// If Yes: delete row
 			break;
-				
-				//
-				// Help for Weather settings
-				//
 			case "Help":
-					helpForm('Weather',"This is the Help screen for weather stations and sensors\n\n"
+					helpForm('Sensor',"This is the Help screen for sensors stations and sensors\n\n"
 						+ "In the header section you see an overview of your sensors defined, "
 						+ "which enables you to view/change or add sensors to a station of your choice. \n\n"
 						+ "The Content section in the middle shows for each defined station the dials, "
@@ -1410,21 +1164,18 @@ function start_LAMP(){
 						);
 					$( '.cw_button' ).removeClass( 'hover' );
 			break;
-				
 			default:
 					alert("Error:: click id " + id + " not recognized");
 			}
-		
 			
 	// Sortable Gui_header on tbody
 
-		// Make the handset header table sortable. It allows us to define a table with buttons above that are 
+		// Make the sensor header table sortable. It allows us to define a table with buttons above that are 
 		// Not sortable but still look quite the same as these ... And for button handling it does
 		// not see the difference.
 		if (jqmobile == 1) {							// Sortable works different for jqmobile, do later
 		
-			// **** SORTABLE HANDSETS NOT IMPLEMENTED FOR JQMOBILE ***
-		
+			// **** SORTABLE sensors is NOT IMPLEMENTED FOR JQMOBILE ***
 		}
 		else 
 		{										// jQuery UI Sortable
@@ -1439,13 +1190,13 @@ function start_LAMP(){
 				// Go over each element and record the id
 				$( "#gui_devices tr" ).each(function( index ) {
 					if ( index != 0) {
-						console.log( index + ": " + $(this ).children().children('.dlabels').attr('id') );
+						logger( index + ": " + $(this ).children().children('.dlabels').attr('id') );
 						// ---YYY--
 						// problem is that we have to change the order in the database
 						// whereas you're never sure which record will be fetched first
 					}
 					else {
-						console.log( index + ": " + "Header" );
+						logger( index + ": " + "Header" );
 					}
 				}); // each
             	//self.sendUpdatedIndex(ui.item);
@@ -1453,18 +1204,18 @@ function start_LAMP(){
 		  }).disableSelection();
 		}//else
 		$( this ).removeClass ( 'hover' );
-	}); // Handler for weathers
+	}); // Handler for sensors
 
 
 // ------------------------------------------------------------------------------
 // Energy
-// Handle the Weather (=remote) selection in the Content area
-// This function deals with the Command WEnergy (ce) buttons diaplayed in the content section.
+// Handle the energy (=remote) selection in the Content area
+// This function deals with the Command Energy (ce) buttons diaplayed in the content section.
 // If the user selects one of these buttons, the corresponding energy action is activated.
 //
 	$("#gui_content").on("click", ".ce_button", function(e){
 			e.preventDefault();
-//			e.stopPropagation();
+			e.stopPropagation();
 			selected = $(this);
 						
 			value=$(this).val();							// Value of the button
@@ -1472,11 +1223,7 @@ function start_LAMP(){
 			$( '.ce_button' ).removeClass( 'hover' );
 			$( this ).addClass ( 'hover' );
 			//activate_energy(id);
-			//alert("Clicked Energy Button, id: "+id+", value: "+value);
-			
-			// Based on the row that is clicked, we should be able to determine the
-			// right type of 
-			var win=window.open('graphs/energy.html', '_parent');
+			var win=window.open('http://'+w_url+'/graphs/energy.html', '_parent');
 			//$.getScript("graphs/enerpi.js", function(){
 			//		start_ENERPI();
 			//		alert("start_ENERPI finished");
@@ -1484,16 +1231,13 @@ function start_LAMP(){
 			$( this ).removeClass( 'hover' );
 	}); // energy
 
-
-
-
 // ----------------------------------------------------------------------------
 // CONFIG
 // ** HANDLER FOR HEADER CONFIG BUTTONS
 //
 	$("#gui_header").on("click", ".hc_button", function(e){
 			e.preventDefault();
-//			e.stopPropagation();
+			e.stopPropagation();
 			selected = $(this);
 			
 			$( '.hc_button' ).removeClass( 'hover' );
@@ -1502,7 +1246,6 @@ function start_LAMP(){
 			value=$(this).val();								// Value of the button
 			id = $(e.target).attr('id');						// should be id of the button (array index substract 1)
 			activate_setting(id);
-//			alert("init_settings:: Button event");
 		});
 
 // -------------------------------------------------------------------------------
@@ -1511,7 +1254,7 @@ function start_LAMP(){
 		
 	$("#gui_header").on("click", ".cc_button", function(e){
 		e.preventDefault();
-//		e.stopPropagation();
+		e.stopPropagation();
 		selected = $(this);
 		$( '.cc_button' ).removeClass( 'hover' );
 		$( this ).addClass ( 'hover' );
@@ -1525,20 +1268,14 @@ function start_LAMP(){
 				// give it a name etc.
 				// Then we need to transfer control to the user
 				alert("Add a Setting");	
-				// Find a free scene id:
+				// Find a free setting id:
 				var ind = 1;
-				
 			break;
-				
-			// Remove the current scene. Means: Remove from the scenes
+			// Remove the current setting. Means: Remove from the settings
 			// array, and reshuffle the array. 
 			// What it means for SQL need to sort out later .....
 			case "Del":
-
 			break;
-				//
-				// Help for Config setting. XXX May have to add this one
-				//
 			case "Help":
 					alert("This is the Help screen for Setting Configuration\n\n"
 						+ "In the header section you see buttons to select a configuration item, "
@@ -1546,7 +1283,6 @@ function start_LAMP(){
 						);
 					$( '.cc_button' ).removeClass( 'hover' );
 			break;
-				
 			default:
 					alert("Error:: click id " + id + " not recognized");
 		} // switch
@@ -1554,575 +1290,281 @@ function start_LAMP(){
 	});	// CC Config Handler
 
 
-	// ----------------------------------------------------------------------------------------
-	//	INIT WEBSOCKETS communication
-	//	Especially the handlers for websockets etc, that need to test the state of the connection
-	//	
-	function init_websockets() {
-	// ** These are the handlers for websocket communication.
-	// ** We only use either websockets or regular/normal sockets called by .ajax/php handlers
-	// ** User can specify/force bahaviour by setting a variable
-	// 
-	// Controller must be Raspberry for websockets to work
-	// Also, phonegap does not yet (!) support websockets for older Android phones
-	//
-		// Make a new connection and start registering the various actions,
-		// State 0: Not ready
-		// State 1: Ready
-		// State 2: Close in progress
-		// State 3: Closed
-	// Apparently, after closing the socket will reopen automatically (in a while)
-	//
-		var urlParts = w_url.split(':');					// remove the calling port number
-		console.log("init_websockets:: Splitting url and port: "+urlParts[0]);
-		w_uri = "ws://"+urlParts[0]+":"+w_port;				// and add the port number of server
-		console.log("init_websockets:: new WebSocket w_uri: "+w_uri);
-		w_sock = new WebSocket(w_uri);						// Create a socket for server communication
-		
-		w_sock.onopen = function(ev) { 						// connection is open 
-			console.log("Websocket:: Opening socket "+w_uri);	// notify user
-			message("websocket reopen",1);
-		};
-		w_sock.onclose	= function(ev){
-			console.log("Websocket:: socket closed "+w_uri);
-			///alert("Connection closed by server, click OK to re-establish the connection");
-			setTimeout( function() { message('<p style="textdecoration: blink; background-color:yellow; color:black;">Restarting the Websocket</p>'); }, 1500);
-			//
-			w_sock.close();
-			setTimeout( function() { init_websockets(); }, 1500);
-			console.log("Websocket:: socket re-opened: "+w_sock.readyState);
-		};
-		w_sock.onerror	= function(ev){
-			var state = w_sock.readyState;
-			console.log("Websocket:: error. State is: "+state);
-			// message("websocket:: error: "+state,1);
-		};
-		
-		// This is one of the most important functions of this program: It receives asynchronous
-		// messages from the daemon and needs to process them for the GUI.
-		// ALL(!) Messages are in json format, but type field defines whether the content is also
-		// in json or in ICS format (for historical and backward compatibility reasons).
-		// 
-		// As all messages are received async, we need to "forward" or temporarily store info
-		// before it is being handled by the client. The easy way: store in a var and depending on 
-		// the current open screen in the client decide what to do...
-		//
-		w_sock.onmessage = function(ev) 
+// -------------------------------------------------------------------------------
+// SCENE We have to setup an event handler for this screen.
+// After all, the user might like to change things and press some buttons
+// NOTE::: This handler runs asynchronous! So after click we need to sort out for which scene :-)
+// Therefore, collect all scene data again in this handler.
+//
+	$( "#gui_content" ).on("click", ".scene_button" ,function(e) 
+	{
+		e.preventDefault();
+		e.stopPropagation();
+		value=$(this).val();									// Value of the button pressed (eg its label)
+		var but_id = $(e.target).attr('id');					// id of button
+		var scene = get_scene(s_scene_id);						// s_scene_id tells us which scene is active
+		var scene_name = scene['name'];
+		var scene_seq = scene['seq'];
+		var scene_split = scene_seq.split(',');					// Do in handler
+		logger("scene handler:: scene_name: "+scene_name,2);
+		// May have to add: Cancel All timers and Delete All timers
+		switch (but_id.substr(0,2))
 		{
-			var ff = ev.data.substr(1);
-			//alert("Websocket:: Received a Message: "+ff);
-			
-			
-			var rcv = JSON.parse(ev.data);		//PHP sends Json data
-			if (debug >= 2) console.log("Websocket:: message action: "+rcv.action);
-			
-			// First level of the json message is equal for all
-			var tcnt   = rcv.tcnt; 				// message transaction counter
-			var type   = rcv.type;				// type of content part, eg raw or json
-			var action = rcv.action; 			// message text: handset || sensor || gui || weather || energy
-												// || login || console || alert
-			
-			// Now we need to parse the message and take action.
-			// Best is to build a separate parse function for messages
-			// and route them to the approtiate screen
-			switch (action) 
-			{	
-				// ack messages ae just confirmations and may be further discarded
-				case "ack":
-					if (debug>1) {
-						message("action: "+action+", tcnt: "+tcnt+", mes: "+msg+", type: "+type);
-					}
-					else {
-						console.log("action: "+action+", tcnt: "+tcnt+", mes: "+msg+", type: "+type);
-					}
-				break;
-				
-				// The daemon wants to display something on the message area, or if the debug level
-				// is high enough will display through an alert.
-				case "alert":
-					if (debug>=1) alert("Server msg:: "+rcv.message);
-				break;
-				
-				// Update messages can contain updates of devices, scenes, timers or settings.
-				// And this is list is sorted on urgency as well. changes in device values need to be
-				// reflected on the dashboard immediately.
-				// Changes in settings are less urgent and frequent
-				case "upd":
-				case "gui":
-					var msg   = rcv.message;
-					message("action: "+action+", tcnt: "+tcnt+", mes: "+msg+", type: "+type);
-					// if content is coded in json, decode rest of message
-					switch (type) {
-						case 'json': 
-							console.log("onmessage:: read upd message. Type is: "+type+". Json is not supported yet");
-							var gaddr  = rcv.gaddr;				// Group address of the receiver
-							var uaddr  = rcv.uaddr;				// Unit address of the receiver device
-							var val    = rcv.val;
-							var brand  = rcv.brand;				// Brand of the receiver device
-							// XXX And for the moment do nothing
-						break;
-						
-						case 'raw':
-							var msg    = rcv.message;		// The message in ICS format e.g. "!RxDyFz"
-							console.log("onmessage:: read upd message. Type is: "+type);
-							var pars = parse_int(msg);	// Split into array of integers
-														// This function works for normal switches AND dimmers
-														// Only for dimmers string is longer !RxxDxxFdPxx
-							// As we receive updates for devices
-							if ( msg.substr(0,2) == "!R" ){
-								var room = pars[0];
-								var device = pars[1];
-								// Now we need to check if it's a dim or F1 command. If dim
-								// we need not use value 1 but last used value in devices!
-								// XXX
-								var val;
-								if (msg.search("FdP") > -1) {
-									val = pars[2];
+			// START button, queue scene
+			case "Fq":
+						// Send to the device message_device
+						var scene_cmd = '!FqP"' + scene['name'] + '"';
+						// Send to device. In case of a Raspberry, we'll use the backend_rasp
+						// to lookup the command string from the database
+						message_device("scene", "run_scene", scene );
+			break;	
+			// STORE button
+			case "Fe":
+						var scene_cmd = '!FeP"' + scene['name'] + '"=' + scene['seq'];
+						send2daemon("dbase","store_scene", scene);
+			break;		
+			// DELETE scene action, ONE of the actions in the seq!!!
+			case "Fx":
+						if (debug > 2) alert("Activate_screen:: Delete Fx button pressed");
+						var msg = "Deleted actions ";
+						// Go over each TR element with id="scene" and record the id
+						// We need to go reverse, as removing will mess up indexes above,
+						// this will not matter if we work up the array
+						$($( "#gui_scenes .scene" ).get().reverse()).each(function(index) {
+																
+							var id = 	$(this ).children().children('.dlabels').attr('id');		
+							var ind = parse_int(id)[1];			// id contains two numbers in id, we need 2nd
+							if ( $(this ).children().children('input[type="checkbox"]').is(':checked') ) {
+								if (debug > 1) alert ("delete scene id: "+id+", index: "+ind+" selected");
+								var removed = scene_split.splice(2*(ind-1),2);
+								ind --;		// After deleting from scene_split, adjust the indexes for rest of the array	
+								if (debug > 1) alert("removed:"+removed[0]+ "," +removed[1]+": from seq: "+scene_split );
+								msg += ind + " : " + decode_scene_string( removed[0] ) + "; " ;
+							}
+						});
+						message(msg);
+						// We need to find the index of array scenes to update. As we are in a handler
+						// we cannot rely on the j above but need to find the index from 'id' field in scenes
+						for (var j=0; j<scenes.length; j++) {
+							if (scenes[j]['id'] == s_scene_id ) {
+								// Now concatenate all actions and timers again for the scene_split
+								if (typeof(scene_split) == "undefined") {
+									if (debug>2) alert("activate_scene:: case FX: scene_split undefined");
 								}
 								else {
-									val = pars[2];
+									scenes[j]['seq']=scene_split.join();
+									if (debug>2) alert("seq: " + scenes[j]['seq']);
 								}
-								var ind = find_device(room, "D"+device);
-								console.log("onmessage:: room: "+room+", device: "+device+", val: "+val+", ind: "+ind);
-								devices[ind]['val']=val;
-								if ((room == s_room_id) && (s_screen == 'room')) {
-									activate_room(s_room_id);
-								}
-							}//if
-						break;
-						
-						default: 
-							console.log("onmessage:: read upd message. Unknown type: "+type);
-					}
-				break;
-				
-				// If we receive a weather message, we scan the incoming message based
-				// on the addr/channel combination and look those up in the weather array.
-				// If the weather station is not present in the array, we will not show its values !!!
-				// The weather stations that we allow for receiving are specified in the 
-				// database.cfg file (and in the database).
-				
-				case 'weather':	
-					var j;
-					// Compare address and channel to identify a weather sensor
-					// Decided not to use the name for this :-)
-					for (j = 0; j<weather.length; j++ )
-					{
-       					if (( weather[j]['address'] == rcv.address ) &&
-							( weather[j]['channel'] == rcv.channel ))
-  						{
-							// return value of the object
-							break;
+								break;
+							}
 						}
-					}
-					// if we found a match, j will be smaller than length of array
-					// So we have the record that partly describes the current sensor
-					// and partly needs to be filled with the latest sensor values received.
-					if (j<weather.length)
-					{
-						weather[j]['temperature']	=rcv.temperature;
-						weather[j]['humidity']		=rcv.humidity;
-						weather[j]['airpressure']	=rcv.airpressure;
-						weather[j]['windspeed']		=rcv.windspeed;
-						weather[j]['winddirection']	=rcv.winddirection;
-						weather[j]['rainfall']		=rcv.rainfall;
-						
-						var msg="";
-						// Only send for the just received sensor
-						//for (j=0;j<weather.length;j++)
-						//{
-							msg += "Weather "+weather[j]['name']+"@ "+weather[j]['location'];
-							msg += ": temp: "+weather[j]['temperature'];
-							msg += ", humi: "+weather[j]['humidity']+"%<br\>";
-							
-							console.log("Weather "+weather[j]['name']+"@"+weather[j]['location']
-								+": temp: "+weather[j]['temperature']
-								+", humi: "+weather[j]['humidity']+"%");
-						//}
-						message(msg);
-					}
-				break;
-				
-				// Generic sensor messages, such as connected one wire systems to the RasPI
-				// At the moment most wire sensors are in fact further treated as weather sensors.
-				//
-				case 'sensor':
-					console.log("Lampi.js:: received sensor message");
-					
-				break;
-				
-				// Support for energy systems is tbd
-				//
-				case 'energy':
-					console.log("Lampi.js:: received energy message, kw_act_use: "+rcv.kw_act_use);
-					energy['kw_hi_use']	=rcv.kw_hi_use;
-					energy['kw_lo_use']	=rcv.kw_lo_use;
-					energy['kw_hi_ret']	=rcv.kw_hi_ret;
-					energy['kw_lo_ret']	=rcv.kw_lo_ret;
-					energy['gas_use']	=rcv.gas_use;
-					energy['kw_act_use']=rcv.kw_act_use;
-					energy['kw_act_ret']=rcv.kw_act_ret;
-					energy['kw_ph1_use']=rcv.kw_ph1_use;
-					energy['kw_ph2_use']=rcv.kw_ph2_use;
-					energy['kw_ph3_use']=rcv.kw_ph3_use;
-				break;
-				
-				//
-				// Console functions; messages that relate to the console option in the
-				// config section
-				//
-				case 'console':
-					console.log("console message received"+rcv.response);
-					// alert("Console Message :\n"+rcv.response);
-					myAlert("Console Message :\n"+rcv.response,rcv.request+" Output");
-				break;
-				//
-				// Support for user management messages, such as login, password etc.
-				//
-				case 'user':
-				case 'login':
-					var uname;
-					var pword;
-					if (loginprocess) break;
-					loginprocess=true;
-					
-					if(typeof(Storage)!=="undefined") {
-  						// Code for localStorage/sessionStorage.
-						// alert("Support for localstorage");
-						uname= localStorage.getItem('uname');				// username
-						pword= localStorage.getItem('pword');				// pin
-						if (debug>=2) {
-							console.log("Support for localstorage, uname: "+uname);
-						}
-						if (uname == null) uname = "";
-						if (pword == null) pword = "";
- 					}
-					else {
-  						// Sorry! No Web Storage support..
-						if (debug>=2) console.log("No local storage in browser");
-						uname="login";
-						pword="****";
- 					}
-					
-					//var saddr= window.localStorage.getItem("saddr");		// Server address
-					console.log("Lampi.js:: received login request");
-					
-					askForm('<form id="addRoomForm"><fieldset>'		
-					+ '<p>Since your computer <'+rcv.address+'> is outside our network, we ask '
-					+ 'you to logon to the system and prove your identity </p>'
-					+ '<label for="val_1">Login: </label>'
-					+ '<input type="text" name="val_1" id="val_1" value="'+uname+'" class="text ui-widget-content ui-corner-all" />'
-					+ '<br />'
-					+ '<label for="val_2">Password: </label>'
-					+ '<input type="text" name="val_2" id="val_2" value="'+pword+'" class="text ui-widget-content ui-corner-all" />'
-					+ '</fieldset></form>'
-					
-					// Create
-					,function (ret) {
-						// OK Func, need to get the value of the parameters
-						// Add the device to the array
-						// SO what are the variables returned by the function???
-						if (debug > 2) alert(" Dialog returned val_1,val_2,val_3: " + ret);	
-						
-						// All OK? 
-						var login_msg = {
-							tcnt: ++w_tcnt%1000,
-							action: 'login',
-							login:  ret[0],
-							password:  ret[1]
-						}
-						w_sock.send(JSON.stringify(login_msg));
-						
-						console.log(login_msg);
-						if(typeof(Storage)!=="undefined")
-  						{
-  							// Code for localStorage/sessionStorage.
-  							localStorage.setItem('uname',uname);
-							localStorage.setItem('pword',pword);
- 						}				
-						// Send the password back to the daemon
-						// message("Login and Password sent to server",1);
-						if (debug >= 2) alert("Submit login: "+ret[0]+", password: "+ret[1] );
-						loginprocess=false;
-						return(1);										//return(1);
-						
-						// Cancel	
+								
+						// We will NOT store to the dabase unless the user stores the sequence by pressing the STORE button
+						activate_scene(s_scene_id);							
+			break;
+			// CANCEL scene button
+			case "Fc":
+			// Do we want confirmation?
+				var scene_cmd = '!FcP"' + scene['name'] + '"';
+				alert("Cancel current Sequence: " + scene['name']
+					+ "\nScene cmd: " + scene_cmd
+					);
+				message_device("scene", "cancel_scene", scene);
+			break;	
+			// Recording
+			case "Fr":
+				if (debug > 2) alert("Activate_screen:: Add Fr button pressed, start recording ...");
+				myConfirm('You are about to add a new action to the scene. If you continue, the system ' 
+				+ 'will be in recording mode until you have selected a device action. Then you are returned '
+				+ 'to this scene screen again. Please confirm if you want to add a device. ', 
+				// Confirm
+				function () {
+					// DO nothing....
+					// Maybe make the background red during device selection or blink or so
+					// with recording in the message area ...
+					message('<p style="textdecoration: blink; background-color:red; color:white;">RECORDING</p>');
+					// Cancel	
   					}, function () {
-						if (debug >= 2) alert("Submit login Cancelled");
-						loginprocess=false;
-						return(0); 									// Avoid further actions for these radio buttons 
+						s_recording = 0;
+						return(1); // Avoid further actions for these radio buttons 
   					},
-  					'Confirm Login'
-					); // askFor
-				break;
-				
-				case 'load_database':
-					// QQQ
-					rooms = rcv.response['rooms'];			// Array of rooms
-					devices = rcv.response['devices'];		// Array of devices			
-					scenes = rcv.response['scenes'];
-					timers = rcv.response['timers'];
-					handsets = rcv.response['handsets'];
-					settings = rcv.response['settings'];
-					brands = rcv.response['brands'];
-					weather = rcv.response['weather'];		// we want the id and name values
-					// energy = rcv.response['energy'];
-					// XXX whaah
-					init();
-				break;
-				
-				default:
-					message("Unknown message: action: "+action+", tcnt: "+tcnt+", mes: "+msg+", type: "+type);
-			}
-			//return(0);
-		};// on-message
-		
-		console.log("Websocket:: readyState: "+w_sock.readyState);	
-	}//function init_websockets
+  					'Adding a Device action?'
+				);
+				s_recording = 1;							// Set the recording flag on!
+				s_recorder = "";							// Empty the recorder
+				init_rooms("init");
+			break;	
+			// Change a timing value in the scene screen
+			case "Ft":
+	// XXX In LamPI, Scene id can be higher than 9, thus 2 chars (make function read_int(s,i) )
+						var val= $(e.target).val();
+						//alert("scene current time val is: "+val);
+						
+						var hh=""; for(var i=0;i<24;i++) {
+							if (i==val.substr(0,2)) hh +='<option selected="selected">'+("00"+i).slice(-2)+'</option>';
+							else hh +='<option>'+("00"+i).slice(-2)+'</option>';
+						}
+						var mm=""; for(var i=0;i<60;i++) {
+							if (i==val.substr(3,2)) mm +='<option selected="selected">'+("00"+i).slice(-2)+'</option>';
+							else mm +='<option>'+("00"+i).slice(-2)+'</option>';
+						}
+						var ss=""; for(var i=0;i<60;i++) {
+							if (i==val.substr(6,2)) ss +='<option selected="selected">'+("00"+i).slice(-2)+'</option>';
+							else ss +='<option>'+("00"+i).slice(-2)+'</option>';
+						}
+						var ret;
+						var frm = '<form id="addRoomForm"><fieldset>'
+							+ '<p>You can change the timer settings for this action. Please use hh:mm:ss</p>'
+							+ '<br />'
+							+ '<label style="width:50px;" for="val_1">hrs: </label>'
+							+ '<select id="val_1" value="'+val.substr(0,2)+'" >' + hh +'</select>'
+							+ '<label style="width:50px;" for="val_2">mins: </label>'
+							+ '<select id="val_2" value="' + val.substr(3,2)+ '">' + mm +'</select>'
+							+ '<label style="width:50px;" for="val_3">secs: </label>'
+							+ '<select id="val_3" selectedIndex="10" value="'+ val.substr(6,2)+'">' + ss +'</select>'
+							+ '</fieldset></form>'
+							;	
+						askForm(
+							frm,
+							function(ret){
+							// OK Func, need to get the value of the parameters
+							// Add the device to the array
+							// SO what are the variables returned by the function???
+							if (debug > 2) alert(" Dialog returned val_1,val_2,val_3: " + ret);
+						
+							// Value of the button pressed (eg its label)
+							var laval = ret[0]+":"+ret[1]+":"+ret[2];
+							$(e.target).val(laval);
+							if (debug>2) alert("Timer changed from "+ val+" to: "+ $(e.target).val() );
+						
+						// Now change its value in the sequence string of timers also
+						// use but_id= $(e.target).attr('id') to get the index number ...							
+							var ids = parse_int(but_id);					// Second number is gid, first scene_id
+							var gid = ids[1];
+							scene_split [((gid-1)*2) + 1] = laval;
+							var my_list = '';
+							// Go over each element and assemble the list again.
+							$( "#gui_scenes .scene" ).each(function( index ) {
+								var id = 	$(this ).children().children('.dbuttons').attr('id');	
+								var ind = parse_int(id)[1];
+								//logger( "scn: " + scn + " html index: " + index + " scene ind: " + ind );
+								my_list += scene_split [(ind-1)*2] + ',' + scene_split [((ind-1)*2) + 1] + ',' ;
+							});
+							my_list = my_list.slice(0,-1);			// remove the last ","
+							var sindex = idx_scene(s_scene_id);		// Find array index for scene id 
+							logger("store_scene:: sindex: "+sindex+",my_list :" + my_list);
+							logger("store_scene: "+sindex+", " +scenes[sindex]['name']+", my_list: "+my_list);
+							scenes[sindex]['seq'] =  my_list;
+							if (debug>2) alert("new scene_list:: "+my_list);
+							return (0);	
+  						},
+						function () {
+							return(1); // Avoid further actions for these radio buttons 
+  						},
+  						'Confirm Change'
+					); // askForm
+			break;	
+			default:
+				alert("Sequence action unknown: " + but_id.substr(-2) );
+		}
+	});
 
 
-	// --------------------- MAIN PROGRAM FOR start_LAMPI -----------------------------------------
+	// --------------------- MAIN init part FOR start_LAMPI -----------------------------------------
 	//
 	// For jqmobile and regular jqueryUI there are differences,
-	// especially for jqmobile combined with phonegap.
-	
 	if ( jqmobile == 1 ) 
 	{
-	  if (( phonegap == 1) && (dynamicIP == 1))
-	  {
-		// ----------------------------------------------------------------------------------------
-		// When device is ready, confirm certain parameters in the device
-		// This function runs for PhoneGap/Mobile only, where we need
-		// to retrieve/store the IP address of the server
-		//
-		// We use local storage, which is a html5 feature! and will not work
-		// with older browsers.
-		// The username and pin are not necessary for local operation, but
-		// they are required once we access the app over the internet.
-		//
-		
-		$( "#popup" ).empty();
-		//html_msg = '<div id="onLinePopup"></div>';
-		
-		if (typeof(Storage) !== "undefined") {
-			var uname= localStorage.getItem("uname");		// username
-			var pword= localStorage.getItem("pword");		// pin
-			var saddr= localStorage.getItem("saddr");		// Server address
-		}
-		else {
-			alert("no localStorage");
-		}
-		var str;
-		str			= '<form><fieldset>';
-		str 		+= '<div><label for="saddr">IP:</label>';
-		if (saddr !== null)
-			str		+= '<input type="text" name="saddr" id="saddr" value="'+saddr+'" />';
-		else str	+= '<input type="text" name="saddr" id="saddr" placeholder="server ip" />';
-		str			+= '</div>\n'
-		
-		str 		+= '<div><label for="uname">Username:</label>';
-		if (uname !== null)
-			str 	+= '<input type="text" name="uname" id="uname" value="'+uname+'"/>';
-		else str	+= '<input type="text" name="uname" id="uname" placeholder="username"/>';
-		str			+= '</div>\n';
-		
-		str			+= '<div><label for="pword">Password:</label>';
-		if (pword !== null)
-			str		+= '<input type="password" name="pword" id="pword" value="'+pword+'"/>';
-		else str	+= '<input type="password" name="pword" id="pword" placeholder="pin"/>';
-		str += '</div></fieldset></form>';
-		
-		var $popUp = $("<div/>").popup({
-			id: "popform",
-			dismissible : false,
-			theme : "b",
-			overlayTheme : "a",
-			title: 'Confirm Login',
-			maxWidth : "500px",
-			transition : "pop"
-		}).bind("popupafterclose", function() {
-			console.log("popupafterclose");
-			//remove the popup when closing
-			$(this).remove();
-		});	
-		
-		$("<div/>", {
-			text : 'Confirm Login'
-		}).appendTo($popUp);
-	
-		$(str,{}).appendTo($popUp);
-	
-		// Submit Button
-		$("<a>", {
-			text : "SUBMIT"
-			}).buttonMarkup({
-				inline : true,
-				icon : "check"
-			}).on("click", function() {
-				console.log("Start submit");
-				//$popUp.popup("close");
-				var uname = $("#uname").val();
-				var saddr = $("#saddr").val();
-				var pword = $("#pword").val();
-				murl = "http://"+saddr+"/";			// XXX Have to check the url for too many / chars
-				
-				if(typeof(Storage) !== "undefined") {
-					localStorage.setItem("uname",uname);
-					localStorage.setItem("saddr",saddr);
-					localStorage.setItem("pword",pword);
-				}
-				// alert("Submit, saddr: "+saddr);
-				// setTimeout(cancelFunc, 50);
-				if (settings.length > 0) {
-					console.log("Database already read");
-					// $popUp.popup("close");
-				}
-				else {
-					console.log("Submit saddr: "+saddr);	
-					var ret = load_database("init");
-					if (ret<0) {
-						alert("Error:: loading database failed");
-					}
-					else { console.log("load_database returns success"); }
-				}
-				$popUp.popup("close");
-				
-				if ((settings[1]['val'] == 1) && (phonegap != 1)) 				
-				{
-					console.log("calling init_websockets");
-					init_websockets();		// For regular web based operations we start websockets here
-				}
-				else {
-					alert("Either Phonegap OR Raspi Set");
-				}
-				console.log("Submit done");
-				
-		}).appendTo($popUp);
-
-		// Back button
-		$("<a>", {
-			text : "CANCEL",
-			"data-jqm-rel" : "back"
-			}).buttonMarkup({
-				inline : true,
-				icon : "back"
-			}).on("click", function() {
-				console.log("Start Cancel");
-				$popUp.popup("close");
-				console.log("End Cancel");
-				//that.subscribeToAsset(callback);
-		}).appendTo($popUp);
-		
-		// ------------------------
-		if (phonegap == 1) {
-			console.log("Do Phonegap");
-			// $( "#popup" ).append ($popUp);
-			$popUp.popup("open");
-			console.log("Do Phonegap done");
-		}	
-		// Else we use the mobile libraries but NOT phonegap.
-		else {
-			console.log("No Phonegap");
-			//$( "#popup" ).append ($popUp);
-			// Only uncomment the Popup line below if you like to test logic of JqMobile on your PC
-			$popUp.popup("open");
-			console.log("No Phonegap return"); // This line will be hit immediately after opening popup
-		}
-	  }
-	  
-	  // (Phonegap == 0 || dynamicIP == 0 ) && jqMobile == 1  (index3.html)
-	  //
-	  else
-	  {
 		var ret = load_database("init");
 		if (ret<0) {
 			alert("Error:: loading database failed");
 		}
-		if ((settings[1]['val'] == 1) && ( phonegap != 1 )) 				
-		{
-			init_websockets();			// For regular web based operations we start websockets here
-		}
-	  }
-		// If we are here, we need to be sure that we have all parameters for networking etc.
+		init_websockets();			// For regular web based operations we start websockets here
 	}
-	
-	// jqMobile == 0 (index.html)
 	//
 	// The solution is to start init_lamps, init_rooms and init_menu 
 	// in the result function of the AJAX call in load_database
 	// Upon success, we know that we have read the whole database, and have all buttons etc.
 	// without the database being present, nothing will be displayed
+	//
 	else {
+		if (typeof(Storage) !== "undefined") {
+			logger("Loading user and database settings from localStorage",1);
+			var uname= localStorage.getItem("uname");		// username
+			var pword= localStorage.getItem("pword");		// pin
+			var saddr= localStorage.getItem("saddr");		// Server address
+
+			rooms	= localStorage.getObject('rooms'); 		// logger("rooms[0]: "+rooms[0]['name'],1);
+			devices	= localStorage.getObject('devices');
+			scenes	= localStorage.getObject('scenes');
+			timers	= localStorage.getObject('timers');
+			handsets= localStorage.getObject('handsets');
+			brands	= localStorage.getObject('brands');
+			sensors	= localStorage.getObject('sensors');
+			//users   = localStorage.getObject('users');
+			settings= localStorage.getObject('settings');	// Needs to be defined to call init()
+		}
+		init_websockets();									// For regular web based operations we start websockets here
 		var ret = load_database("init");
 		if (ret<0) {
 			alert("Error:: loading database failed");
 		}
-		// If controller == RASPI and phonegap == 0
-		if ((settings[1]['val'] == 1) && ( phonegap != 1 )) 				
-		{
-			init_websockets();			// For regular web based operations we start websockets here
-		}
 	}
-
-}); // Doc Ready end
+  }); // Doc Ready end
 
 } //start_LAMP() function end
 
 
 // ========================================================================================
 // Below this line, only functions are declared.
-// The only program started is either load_database
-
-
-
-// ----------------------------------------------------------------------------------------
-//	function message, displays a message down in the gui_messages area
-//	Input Parameter is now just the text to display
-//
-function message(txt,lvl) 
-{
-	if (debug >2 ) alert("Message called: "+txt+", lvl: "+lvl+", debug: "+debug);
-	if (typeof lvl != 'undefined') {
-		// alert("defined");
-	}
-	else {
-		// alert("undefined");
-		lvl = debug ;
-		//alert("setting debug in message");
-	}
-	if (lvl <= debug) {
-		$( "#gui_messages" ).empty("")
-		txt = '<div id="comment">' + txt + '</div>'
-		$( "#gui_messages" ).append( txt );	
-	}
-	return(0);
-}
-
-
+// The only program started is found in the document.ready() function above
 // -------------------------------------------------------------------------------------
 // FUNCTION INIT
 // This function is the first function called when the database is loaded
 // It will setupt the menu area and load the first room by default, and mark 
 // the button of that room
-// See function above, we will call from load_database !!!
+// See function above, we will call from load_database when $ajax success or 
+// when using websockets from init_websockets !!!
 //
 function init() {
+	// The settings array must be there and initialized!
 	debug = settings[0]['val'];
-	cntrl = settings[1]['val'];
-	if (cntrl == 0) {
-		s_controller = murl + 'frontend_ics.php';
-	}
-	else {
-		s_controller = murl + 'frontend_rasp.php';
-	}
-	mysql = settings[2]['val'];
-	persist = settings[3]['val'];
-	if (jqmobile != 1) { 
-		skin = settings[4]['val'];
+	use_energy = ( energy.length > 0 ? true : false );			// Will we use energy display, only when P1-sensor is working
+		
+	// Load Skin for the website
+	// XXX Why we would this only for non-jqmobile use is not clear.
+	if (jqmobile != 1) {
+		// LocalStorage Use
+		if(typeof(Storage)!=="undefined") {
+  			// Code for localStorage/sessionStorage.
+			skin = localStorage.getItem('skin');				// Skin Setting
+			logger("init:: localStorage, skin: "+skin,1);
+		}
+		else {
+			logger("init:: No localStorage support for skin",1);
+		}
+		if (skin == null) skin = settings[4]['val'];
 		$("link[href^='styles']").attr("href", skin);
 	}
-	use_weather = settings[8]['val'];							// Will we display weather info and buttons
-	use_energy = settings[8]['val'];							// Will we use energy display, only when P1-sensor is working
+
+	// Set the interval so that every 10 seconds the system decreases the healthcount variable
+	setInterval( function() { 
+		send2daemon("ping","","") ;
+			if (healthcount > 0) healthcount--;
+			logger("healthcount:: "+healthcount,2);
+			if (jqmobile==1) {
+				logger("healthcount mobile:: "+healthcount,1);
+				$("#health-slider").val(healthcount).slider("refresh");
+			}
+			else {
+				logger("healthcount ui:: "+healthcount,1);
+				$("#health-slider").val(healthcount);
+				$("#health-slider").slider("option", "value", healthcount );
+			}
+	}, 10000);
+	
+	// XXX This type of init it not flexible.. Fortunately number and type of fields
+	// used for energy is fixed. All of these fields are present in a modern Energy P1 meter
 	energy['kw_hi_use'] = 0;
 	energy['kw_lo_use'] = 0;
 	energy['kw_hi_ret'] = 0;
@@ -2134,87 +1576,51 @@ function init() {
 	energy['kw_ph2_use'] = 0;
 	energy['kw_ph3_use'] = 0;
 	
+	// Sort the devices array on the "id" field
+	//sort(devices);
+	// XYZ
+	function idsort(a,b) {
+		if (a.id < b.id)
+			return -1;
+  		if (a.id > b.id)
+    		return 1;
+  		return 0;
+	}
+
+	devices.sort(idsort);
+	if (debug >= 2) {
+		for (var i=0; i< devices.length; i++) {
+			logger("devices i: "+i+", id: "+devices[i]['id']+", name: "+devices[i]['name']);
+		}
+	}
 	init_rooms(s_room_id);										// Initial startup config
 	init_menu(s_setting_id);
-}		
-
-// ************************ SUPPORTING FUNCTIONS *********************************
-//
-//	Get the time
-//
-function getTime() {
-  var date = new Date();
-  return pad(date.getHours(), 2) + ':' + pad(date.getMinutes(), 2) + ':' + pad(date.getSeconds(), 2);
 }
 
-//
-// Read Integers from a string
-// 
-function parse_int(s) {
-	return(s.match(/\d+\.?\d*/g));					// returns array with values
-}
-
-//
-// Read First integer value from a string
-//
-function read_int(s) {								// Read only first in in string
-	var ret = s.match(/\d+\.?\d*/g);
-	return (ret[0]);
-}
-
-
-// ----------------------------------------------------------------------------
-// Alert Box
-// Difference from alert() is that this does not stop program execution of other
-// threads. Also, breaks in lines not with \n but with </br>
-//
-function myAlert(msg, title) {
-
-  $('<div style="padding:10px; min-width:250px; max-width:800px; max-height:500px; overflow:scroll; word-wrap:break-word;">'+msg+'</div>').dialog({
-    draggable: false,
-    modal: true,
-    resizable: false,
-    width: 'auto',
-    title: title || 'Confirm',
-    minHeight: 75,
-    buttons: {
-      OK: function () {
-        //if (typeof (okFunc) == 'function') {
-         // setTimeout(okFunc, 1);
-        //}
-        $(this).dialog('destroy');
-      }
-    }
-  });
-}
-
-
-// ----------------------------------------------------------------------------
-// Dialog Box, confirm/cancel
-//
-function myConfirm(dialogText, okFunc, cancelFunc, dialogTitle) {
-  $('<div style="padding: 10px; max-width: 500px; word-wrap: break-word;">' + dialogText + '</div>').dialog({
-    draggable: false,
-    modal: true,
-    resizable: false,
-    width: 'auto',
-    title: dialogTitle || 'Confirm',
-    minHeight: 75,
-    buttons: {
-      OK: function () {
-        if (typeof (okFunc) == 'function') {
-          setTimeout(okFunc, 50);
-        }
-        $(this).dialog('destroy');
-      },
-      Cancel: function () {
-        if (typeof (cancelFunc) == 'function') {
-          setTimeout(cancelFunc, 50);
-        }
-        $(this).dialog('destroy');
-      }
-    }
-  });
+// ----------------------------------------------------------------------------------------
+// Based on the value of s_screen, activate the screen again
+// ----------------------------------------------------------------------------------------
+function activate (s_screen) {
+	switch (s_screen) {
+		case "room":
+			activate_room(s_room_id);
+		break;
+		case "screne":
+			activate_scene(s_scene_id);
+		break;
+		case "timer":
+			activate_timer(s_timer_id);
+		break;
+		case "sensor":
+			activate_sensors(s_sensor_id);
+		break;
+		case "energy":
+			activate_energy(s_energy_id);
+		break;
+		case "config":
+			activate_setting(s_setting_id);
+		break;
+	}
 }
 
 
@@ -2239,6 +1645,7 @@ function helpForm(dialogTitle, dialogText, moreFunc, doneFunc ) {
         	theme : "a",
         	overlayTheme : "a",
 			maxWidth : "400px",
+			dialogClass: 'askform',
         	transition : "pop"
 		}).bind("popupafterclose", function() {
 			//remove the popup when closing
@@ -2266,27 +1673,14 @@ function helpForm(dialogTitle, dialogText, moreFunc, doneFunc ) {
 				var ret = [ $("#val_1").val(), $("#val_2").val(), $("#val_3").val(), $("#val_4").val() ];
 				setTimeout(function(){ moreFunc(ret) }, 50);
         	}
+			var s="http://platenspeler.github.io/LamPI-3.0/UserGuide/";
 			switch (s_screen) {
-				case 'room':
-					var win=window.open('http://platenspeler.github.io/LamPI-1.9/gh-pages/rooms.html', '_blank');
-					win.focus();
-				break;
-				case 'scene':
-					var win=window.open('http://platenspeler.github.io/LamPI-1.9/gh-pages/scenes.html', '_blank');
-					win.focus();
-				break;
-				case 'timer':
-					var win=window.open('http://platenspeler.github.io/LamPI-1.9/gh-pages/timers.html', '_blank');
-					win.focus();
-				break;
-				case 'handset':
-					var win=window.open('http://platenspeler.github.io/LamPI-1.9/gh-pages/handsets.html', '_blank');
-					win.focus();
-				break;
-				case 'weather':
-					var win=window.open('http://platenspeler.github.io/LamPI-1.9/gh-pages/weather.html', '_blank');
-					win.focus();
-				break;
+				case 'room': var win=window.open(s+'rooms.html', '_blank'); win.focus(); break;
+				case 'scene': var win=window.open(s+'scenes.html', '_blank'); win.focus(); break;
+				case 'timer': var win=window.open(s+'timers.html', '_blank'); win.focus(); break;
+				case 'handset': var win=window.open(s+'handsets.html', '_blank'); win.focus(); break;
+				case 'sensor': var win=window.open(s+'weather.html', '_blank'); win.focus(); break;
+				case 'energy': var win=window.open(s+'energy.html', '_blank'); win.focus(); break;
 				default:				
 			}
 			if (debug>=2) alert("Read More for screen: "+s_screen);
@@ -2328,23 +1722,27 @@ function helpForm(dialogTitle, dialogText, moreFunc, doneFunc ) {
         	}
 			switch (s_screen) {
 				case 'room':
-					var win=window.open('http://platenspeler.github.io/LamPI-2.0/gh-pages/UserGuide/rooms.html', '_blank');
+					var win=window.open('http://platenspeler.github.io/LamPI-3.0/UserGuide/rooms.html', '_blank');
 					win.focus();
 				break;
 				case 'scene':
-					var win=window.open('http://platenspeler.github.io/LamPI-2.0/gh-pages/UserGuide/scenes.html', '_blank');
+					var win=window.open('http://platenspeler.github.io/LamPI-3.0/UserGuide/scenes.html', '_blank');
 					win.focus();
 				break;
 				case 'timer':
-					var win=window.open('http://platenspeler.github.io/LamPI-2.0/gh-pages/UserGuide/timers.html', '_blank');
+					var win=window.open('http://platenspeler.github.io/LamPI-3.0/UserGuide/timers.html', '_blank');
 					win.focus();
 				break;
 				case 'handset':
-					var win=window.open('http://platenspeler.github.io/LamPI-2.0/gh-pages/UserGuide/handsets.html', '_blank');
+					var win=window.open('http://platenspeler.github.io/LamPI-3.0/UserGuide/handsets.html', '_blank');
 					win.focus();
 				break;
-				case 'weather':
-					var win=window.open('http://platenspeler.github.io/LamPI-2.0/gh-pages/UserGuide/weather.html', '_blank');
+				case 'sensor':
+					var win=window.open('http://platenspeler.github.io/LamPI-3.0/UserGuide/weather.html', '_blank');
+					win.focus();
+				break;
+				case 'energy':
+					var win=window.open('http://platenspeler.github.io/LamPI-3.0/UserGuide/energy.html', '_blank');
 					win.focus();
 				break;
 				default:			
@@ -2368,131 +1766,9 @@ function helpForm(dialogTitle, dialogText, moreFunc, doneFunc ) {
 		$(this).dialog('destroy');
 	}
   });
-  // console.log(" name: "+name.val);
+  // logger(" name: "+name.val);
   }
 } // helpForm end
-
-// -------------------------------------------------------------------------------
-// Helper function for askForm
-//
-function checkLength( o, n, min, max ) {
-	if ( o.val().length > max || o.val().length < min ) {
-		o.addClass( "ui-state-error" );
-		updateTips( "Length of " + n + " must be between " +
-		min + " and " + max + "." );
-		return false;
-	} else {
-		return true;
-	}
-}
-
-// -------------------------------------------------------------------------------------
-// Dialog Box, Ask for  details as specified in function paramters
-// 1. Your dialog text,including the button specification (see activate_room for a description)
-// 2. The function to execute when user has provided input
-// 3. The function to execute when operation is cancelled
-// 4. The title of your dialog
-//
-// Input Values (only val_1 is required, other optional for more or less input fields
-// val_1, val_2, val_3 etc 
-// Return values is an array in var ret, So ret[0] may contain values just as many as val_x
-//
-function askForm(dialogText, okFunc, cancelFunc, dialogTitle) {
-
-  if (jqmobile == 1) {
-
-		$( "#header" ).empty();
-	
-		var $popUp = $("<div/>").popup({
-			id: "popform",
-			dismissible : false,
-			theme : "b",
-			overlayTheme : "a",
-			title: dialogTitle || 'Confirm',
-			maxWidth : "500px",
-			transition : "pop"
-		}).bind("popupafterclose", function() {
-			//remove the popup when closing
-			$(this).remove();
-		});
-	
-		$("<div/>", {
-			text : dialogTitle
-		}).appendTo($popUp);
-	
-			$(dialogText,{}).appendTo($popUp);
-	
-		// Submit Button
-		$("<a>", {
-			text : "Submit"
-		}).buttonMarkup({
-			inline : true,
-			icon : "check"
-		}).bind("click", function() {
-			if (typeof (okFunc) == 'function') {
-				// Return max of 4 results (may define more)...
-				var ret = [ $("#val_1").val(), $("#val_2").val(), $("#val_3").val(), $("#val_4").val() ];
-				setTimeout(function(){ okFunc(ret) }, 50);
-			}
-			if (debug>=2) alert("Submit");
-			$popUp.popup("close");
-			//that.subscribeToAsset(callback);
-		}).appendTo($popUp);
-
-		// Back button
-		$("<a>", {
-			text : "CANCEL",
-			"data-jqm-rel" : "back"
-		}).buttonMarkup({
-			inline : true,
-			icon : "back"
-		}).bind("click", function() {
-			if (typeof (cancelFunc) == 'function') {
-				setTimeout(cancelFunc, 50);
-			}
-			$popUp.popup("close");
-			if (debug>1) alert("cancel");
-			//that.subscribeToAsset(callback);
-		}).appendTo($popUp);
-	
-		$popUp.popup("open");
-	}
-  
-  // jQuery UI style of dialog
-  
-	else {
-		$('<div style="padding: 10px; max-width: 500px; word-wrap: break-word;">'+dialogText+'</div>').dialog({
-			draggable: false,
-			modal: true,
-			resizable: false,
-			width: 'auto',
-			title: dialogTitle || 'Confirm',
-			minHeight: 120,
-			buttons: {
-				OK: function () {
-					//var bValid = true;
-	//				bValid = bValid && checkLength( name, "name", 3, 16 );
-        			if (typeof (okFunc) == 'function') {
-						// Return max of 4 results (may define more)...
-						var ret = [ $("#val_1").val(), $("#val_2").val(), $("#val_3").val(), $("#val_4").val() ];
-						setTimeout(function(){ okFunc(ret) }, 50);
-					}
-					$(this).dialog('destroy');
-				},
-				Cancel: function () {
-					if (typeof (cancelFunc) == 'function') {
-						setTimeout(cancelFunc, 50);
-        			}
-					$(this).dialog('destroy');
-				}
-			},
-			close: function() {
-				$(this).dialog('destroy');
-			}
-		});
-		// console.log(" name: "+name.val);
-	}
-} // askForm end
 
 
 // ---------------------------------------------------------------------------------
@@ -2506,7 +1782,7 @@ function askForm(dialogText, okFunc, cancelFunc, dialogTitle) {
 //
 function init_rooms(cmd) 
 {
-	// The rooms variable, and devices for rooms are defined in load_database()
+	// The rooms variable, and devices for rooms are filled in load_database()
 	// First define the handler, and then activate_room() will make buttons for those devices
 	//<input type="submit" id="' + id + '" value= "'+ val + '" class="buttons">
 	$("#gui_header").empty();
@@ -2528,11 +1804,68 @@ function init_rooms(cmd)
 	}
 	$("#gui_header_content").append(but);
 
-	but  = '<input type="submit" id="Add"  value= "+"  class="cr_button new_button">'  ;
-	but += '<input type="submit" id="Del"  value= "X"  class="cr_button del_button">'  ;
-	but += '<input type="submit" id="Help" value= "?" class="cr_button help_button">'  ;
+	// Now do the buttons on the right: add, delete, help and the slider for the health indication
+	but  = '<input type="submit" id="Add"  value= "+"  class="cr_button new_button">' ;
+	but += '<input type="submit" id="Del"  value= "X"  class="cr_button del_button">' ;
+	but += '<input type="submit" id="Help" value= "?" class="cr_button help_button">' ;
 	$("#gui_header_controls").append(but);
+	
+	if (jqmobile==1) {
+		but  = '<div data-role="fieldcontain" class="container-health">';
+		but += '<label for="health-slider"></label>';
+		but += '<input type="range" name="health-slider" id="health-slider" value='+healthcount+' min="0" max="9" data-mini="true"  data-highlight="true" class="slider-health"/></div>';
+		$("#gui_header_controls").append(but);
 		
+		logger("Starting Healthcount Slider function",2);
+		$("#health-slider").slider();
+		$("#health-slider").next().find('.ui-slider-handle').hide();
+		$("#health-slider").slider("refresh");
+	}
+	else {
+		but  = '';
+		but += '<div id="health-slider" class="slider-health" ></div>' ;
+		$("#gui_header_controls").append(but);
+	
+		$(function() {
+			logger("Starting Healthcount Slider function",2);
+			$( "#health-slider" ).slider({
+				range: "max",
+				min: 0,
+				max: 9,
+				value: healthcount,
+    			slide: function( event, ui ) {
+      				$( "#health-slider" ).val( ui.value );
+					// var x = $( "#health-slider" ).val();
+					var x = healthcount;
+					if (x <= 2) {
+						$(".slider-health").css("background", "#4ea6cf");
+					}
+					else if (x > 2 && x <= 3) {
+						$(".slider-health").css("background", "#5ac5cf");
+					}
+					else if (x > 3 && x <= 4) {
+						$(".slider-health").css("background", "#7dd7bf");
+					}
+					else if (x > 4 && x <= 5) {
+						$(".slider-health").css("background", "#b1cfa1");
+					}
+					else if (x > 5 && x <= 6) {
+						$(".slider-health").css("background", "#e5bf7c");
+					}
+					else if (x > 6 && x <= 7) {
+						$(".slider-health").css("background", "#d79168");
+					}
+					else if (x > 7 && x <= 8) {
+						$(".slider-health").css("background", "#cd7159");
+					}
+					else if (x > 8) {
+						$(".slider-health").css("background", "#c4463a");
+					};
+				}
+			});
+			//$( ".active" ).val( $( "#slider" ).slider( "value"));
+		});
+	}
 	//	Display the devices for the room at the first time run
 	s_screen='room';
 	activate_room(s_room_id);		
@@ -2587,7 +1920,6 @@ function init_timers(cmd)
 	var msg = 'Init Timers, timers read: ';	
 	var but = '' ;
 	for (var j = 0; j<timers.length; j++ ){
-  
 		var timer_id = timers[j]['id'];
 		var timer_name = timers[j]['name'];
 		var timer_seq = timers[j]['seq'];
@@ -2601,14 +1933,10 @@ function init_timers(cmd)
 	}
 	if (debug>1) message(msg);
 	$("#gui_header_content").append(but);
-	
-	// Add special buttons for controlling the scenes
-	// Add a scene
 	but  =  '';
 	but += '<input type="submit" id="Add" value= "+" class="ct_button new_button">'  ;
 	but += '<input type="submit" id="Del" value= "X" class="ct_button del_button">'  ;
 	but += '<input type="submit" id="Help" value= "?" class="ct_button help_button">'  ;
-	
 	$("#gui_header_controls").append(but);
 	s_screen = 'timer';
 	activate_timer(s_timer_id);
@@ -2623,7 +1951,6 @@ function init_handsets(cmd)
 		$("#gui_header").empty();
 		html_msg = '<div id="gui_header_content"></div><div id="gui_header_controls"></div>';
 		$("#gui_header").append(html_msg);
-		
 		var msg = 'Init Handsets, handsets read: ';	
 		var but = '' ;
 		var hset_list=[];										// Array of names that we like to put in the header
@@ -2631,7 +1958,6 @@ function init_handsets(cmd)
 		{
 			// If this handset is already in our list ...
   			if ( $.inArray(handsets[j]['id'],hset_list) == -1) {
-				//alert("adding id: "+j);
 				var handset_id    = handsets[j]['id'];
 				var handset_name  = handsets[j]['name'];
 				var handset_addr  = handsets[j]['addr'];
@@ -2653,75 +1979,67 @@ function init_handsets(cmd)
 		}
 		if (debug>1) message(msg);
 		$("#gui_header_content").append(but);
-		
 		// Add special buttons for controlling the handsets
 		but  =  '';
 		but += '<input type="submit" id="Add" value= "+" class="ch_button new_button">'  ;
 		but += '<input type="submit" id="Del" value= "X" class="ch_button del_button">'  ;
 		but += '<input type="submit" id="Help" value= "?" class="ch_button help_button">'  ;	
 		$("#gui_header_controls").append(but);
-		
 		s_screen = 'handset';
 		activate_handset(s_handset_id);
 }
 
 // ------------------------------------------------------------------------------------------
-// Setup the weather event handling
-// Display only weather buttons for unique locations. SO in the header section
-// there will be one button for a loction. Weather dials will be sorted to locations as well
-function init_weather(cmd) 
+// Setup the sensors event handling
+// Display only sensors buttons for unique locations. SO in the header section
+// there will be one button for a loction. Sensor dials will be sorted to locations as well
+function init_sensors(cmd) 
 {
 		$("#gui_header").empty();
 		html_msg = '<div id="gui_header_content"></div><div id="gui_header_controls"></div>';
 		$("#gui_header").append(html_msg);
 		
-		var msg = 'Init weather, config read: ';
+		var msg = 'Init sensors, config read: ';
 		var but = '' ;
-		
-		if (s_weather_id == "") { 
-			s_weather_id = weather[0]['location']; 
+		if (s_sensor_id == "") { 
+			s_sensor_id = sensors[0]['location']; 
 		}
 		
-		var weather_list=[];
-		for (var j = 0; j<weather.length; j++ ){
+		var sensor_list=[];
+		for (var j = 0; j<sensors.length; j++ ){
 			// Create only unique buttons
-  			if ( $.inArray(weather[j]['location'],weather_list) == -1) {
+  			if ( $.inArray(sensors[j]['location'],sensor_list) == -1) {
 				//alert("adding id: "+j);
-				var weather_id = weather[j]['id'];
-				var location = weather[j]['location'];
-				var temperature = weather[j]['temperature'];
-				
+				var sensors_id = sensors[j]['id'];
+				var location = sensors[j]['location'];
+				//var temperature = sensors[j]['sensor']['temperature']['val'];
 				msg += j + ', ';
-				if ( location == s_weather_id ) {
-					//but +=  weather_button(weather_id, location, "hover");
-					but +=  weather_button(location, location, "hover");
+				if ( location == s_sensor_id ) {
+					//but +=  sensors_button(sensors_id, location, "hover");
+					but +=  sensors_button(location, location, "hover");
 				}
-				else
-				{
-					//but +=  weather_button(weather_id, location);
-					but +=  weather_button(location, location);
+				else {
+					//but +=  sensors_button(sensors_id, location);
+					but +=  sensors_button(location, location);
 				}
-				weather_list[weather_list.length]= weather[j]['location'];
+				sensor_list[sensor_list.length]= sensors[j]['location'];
 			}
 		}
 		if (debug>1) message(msg);
 		$("#gui_header_content").append(but);	
-		
 		but =  '';
 		//but += '<input type="submit" id="Add" value= "+" class="cw_button new_button">';
 		//but += '<input type="submit" id="Del" value= "X" class="cw_button del_button">';
 		but += '<input type="submit" id="Help" value= "?" class="cw_button help_button">';
-		$("#gui_header_controls").append(but);
-
-		
-		s_screen = 'weather';
-		activate_weather(s_weather_id);	
+		$("#gui_header_controls").append(but);	
+		s_screen = 'sensor';
+		activate_sensors(s_sensor_id);	
 }
 
 // ------------------------------------------------------------------------------------------
-// Setup the weather event handling
-// Display only weather buttons for unique locations. SO in the header section
-// there will be one button for a loction. Weather dials will be sorted to locations as well
+// Setup the energy sensors event handling
+// Display only sensors buttons for unique locations. SO in the header section
+// there will be one button for a loction. Sensor dials will be sorted to locations as well
 function init_energy(cmd) 
 {
 		$("#gui_header").empty();
@@ -2732,33 +2050,6 @@ function init_energy(cmd)
 		var but = '';
 		$("#gui_header_content").append(but);
 		
-		//if (s_weather_id == "") { 
-		//	s_weather_id = weather[0]['location']; 
-		//	//alert("init_weather:: loc id: "+s_weather_id);
-		//}
-		
-		//var weather_list=[];
-		//for (var j = 0; j<weather.length; j++ ){
-		//	// Create only unique buttons
-  		//	if ( $.inArray(weather[j]['location'],weather_list) == -1) {
-		//		//alert("adding id: "+j);
-		//		var weather_id = weather[j]['id'];
-		//		var location = weather[j]['location'];
-		//		var temperature = weather[j]['temperature'];
-		//		
-		//		msg += j + ', ';
-		//		if ( location == s_weather_id ) {
-		//			//but +=  weather_button(weather_id, location, "hover");
-		//			but +=  weather_button(location, location, "hover");
-		//		}
-		//		else
-		//		{
-		//			//but +=  weather_button(weather_id, location);
-		//			but +=  weather_button(location, location);
-		//		}
-		//		weather_list[weather_list.length]= weather[j]['location'];
-		//	}
-		//}
 		if (debug>1) message(msg);
 		but= '';
 		//but += '<input type="submit" id="Add" value= "+" class="cw_button new_button">';
@@ -2775,38 +2066,30 @@ function init_energy(cmd)
 //
 function init_settings(cmd) 
 {
-		$("#gui_header").empty();
-		html_msg = '<div id="gui_header_content"></div><div id="gui_header_controls"></div>';
-		$("#gui_header").append(html_msg);
-		
-		var msg = 'Init Config, config read: ';	
-		// XXX rroom??
-		var but = '';
-		for (var j = 0; j<settings.length; j++ ){
-  
-			var setting_id = settings[j]['id'];
-			var setting_name = settings[j]['name'];
-			var setting_val = settings[j]['val'];
-			msg += j + ', ';
-			
-			if ( setting_id == s_setting_id ) {
-				but +=  setting_button(setting_id, setting_name, "hover");
-			}
-			else
-			{
-				but +=  setting_button(setting_id, setting_name);
-			}	
+	$("#gui_header").empty();
+	html_msg = '<div id="gui_header_content"></div><div id="gui_header_controls"></div>';
+	$("#gui_header").append(html_msg);
+	var msg = 'Init Config, config read: ';	
+	var but = '';
+	for (var j = 0; j<settings.length; j++ ){
+		var setting_id = settings[j]['id'];
+		var setting_name = settings[j]['name'];
+		var setting_val = settings[j]['val'];
+		msg += j + ', ';
+		if ( setting_id == s_setting_id ) {
+			but +=  setting_button(setting_id, setting_name, "hover");
 		}
-		if (debug>1) message(msg);
-		$("#gui_header_content").append(but);
-
-		but = '';
-		but += '<input type="submit" id="Help" value= "?" class="cc_button help_button">'  ;
-		but += '</td>';
-		$("#gui_header_controls").append(but);	
-		
-		s_screen = 'config';
-		activate_setting(s_setting_id);	
+		else {
+			but +=  setting_button(setting_id, setting_name);
+		}	
+	}
+	$("#gui_header_content").append(but);
+	but  = '';
+	but += '<input type="submit" id="Help" value= "?" class="cc_button help_button">'  ;
+	but += '</td>';
+	$("#gui_header_controls").append(but);	
+	s_screen = 'config';
+	activate_setting(s_setting_id);	
 }
 
 
@@ -2816,97 +2099,83 @@ function init_settings(cmd)
 
 function init_menu(cmd) 
 {
-	html_msg = '<table border="0">';
-	$( "#gui_menu" ).append( html_msg );
-	var table = $( "#gui_menu" ).children();		// to add to the table tree in DOM
-		
+	$("#gui_menu").empty();
 	// For all menu buttons, write all to a string and print string in 1 time
 	if (jqmobile == 1) {
-		var but =  ''
-		+ '<tr><td>'
-		+ '<input type="submit" id="M1" value= "Rooms" class="hm_button hover">' 
-		+ '<input type="submit" id="M2" value= "Scenes" class="hm_button">'
-		+ '<input type="submit" id="M3" value= "Timers" class="hm_button">'
-		+ '<input type="submit" id="M4" value= "Handsets" class="hm_button">'
-		;
-		if (weather.length > 0) {
-			but += '<input type="submit" id="M6" value= "Weather" class="hm_button">';
-		}
-		but += '<input type="submit" id="M5" value= "Config" class="hm_button">'
-		+ '</td></tr>'
-		;
-		$(table).append(but);
+		var txt = '<div data-role="fieldcontain" class="ui-hide-label">';
+		txt += '<label for="select-choice-1" class="select hm_button">menu</label> ';
+		txt += '<select name="select-choice-1" id="select-choice-1"> ';
+		txt += '<option value="Rooms">Rooms</option>';
+		txt += '<option value="Scenes">Scenes</option>';
+		txt += '<option value="Timers">Timers</option>';
+		txt += '<option value="Handsets">Handsets</option>';
+		if (sensors.length > 0) { txt += '<option value="Sensor">Sensor</option>'; }
+		if (use_energy) { txt += '<option value="Energy">Energy</option>'; }
+		txt += '<option value="Config">Config</option>';
+		txt += '</select></div>';
+		$("#gui_menu").append( txt );
+		$("#select-choice-1").change(function() {
+    		var selected = $(this).val(); // or this.value
+			switch(selected) {
+			case "Rooms": init_rooms ("init"); break;
+			case "Scenes": init_scenes(s_scene_id); break;
+			case "Timers": init_timers(); break;
+			case "Handsets": init_handsets(); break;
+			case "Config": init_settings(); break;
+			case "Sensor": init_sensors(); break;
+			case "Energy": init_energy(); break;
+			default: message('init_menu:: id: ' + selected + ' not a valid menu option');
+			}
+		});
 	}
 	else {
+		html_msg = '<table border="0">';
+		$("#gui_menu").append( html_msg );
+		var table = $( "#gui_menu" ).children();		// to add to the table tree in DOM
 		var but =  ''	
-		+ '<tr class="switch"><td><input type="submit" id="M1" value= "Rooms" class="hm_button hover"></td>' 
-		+ '<tr class="switch"><td><input type="submit" id="M2" value= "Scenes" class="hm_button"></td>'
-		+ '<tr class="switch"><td><input type="submit" id="M3" value= "Timers" class="hm_button"></td>'
-		+ '<tr class="switch"><td><input type="submit" id="M4" value= "Handsets" class="hm_button"></td>'
+		+ '<tr><td><input type="submit" id="M1" value= "Rooms" class="hm_button hover"></td>' 
+		+ '<tr><td><input type="submit" id="M2" value= "Scenes" class="hm_button"></td>'
+		+ '<tr><td><input type="submit" id="M3" value= "Timers" class="hm_button"></td>'
+		+ '<tr><td><input type="submit" id="M4" value= "Handsets" class="hm_button"></td>'
 		;
-		// Do we have weather definitions in database.cfg file?
-		if (weather.length > 0) {
-			but += '<tr class="switch"><td><input type="submit" id="M6" value= "Weather" class="hm_button"></td>'
+		// Do we have sensors definitions in database.cfg file?
+		if (sensors.length > 0) {
+			but += '<tr><td><input type="submit" id="M6" value= "Sensor" class="hm_button"></td>'
 		}
 		// Do we have energy definitions in database.cfg file?
-		if (use_energy > 0) {
-			but += '<tr class="switch"><td><input type="submit" id="M7" value= "Energy" class="hm_button"></td>'
+		if (use_energy) {
+			but += '<tr><td><input type="submit" id="M7" value= "Energy" class="hm_button"></td>'
 		}
-
 		but += '<tr><td></td>'
 		+ '<tr><td></td>'
-		+ '<tr class="switch"><td><input type="submit" id="M5" value= "Config" class="hm_button"></td>'
+		+ '<tr><td><input type="submit" id="M5" value= "Config" class="hm_button"></td>'
 		+ '</table>'
 		;
 		$(table).append(but);
-	}
-	// EVENT HANDLER
-	
-	$("#gui_menu").on("click", ".hm_button", function(e){
-		e.preventDefault();
-//		e.stopPropagation();
-		selected = $(this);
-			
-		value=$(this).val();								// Value of the button
-		id = $(e.target).attr('id');						// should be id of the button (array index substract 1)
-		$( '.hm_button' ).removeClass( 'hover' );
-		$( this ).addClass ( 'hover' );
-		switch(id)
-		{
-			case "M1":
-				init_rooms ("init");
-			break;
-				
-			case "M2":
-				init_scenes(s_scene_id);
-			break;
-				
-			case "M3":
-				init_timers();
-			break;
-				
-			case "M4":
-				init_handsets();
-			break;
-				
-			case "M5":
-				init_settings();
-			break;
-				
-			case "M6":
-				init_weather();
-			break;
-			
-			case "M7":
-				init_energy();
-			break;
-				
+		
+		$("#gui_menu").on("click", ".hm_button", function(e){
+			e.preventDefault();
+			e.stopPropagation();
+			selected = $(this);
+			value=$(this).val();								// Value of the button
+			id = $(e.target).attr('id');						// should be id of the button (array index substract 1)
+			$( '.hm_button' ).removeClass( 'hover' );
+			$( this ).addClass ( 'hover' );
+			switch(id)
+			{
+			case "M1": init_rooms ("init"); break;
+			case "M2": init_scenes(s_scene_id); break;
+			case "M3": init_timers(); break;
+			case "M4": init_handsets(); break;
+			case "M5": init_settings(); break;
+			case "M6": init_sensors(); break;
+			case "M7": init_energy(); break;
 			default:
 				message('init_menu:: id: ' + id + ' not a valid menu option');
-		}
-	}); 	
+			}
+		}); 
+	}
 }
-
 
 
 // --------------------------------------------------------------------------------
@@ -2932,8 +2201,8 @@ function activate_room(new_room_id, selectable)
 	// Empty the parent works best in changing rooms
 	$("#gui_content").empty();
 	$("#gui_content").css( "overflow-y", "auto" );
-	// XXX We might have to destroy the old sliders, depending
-	// whether the memory s reused for the sliders or we keep on allocating new memory with every room change
+	// XXX We might have to destroy the old sliders, depending on whether the memory is
+	// re-used for the sliders or we keep on allocating new memory with every room change
 	html_msg = '<div id="gui_devices"></div>';
 	$( "#gui_content" ).append(html_msg);
 
@@ -2943,21 +2212,21 @@ function activate_room(new_room_id, selectable)
 	$( "#gui_devices" ).append( html_msg );
 	var table = $( "#gui_devices" ).children();		// to add to the table tree in DOM	
 	
-	var but = '<thead><tr class="switch">' ;
+	var but = '<thead><tr class="headrow switch">' ;
 	if (selectable == "Del") { but+= '<td colspan="2">' ; }
 		else {but += '<td>' };
 	// class dbuttons belongs to device screen and defines round corners etc.
 	but += '<input type="submit" id="Rx" value="X" class="dbuttons del_button" >'
-		+ '<input type="submit" id="Ra" value="+" class="dbuttons new_button" >'
-		+ '</td>'
+		+  '<input type="submit" id="Ra" value="+" class="dbuttons new_button" >'
+		+  '</td>'
 		;
 	but += '<td class="filler" align="center">'+room_name+'</td>';
 	if (jqmobile == 1) {
-		but += '<td><input type="submit" id="Fa" value="ALL OFF" class="dbuttons" ></td>';
+		but += '<td><input type="submit" id="Fa" value="ALL OFF" class="dbuttons all_off_button" ></td>';
 	}
 	else {
 		but +='<td></td>';					// Because in non jqmobile dimmers display value in this column
-		but += '<td colspan="2"><input type="submit" id="Fa" value="ALL OFF" class="dbuttons" ></td>';
+		but += '<td><input type="submit" id="Fa" value="ALL OFF" class="dbuttons all_off_button" ></td>';
 	}
 	$(table).append(but);
 	$(table).append('</tr>');
@@ -2968,7 +2237,6 @@ function activate_room(new_room_id, selectable)
 	table = $( "#gui_devices tbody" ).last();
 		
 	for (var j = 0; j<devices.length; j++ ){
-  
 		var device_id = devices[j]['id'];
 		var room_id = devices[j]['room'];
 			
@@ -2979,20 +2247,13 @@ function activate_room(new_room_id, selectable)
 			var device_val  = devices[j]['val'];				// Do NOT use lastval here!
 			var offbut, onbut;
 				
-			if ( device_val == 0 ) {							// device value, not the button value
-				offbut = " hover";
-				onbut = "";
-			}
-			else {
-				offbut = "";
-				onbut = " hover" ;
-			};
+			if ( device_val == 0 )	{ offbut = " hover"; onbut = ""; }
+			else					{ offbut = ""; onbut = " hover"; }
 				
 			// add the html of button, depending on the type switch or dimmer
 			switch (device_type) 
 			{ 
-			case "switch": 
-				
+			  case "switch": 
 				// Below is the on/off device. Some code double, but better readable
 				// For jqmobile the layout, but also slider difinitions are different
 				if (jqmobile == 1) {
@@ -3000,36 +2261,33 @@ function activate_room(new_room_id, selectable)
 					if (selectable == "Del") 
 						but+= '<td><input type="checkbox" id="'+device_id+'c" name="cb'+device_id+'" value="yes" class="dbuttons"></td>';
 					but += '<td colspan="2"><input type="text" id="'+device_id+'" value="'+device_name+'" class="dlabels"></td>';
-
-					but += '<td><input type="submit" id="'+device_id+'F0'+'" value="OFF" class="dbuttons'+offbut+'">';
-					but += '<input type="submit" id="'+device_id+'F1'+'" value="ON" class="dbuttons'+onbut+'"></td>'
-//					+ '</tr>' 
-//					+ '</div>'
-					;
-				}		// NOT jqmobile, but browser
+					but += '<td><input type="submit" id="'+device_id+'F0'+'" value="OFF" class="dbuttons off_button'+offbut+'">';
+					but += '<input type="submit" id="'+device_id+'F1'+'" value="ON" class="dbuttons on_button'+onbut+'"></td>';
+				}		
+				// NOT jqmobile
 				else {
 					var but =  '<tr class="devrow switch">' ;
 					if (selectable == "Del") 
 						but+= '<td><input type="checkbox" id="'+device_id+'c" name="cb'+device_id+'" value="yes" class="dbuttons"></td>';
 					but += '<td colspan="2"><input type="submit" id="'+device_id+'" value= "'+device_name+'" class="dlabels"></td>';
 					but += '<td></td>';	
-					but += '<td><input type="submit" id="'+device_id+'F0'+'" value= "'+"OFF" +'" class="dbuttons'+offbut+'"></td>';
-					but += '<td><input type="submit" id="'+device_id+'F1'+'" value= "'+"ON" +'" class="dbuttons'+onbut+'"></td>';
+					but += '<td><input type="submit" id="'+device_id+'F0'+'" value= "'+"OFF" +'" class="dbuttons off_button'+offbut+'">';
+					but += '    <input type="submit" id="'+device_id+'F1'+'" value= "'+"ON" +'" class="dbuttons on_button'+onbut+'"></td>';
 				}
 				$(table).append(but);
-					// Set the value read from load_device in the corresponding button
-			break;
+				// Set the value read from load_device in the corresponding button
+			  break;
 			
-			case "dimmer":	
+			  case "dimmer":	
 					// Unfortunately, code for jqmobile and Web jQuery UI is not the same
 				if (jqmobile == 1) {	
 					var slid = '<tr class="devrow dimrow">';
 					if (selectable == "Del")
 						slid += '<td><input type="checkbox" id="'+device_id+'c" name="cb'+device_id+'" value="yes" class="dbuttons"></td>';	
 					slid += '<td colspan="2"><label for="'+device_id+'Fd">'+device_name+'</label>';
-					slid += '<input type="number" data-type="range" style="min-width:32px;" id="'+device_id+'Fd" name="'+device_id+'Fl" value="'+device_val+'" min=0 max=31 data-highlight="true" data-mini="false" data-theme="b" class="ddimmer"/></td>';
-					slid += '<td><input type="submit" id="'+device_id+'F0'+'" value= "OFF" class="dbuttons'+offbut+'" />';
-					slid += '<input type="submit" id="'+device_id+'F1'+'" value= "ON" class="dbuttons'+onbut+'" /></td>';
+					slid += '<input type="number" data-type="range" style="min-width:32px;" id="'+device_id+'Fd" name="'+device_id+'Fl" value="'+device_val+'" min=0 max=31 data-highlight="true" data-mini="false" class="ddimmer"/></td>';
+					slid += '<td><input type="submit" id="'+device_id+'F0'+'" value= "OFF" class="dbuttons off_button'+offbut+'" />';
+					slid += '<input type="submit" id="'+device_id+'F1'+'" value= "ON" class="dbuttons on_button'+onbut+'" /></td>';
 					slid += '</tr>';
 				}
 				else // This is the jQuery UI normal
@@ -3037,27 +2295,160 @@ function activate_room(new_room_id, selectable)
 					var slid = '<tr class="devrow dimrow">' ;
 					if (selectable == "Del")
 						slid += '<td><input type="checkbox" id="'+device_id+'c" name="cb'+device_id+'" value="yes" class="dbuttons"></td>';
-					slid += '<td><input type="submit" id="' +device_id 
-						+ '" value= "'+device_name + '" class="dlabels"></td>'
-						+ '<td><div id="' +device_id + 'Fd" class="slider"></div></td>'	
+					slid += '<td><input type="submit" id="' +device_id+ '" value= "'+device_name+ '" class="dlabels"></td>'
+						+ '<td><div id="' +device_id + 'Fd" class="slider slider-dimmer"></div></td>'	
 						+ '<td><input type="text" id="' +device_id+'Fl" class="slidval"></td>'
 						// On/Off buttons
-						+ '<td><input type="submit" id="'+device_id+'F0'+'" value="OFF" class="dbuttons'+offbut+'"></td>'
-						+ '<td><input type="submit" id="'+device_id+'F1'+'" value="ON" class="dbuttons'+onbut+'"></td>'
+						+ '<td><input type="submit" id="'+device_id+'F0'+'" value="OFF" class="dbuttons off_button'+offbut+'">'
+						+ '    <input type="submit" id="'+device_id+'F1'+'" value="ON" class="dbuttons on_button'+onbut+'"></td>'
 						+ '</tr>'
 						;
 				}
 				table.append(slid);
 							
 				//XXX		
-				// eventhandler for the slider. Use a div and id to make distict sliders
+				// eventhandler for the slider. Use a div and id to make distinct sliders
 				// This function works only if the handler is put AFTER the sliders generated
-				// So if we want to connect to a
 					
 				var label ="#"+device_id+"Fl"; 
 				var slidid="#"+device_id+"Fd";
 
 				//XXX	Dimmer/Slider handling must be here for the moment. Every slider is "static" and belongs to
+				//		and is declared for a specific device
+				//		Move to doc ready section when possible 
+
+				// eventhandler for the slider. Use a div and id to make distict sliders
+				// This function works only if the handler is put AFTER the sliders generated
+				// NOTE:: The handler is asynchronous, you never know when it is called
+				// and it's context at that moment is unknown wrt variables in this function
+				if (jqmobile==1) 
+				{ 					// SLIDER FOR MOBILE
+				  $(function() 
+				  {
+					var val = load_device(room_id, device_id);
+					if (val == 'F0') { val = 0; }
+					$( slidid ).slider
+					({
+					 	stop: function( event, ui ) {
+							// This is where it happens for the value of the action
+							var id = $(event.target).attr('id');
+							var val = $(event.target).val();
+							//var val2 = ui.value;
+		
+							// For slider==0 a special case. We want to switch OFF the device
+							// As the dimmer command only accepts values 1-32, for value 0 we
+							// make a special case and set the value of button OFF to hover.
+							if ( val == 0 ) { 								
+								// strip id and change val "D1Fd"+"P0" ==>> "D1"+"F0"
+								handle_device( id.slice(0,-2), "F" + val );		 
+								// Remove hover from "ON" and put the hover on the OFF button
+								$("#"+id.slice(0,-2)+"F1").removeClass('hover');
+								$("#"+id.slice(0,-2)+"F0").addClass('hover');
+							} 
+							else { 
+								handle_device( id, "P" + val );				// id ="D1Fd", value = "P31"
+								$("#"+id.slice(0,-2)+"F0").removeClass('hover');
+								$("#"+id.slice(0,-2)+"F1").addClass('hover');
+							}
+							// Update the devices[][] array
+							store_device(s_room_id, id.slice(0,-2), val);
+						}
+					});
+					$( slidid ).slider("refresh");
+				  });
+				}
+				else			// NORMAL SLIDER, 
+				$(function() 
+				{
+					// Load database value
+					var val = load_device(room_id, device_id);
+					// If the OFF buton is pressed, put the slider to lowest position
+					if (val == 'F0') { val = 0; }
+  					$( slidid ).slider
+					({
+						range: "max",
+						main: 1,
+						min: 0,
+						max: 32,
+						value: val,
+						slide: function( event, ui ) {
+							// This is where it happens for the label
+							// Problem is we need to update the correct label
+							var id = $(event.target).attr('id');
+							// strip last character of id of slider object
+							// and replace with a l for the label object
+							// For more than 9 devices, may be 4! chars eg. string ="D10F"							
+							var lid = '#' + id.slice(0,-1) + 'l';
+							$( lid ).val (ui.value);
+						},
+						stop: function( event, ui ) {
+							// This is where it happens for the value of the action
+							var id = $(event.target).attr('id');
+							var val = ui.value;
+							// For slider==0 a special case. We want to switch OFF the device
+							// As the dimmer command only accepts values 1-32, for value 0 we
+							// make a special case and set the value of button OFF to be pressed.
+							if ( val == 0 ) 
+							{ 
+								val = 0 ;	
+								// strip id and change val "D1Fd"+"P0" ==>> "D1"+"F0"
+								handle_device( id.slice(0,-2), "F" + val );		 
+								// Remove old hover from the current button (probably "ON") and place new hover
+								$( this ).parent().siblings().children().removeClass( 'hover' );
+								$( this ).parent().siblings().children("#"+id.slice(0,-2)+"F0").addClass( 'hover' );
+							} 
+							else { 
+								handle_device( id, "P" + val );				// id ="D1Fd", value = "P31"
+								$( this ).parent().siblings().children().removeClass( 'hover' );
+								$( this ).parent().siblings().children("#"+id.slice(0,-2)+"F1").addClass( 'hover' );
+							}
+							// Update the devices[][] array
+							store_device(s_room_id, id.slice(0,-2), val);
+						}
+					});
+					// Initial value of the slider at time of definition
+					$( label ).val( val );
+  				}); // Slider Function
+				
+			  break;
+			
+			  case "thermostat":
+					// Unfortunately, code for jqmobile and Web jQuery UI is not the same
+				if (jqmobile == 1) {	
+					var slid = '<tr class="devrow dimrow">';
+					if (selectable == "Del")
+						slid += '<td><input type="checkbox" id="'+device_id+'c" name="cb'+device_id+'" value="yes" class="dbuttons"></td>';	
+					slid += '<td colspan="2"><label for="'+device_id+'Fd">'+device_name+'</label>';
+					slid += '<input type="number" data-type="range" style="min-width:32px;" id="'+device_id+'Fd" name="'+device_id+'Fl" value="'+device_val+'" min=15 max=25 data-highlight="true" data-mini="false" data-theme="b" class="ddimmer"/></td>';
+					slid += '<td></td>';
+					slid += '</tr>';
+				}
+				else // This is the jQuery UI normal
+				{
+					var slid = '<tr class="devrow dimrow">' ;
+					if (selectable == "Del")
+						slid += '<td><input type="checkbox" id="'+device_id+'c" name="cb'+device_id+'" value="yes" class="dbuttons"></td>';
+						
+					slid += '<td><input type="submit" id="' +device_id 
+						+ '" value= "'+device_name + '" class="dlabels"></td>'
+						+ '<td><div id="' +device_id + 'Fd" class="slider slider-thermo"></div></td>'	
+						+ '<td><input type="text" id="' +device_id+'Fl" class="slidval"></td>'
+						// On/Off buttons do not apply for thermostat
+						+ '<td></td>'
+						// + '<td></td>'
+						+ '</tr>'
+						;
+				}
+				table.append(slid);
+							
+				//XXX Thermostat
+				// eventhandler for the slider. Use a div and id to make distict sliders
+				// This function works only if the handler is put AFTER the sliders generated
+				// So if we want to connect to a
+				var label ="#"+device_id+"Fl"; 
+				var slidid="#"+device_id+"Fd";
+
+				//XXX	Slider handling must be here for the moment. Every slider is "static" and belongs to
 				//		and is declared for a specific device
 				//		Move to doc ready section as soon as possible 
 
@@ -3066,7 +2457,7 @@ function activate_room(new_room_id, selectable)
 				// NOTE:: The handler is asynchronous, you never know when it is called
 				// and it's context at that moment is unknown wrt variables in this function
 				if (jqmobile==1) 
-				{ 					// SLIDER FOR MOBILE
+				{ 					// THERMOSTAT SLIDER FOR MOBILE
 				  $(function() 
 				  {
 					var val = load_device(room_id, device_id);
@@ -3100,19 +2491,18 @@ function activate_room(new_room_id, selectable)
 					$( slidid ).slider("refresh");
 				  });
 				}
-				else			// NORMAL SLIDER, 
+				else			// REGULAR THERMOSTAT SLIDER, 
 				$(function() 
 				{
 					// Load database value
 					var val = load_device(room_id, device_id);
 					// If the OFF buton is pressed, put the slider to lowest position
-					if (val == 'F0') { val = 0; }
   					$( slidid ).slider
 					({
 						range: "max",
 						main: 1,
-						min: 0,
-						max: 32,
+						min: 15,
+						max: 25,
 						value: val,
 						slide: function( event, ui ) {
 							// This is where it happens for the label
@@ -3129,48 +2519,29 @@ function activate_room(new_room_id, selectable)
 							// This is where it happens for the value of the action
 							var id = $(event.target).attr('id');
 							var val = ui.value;
-							// For slider==0 a special case. We want to switch OFF the device
-							// As the dimmer command only accepts values 1-32, for value 0 we
-							// make a special case and set the value of button OFF to be pressed.
-							if ( val == 0 ) 
-							{ 
-								val = 0 ;	
-								// strip id and change val "D1Fd"+"P0" ==>> "D1"+"F0"
-								handle_device( id.slice(0,-2), "F" + val );		 
-								// Remove the hover from the current button (probably "ON")
-								$( this ).parent().siblings().children().removeClass( 'hover' );
-								// Now put the hover on the OFF button
-								$( this ).parent().siblings().children("#"+id.slice(0,-2)+"F0").addClass( 'hover' );
-							} 
-							else { 
-								handle_device( id, "P" + val );				// id ="D1Fd", value = "P31"
-								$( this ).parent().siblings().children().removeClass( 'hover' );
-								$( this ).parent().siblings().children("#"+id.slice(0,-2)+"F1").addClass( 'hover' );
-							}
+							handle_device( id, "P" + val );				// id ="D1Fd", value = "P31"
 							store_device(s_room_id, id.slice(0,-2), val);
 						}
 					});
 					// Initial value of the slider at time of definition
 					$( label ).val( val );
-  				}); // Slider Function
-				
-			break;
+  				});// Slider Function
+			  break;
 			
-			default:
+			  default:
 					alert("lamp_button, type: "+device_type+" unknown");
-			} // switch	
+			}// switch	
 				
 		}// room
-       };//for		
+	};//for		
 					
-		s_room_id = new_room_id;				
+	s_room_id = new_room_id;				
 				
-		// Listen to ALL (class) buttons for #gui_devices which is subclass of DIV #gui_content
-		$( "#gui_devices" ).on("click", ".dbuttons" ,function(e) 
-		{
+	// Listen to ALL (class) buttons for #gui_devices which is subclass of DIV #gui_content
+	$( "#gui_devices" ).on("click", ".dbuttons" ,function(e) 
+	{
 			e.preventDefault();
 //			e.stopPropagation();
-
 			value=$(this).val();									// Value of the button
 			var but_id = $(e.target).attr('id');					// id of the device (from the button_id)
 			
@@ -3178,7 +2549,7 @@ function activate_room(new_room_id, selectable)
 			{
 			// ROOM ADD BUTTON (Adds a DEVICE to a ROOM)
 			case "Ra":
-				if (debug>2) alert("Room Add Button: "+but_id);
+				if (debug>2) alert("activate_room:: Add Device Button: "+but_id);
 				// Find an empty device['id'] for this room, and if none left, create a new one
 				// at the end of the devices array, provided we do not have more than 16 devices
 				// for this room. We could make this a function...
@@ -3210,7 +2581,7 @@ function activate_room(new_room_id, selectable)
 				for (var i=0; i<brands.length; i++) {
 					str += '<option>' + brands[i]['name'] + '</option>';
 				}
-				str += '</select>';
+				str += '</select><br />';
 				
 				// Generate the complete form for adding a device
 				// XXX Need to improve and add field for address for example
@@ -3220,22 +2591,36 @@ function activate_room(new_room_id, selectable)
 				askForm('<form id="addRoomForm"><fieldset>'
 					+ '<p>You have created a new device, please give it a name and specify its type and brand. '
 					+ 'Optionally, the group address can be set if this device address is different from the room address</p>'
+					
 					+ '<label for="val_1">Name: </label>'
 					+ '<input type="text" name="val_1" id="val_1" value="" class="text ui-widget-content ui-corner-all" />'
 					+ '<br />'
+					
 					+ '<label for="val_2">Type: </label>'
 					+ '<select id="val_2" value="switch" ><option selected="selected">switch</option>'
-					+ '<option>dimmer</option></select><br />'
+					+ '<option>dimmer</option><br /><option>thermostat</option></select>'
+					+ '<br />'
 					+ str
 					+ '<label for="val_4">Group addr: </label>'
 					+ '<input type="text" name="val_4" id="val_4" value="'+ gaddr+'" class="text ui-widget-content ui-corner-all" />'
+					+ '<br />'
+					
+					+ '<label for="val_5">Unit addr: </label>'
+					+ '<input type="text" name="val_5" id="val_5" value="'+ ind +'" class="text ui-widget-content ui-corner-all" />'
 					+ '</fieldset></form>'
+					
+					// Return Values in ret[]:
+					//	0: Name
+					//	1: Type (devices[xxx]['type]'
+					//	2: Brand (in str)
+					//	3: Group
+					//	4: Unit device[xxx]['uaddr'] device address (can be different from the LamPI devices[xxx]['id'] )
 					
 					// Create
 					,function (ret) {
 						// OK Func, need to get the value of the parameters
 						// Add the device to the array
-						// SO what are the variables returned by the function???
+						// SO what are the variables returned by the function?
 						if (debug > 2) alert(" Dialog returned val_1,val_2,val_3: " + ret);	
 						
 						// Now figure out the fname for the brand name
@@ -3249,10 +2634,15 @@ function activate_room(new_room_id, selectable)
 						
 						// Validate response. Dimmer type is not always allowed. For the moment we trust the user 
 						// more or less
-						if ((ret[1]=="dimmer") && (brnd_nm != "kaku")) {
+						if ((ret[1]=="dimmer") &&  ((brnd_nm != "kaku")&&(brnd_nm != "zwave")) ) {
 							alert("Type dimmer is not supported for brand "+brnd_nm);
 							return(1);
 						}
+						if ((ret[1]=="thermostat") && (brnd_nm != "zwave")) {
+							alert("Type thermostat is not supported for brand "+brnd_nm);
+							return(1);
+						}
+						
 						// All OK? Make a new device in the room
 						var newdev = {
 							id: "D"+ind,
@@ -3260,20 +2650,21 @@ function activate_room(new_room_id, selectable)
 							gaddr: ret[3],					// Initial Value, is room_id + 99
 							name:  ret[0],
 							type:  ret[1],
+							uaddr: ret[4],
 							val: "0",
 							lastval: "0", 
 							brand: brnd_id
 						}
 						devices.push(newdev);			// Add record newdev to devices array
-						console.log(newdev);
-						send_2_dbase("add_device", newdev);
+						logger(newdev,2);
+						send2daemon("dbase","add_device", newdev);
 						// And add the line to the #gui_devices section
 						activate_room(s_room_id);
 						return(1);	//return(1);
 						
 					// Cancel	
   					}, function () {
-							activate_room (new_room_id);
+							activate_room(new_room_id);
 						return(1); // Avoid further actions for these radio buttons 
   					},
   					'Confirm Create'
@@ -3290,7 +2681,7 @@ function activate_room(new_room_id, selectable)
 				// alert("Delete a device: \nPlease select the device you like to delete by clicking its radio button left on line. ");
 
 				// Calling this function with parmeter Del does the trick				
-				activate_room (new_room_id, "Del");
+				activate_room(new_room_id, "Del");
 				// After executing this function recursively, it comes back to this place
 				return(1);
 			break;
@@ -3298,17 +2689,15 @@ function activate_room(new_room_id, selectable)
 			// All OFF in room works; command is sent to daemon who updates the database too.
 			case "Fa":
 				
-				// Could use group function of remote, but that will NOT work accross brands
-				// All OFF Pressed, No room specified!!
+				// Send the All Off message to the daemon (or handle with Ajax)
 				handle_device( "", "Fa" );
-				// for every device in this room set memory value to off
+				// for every device in this room set memory value to off, exception for thermostats
 				for (var j=0; j< devices.length; j++) {
-					if (devices[j]['room'] == s_room_id ) {
+					if ((devices[j]['room'] == s_room_id ) && (devices[j]['type'] != "thermostat" )) {
 						//
-						// store_device should have a local function of storing to devices object
-						// Syncing to databases (based on value of persist) is a function of the daemon
-						// XXX Need to relax the timer for SQL to 10 secs or so, or do group update (better);
+						// store_device updates the devices[][] array
 						store_device(s_room_id, devices[j]['id'], "OFF"); // Was F0
+						logger("activate_room:: All Off command for device: "+devices[j]['uaddr'],2);
 					}
 				}
 				// And update the page, or update row. Given that all devices are
@@ -3322,8 +2711,7 @@ function activate_room(new_room_id, selectable)
 			}
 			
 			// Now first see if we have a special case with op selectable boxes
-			//DEL Delete action by pressing a line when the checkbox is open.
-			
+			// DEL Delete action by pressing a line when the checkbox is open.
 			if ((selectable == "Del") && ( $(this).attr("type" ) == "checkbox") ) 
 			{ 
 				if (debug < 1) $("#gui_messages").empty();			// Clear messages
@@ -3339,22 +2727,20 @@ function activate_room(new_room_id, selectable)
 						that.closest("tr").remove() ;
 						// remove that device from the devices array. Send removed back to the backend to persist
 						var removed = devices.splice(dev_index ,1);
-						if ( persist > 0 ) {
-							console.log(removed[0]);
-							send_2_dbase("delete_device", removed[0]);
-							if (debug>1)
+						logger(removed[0]);
+						send2daemon("dbase","delete_device", removed[0]);
+						if (debug>1)
 								alert("Removed from dbase:: id: " + removed[0]['id'] + " , name: " + removed[0]['name']);
-								//alert (JSON.stringify(removed));
-						}
+						
 						// Sync devices array to the database OR send it the device to-be-removed
 						if (debug > 1)
 							alert ("Removed object id:" + id );
 							// Should do the trick as there is no further device to handle
-							activate_room (new_room_id);
+							activate_room(new_room_id);
 						return(1);
 					// Cancel	
   					}, function () {
-							activate_room (new_room_id);
+							activate_room(new_room_id);
 						return(1); // Avoid further actions for these radio buttons 
   					},
   					'Confirm Delete'
@@ -3390,7 +2776,6 @@ function activate_room(new_room_id, selectable)
 			handle_device(id, value);							// id like "D1", button value like "ON" or "OFF"
 			
 			// Store device will also deal with ON and OFF. It stores in SQL
-			// XXX should be based on persist here, or in store-device
 			store_device(s_room_id, id, value);
 			
 			// Now we want to mark the buttons as selected
@@ -3437,26 +2822,26 @@ function activate_room(new_room_id, selectable)
 			// This is a regular button. if there are special commands for this situation they go here
 
 			}
-		}); // End of button Handler
+	}); // End of button Handler
 		
-		// SORTABLE
+	// SORTABLE
 		// Make the table sortable. It allows us to define a table with buttons above that are 
 		// Not sortable but still look quite the same as these ... And for button handling it does
 		// not see the difference.
-		if (jqmobile == 1) {								// For jqmobile make a different sortable (later)
+	if(jqmobile == 1) {								// For jqmobile make a different sortable (later)
 		
-			// *** NOT IMPLEMENTED YET FOR MOBILE ***
+			// *** SORTABLE NOT IMPLEMENTED YET FOR MOBILE ***
 		
-		}
-		else
-		{// Sortable works different for mobile and webbased
-			var start_pos;
-			$("#gui_devices tbody").last().sortable({
+	}
+	else
+	{// Sortable works different for mobile and webbased
+		var start_pos;
+		$("#gui_devices tbody").last().sortable({
 
 			start: function (event, ui) {
             	$(ui.item).data("startindex", ui.item.index());
 				start_pos = ui.item.index();
-				console.log( "Start pos: " + start_pos );
+				logger( "Start pos: " + start_pos );
         	},
 			// NOTE: index 0 contains the header and is undefined, DO NOT USE IT
 			stop: function (event, ui) {
@@ -3464,10 +2849,8 @@ function activate_room(new_room_id, selectable)
 				var stop_pos = ui.item.index();
 				var stop_index;
 				var start_index;
-				//console.log( "Start pos: " + start_pos );
-				//console.log( "Stop pos: " + stop_pos  );
 				
-				console.log( "start_pos: "+start_pos+", stop_pos: "+stop_pos);
+				logger( "sortable:: start_pos: "+start_pos+", stop_pos: "+stop_pos);
             	//self.sendUpdatedIndex(ui.item);
 				j=0;
 				for (var i=0; i<devices.length; i++) {
@@ -3477,31 +2860,47 @@ function activate_room(new_room_id, selectable)
 						if (j==start_pos) { 
 							start_index = i;
 						}
-						else if (j== stop_pos) {
+						else if (j==stop_pos) {
 							stop_index = i;
 						}
 						j++;
 				}//for
-				console.log( "room: "+s_room_id+",start_index: "+start_index+", stop_pos: "+stop_index);
-				// start_index en stop_index contain idexs of the elements
+				logger( "room: "+s_room_id+",start_index: "+start_index+", stop_index: "+stop_index);
+				logger( "room: "+s_room_id+",start_pos:   "+start_pos+", stop_pos:     "+stop_pos);
+				
+				// start_index en stop_index contain indexes of the elements
 				// that will be involved in the move !!
 				var removed = devices.splice(start_index,1);
-				console.log( "name removed: "+removed[0]['name']);
 				var effe = devices.splice(stop_index,0,removed[0]);
 				
+				logger( "name of device moved: "+removed[0]['name']);
+				
+				// Need to update the database (ever) for every stop event!
+				var j=1
+				for (var i=0; i<devices.length; i++) {
+					if (devices[i]['room'] != s_room_id) {		// Find next device in THIS room
+							continue;
+					}
+					// Might have to remove the old content of the database table first
+					// After all, when removing devices there might be holes in the index table.
+					// send2daemon("dbase","delete_device", devices[i]);
+					// Then add the correct values
+					devices[i]['id']="D"+j;
+					logger( "storing device: id: "+devices[i]['id']+", name: "+devices[i]['name']);
+// XXX					send2daemon("dbase","store_device", devices[i]);
+					
+					j++;
+				}
         	}// stop 
 		}).disableSelection();
-		// Sorting done, updated the devices array to reflect the changes, 
-		
-		// Need to update the database (ever)!
-		
+		// Sorting done, updated the devices array to reflect the changes, 	
 	}//else
 } // activate_room
 
 
 // ---------------------------------------------------------------------------------------
 //
-// Change a scene based on the index of the menu button pressen on top of page
+// Change a scene based on the index of the menu button pressed on top of page
 // For each secen we record a set of user actions.
 // For the moment we can show the complete sequence, delete it and/or record a new sequence
 //
@@ -3516,7 +2915,6 @@ function activate_scene(scn)
 		// For all devices, write all to a string and print string in 1 time
 	for (var j = 0; j<scenes.length; j++ )
 	{
-		
 		var scene_id = scenes[j]['id'];		
 		if (scn == scene_id )
 		{
@@ -3528,19 +2926,19 @@ function activate_scene(scn)
 			var table = $( "#gui_scenes" ).children();		// to add to the table tree in DOM
 			var scene_name = scenes[j]['name'];
 			var scene_seq = scenes[j]['seq'];
-			// alert("activate_scene:: id:"+scene_id+"\nname: "+scene_name+"\nSeq: "+scene_seq);
+
 			// By making first row head, we make it non sortable as well!!
 			var but =  '<thead>'	
 					+ '<tr class="switch">'
 					+ '<td colspan="2">'
-					+ '<input type="submit" id="Fx'+scene_id+'" value="X" class="dbuttons del_button">'
-					+ '<input type="submit" id="Fr'+scene_id+'" value="+" class="dbuttons new_button">'
+					+ '<input type="submit" id="Fx'+scene_id+'" value="X" class="dbuttons scene_button del_button">'
+					+ '<input type="submit" id="Fr'+scene_id+'" value="+" class="dbuttons scene_button new_button">'
 					+ '</td>'
 					+ '<td colspan="2"><input type="input"  id="Fl'+scene_id+'" value= "'+scene_name+'" class="dlabels"></td>' 
 					
-					+ '<td><input type="submit" id="Fc'+scene_id+'" value="STOP" class="dbuttons">'
-					+ '<input type="submit" id="Fe'+scene_id+'" value="Store" class="dbuttons">'
-					+ '<input type="submit" id="Fq'+scene_id+'" value=">" class="dbuttons play_button">'
+					+ '<td><input type="submit" id="Fc'+scene_id+'" value="STOP" class="dbuttons scene_button">'
+					+ '<input type="submit" id="Fe'+scene_id+'" value="Store" class="dbuttons scene_button">'
+					+ '<input type="submit" id="Fq'+scene_id+'" value=">" class="dbuttons scene_button play_button">'
 					+ '</td></thead>'
 					;
 			$(table).append(but);
@@ -3560,7 +2958,7 @@ function activate_scene(scn)
 					+ '<td><input type="checkbox" id="s'+scene_id+'c" name="cb'+ind+'" value="yes"></td>'
 					+ '<td> ' + ind
 					+ '<td><input type="input" id="Fs'+scene_id+'i'+ind+'" value= "'+scene_split[k]+'" class="dlabels sval"></td>'
-					+ '<td><input type="text" id="Ft'+scene_id+'t'+ind+'" value= "'+scene_split[k+1]+'" class="dbuttons sval"></td>'
+					+ '<td><input type="text" id="Ft'+scene_id+'t'+ind+'" value= "'+scene_split[k+1]+'" class="dbuttons scene_button sval"></td>'
 					+ '<td>' + scmd 
 					;
 				$(table).append(but);
@@ -3579,7 +2977,7 @@ function activate_scene(scn)
 				
 				// Return here as there is no device to handle
 				
-				console.log("Need to decode s_recorder");
+				logger("Need to decode s_recorder");
 				// Should we do this, or keep on recording until the user presses the recording button again?
 				s_recording = 0;
 				ind++;												// If list was empty, ind was 0, becomes 1
@@ -3588,7 +2986,7 @@ function activate_scene(scn)
 					+ '<td><input type="checkbox" id="s'+scene_id+ 'c" name="cb' + ind +'" value="yes"></td>'
 					+ '<td>' + ind
 					+ '<td><input type="input" id="Fs'+scene_id+'i'+ind+'" value= "'+s_recorder+'" class="dlabels sval"></td>'
-					+ '<td><input type="text" id="Ft'+scene_id+'t'+ind+'" value= "'+"00:00:10"+'" class="dbuttons sval"></td>'
+					+ '<td><input type="text" id="Ft'+scene_id+'t'+ind+'" value= "'+"00:00:10"+'" class="dbuttons scene_button sval"></td>'
 					+ '<td colspan="2">' + scmd 
 					;
 				$(table).append(but);
@@ -3610,215 +3008,11 @@ function activate_scene(scn)
 				
 				
 				// If this is the first line in the scene database
-				send_2_dbase("store_scene", scenes[j]);
-				message("Device command added to the scene");
-				
-			} // if recording
-
-			// We have to setup an event handler for this screen.
-			// After all, the user might like to change things and press some buttons
-			// NOTE::: This handler runs asynchronous! So after click we need to sort out for which scene :-)
-			// Therefore, collect all scene data again in this handler.
-			//
-			$( "#gui_scenes" ).on("click", ".dbuttons" ,function(e) 
-			{
-				e.preventDefault();
-//				e.stopPropagation();
-				value=$(this).val();									// Value of the button pressed (eg its label)
-				var but_id = $(e.target).attr('id');					// id of button
-				// var scene_id = $(e.target).attr('id').substr(2,1);	// XXX Assuming scene Id is one digit
-				// but also s_scene_id tells us which scene is active
-				
-				var scene = get_scene(s_scene_id);
-				//alert("s_scene_id: "+s_scene_id+", scene[id]: "+scene['id']);
-				
-				var scene_name = scene['name'];
-				var scene_seq = scene['seq'];
-				var scene_split = scene_seq.split(',');					// Do in handler
-			
-			// May have to add: Cancel All timers and Delete All timers
-				switch (but_id.substr(0,2))
-				{
-					// START button, queue scene
-					case "Fq":
-						// Send to the device message_device
-						var scene_cmd = '!FqP"' + scene['name'] + '"';
-						// Send to device. In case of a Raspberry, we'll use the backend_rasp
-						// to lookup the command string from the database
-						message_device("scene", scene_cmd );
-
-					break;
-					
-					// STORE button
-					case "Fe":
-						var scene_cmd = '!FeP"' + scene['name'] + '"=' + scene['seq'];
-						
-						// alert("Fe Storing scene:: "+scene_cmd+", length: "+scene['seq'].length);
-						// Send to database and update the current scene record
-						send_2_dbase("store_scene", scene);
-					break;
-						
-					// DELETE scene action, ONE of the actions in the seq!!!
-					case "Fx":
-						if (debug > 2) alert("Activate_screen:: Delete Fx button pressed");
-						
-						var msg = "Deleted actions ";
-						// Go over each TR element with id="scene" and record the id
-						// We need to go reverse, as removing will mess up higher indexes above,
-						// this will not matter if we work down the array
-						$($( "#gui_scenes .scene" ).get().reverse()).each(function( index ) {
-																
-							var id = 	$(this ).children().children('.dlabels').attr('id');		
-							var ind = parse_int(id)[1];			// id contains two numbers in id, we need 2nd
-						
-							if ( $(this ).children().children('input[type="checkbox"]').is(':checked') ) {
-
-								if (debug > 1) alert ("delete scene id: "+id+", index: "+ind+" selected");
-								var removed = scene_split.splice(2*(ind-1),2);
-								ind --;							// After deleting from scene_split, adjust the indexes for
-																// rest of the array	
-								if (debug > 1) alert("removed:"+removed[0]+ "," +removed[1]+": from seq: "+scene_split );
-								msg += ind + " : " + decode_scene_string( removed[0] ) + "; " ;
-							}
-						});
-						message(msg);
-						// We need to find the index of array scenes to update. As we are in a handler
-						// we cannot rely on the j above but need to find the index from 'id' field in scenes
-						
-						for (var j=0; j<scenes.length; j++) {
-							if (scenes[j]['id'] == s_scene_id ) {
-								// Now concatenate all actions and timers again for the scene_split
-								if (typeof(scene_split) == "undefined") {
-									if (debug>2) alert("activate_scene:: case FX: scene_split undefined");
-								}
-								else {
-									scenes[j]['seq']=scene_split.join();
-									if (debug>2) alert("seq: " + scenes[j]['seq']);
-								}
-								break;
-							}
-						}
-								
-						// We will NOT store to the dabase unless the user stores the sequence by pressing the STORE button
-						activate_scene(s_scene_id);
-												
-					break;
-
-					// CANCEL scene button
-					case "Fc":
-					// Do we want confirmation?
-						var scene_cmd = '!FcP"' + scene['name'] + '"';
-						alert("Cancel current Sequence: " + scene['name']
-							+ "\nScene cmd: " + scene_cmd
-							);
-						message_device("scene", scene_cmd);
-					break;
-					
-					// Recording
-					case "Fr":
-						if (debug > 2) alert("Activate_screen:: Add Fr button pressed, start recording ...");
-						myConfirm('You are about to add a new action to the scene. If you continue, the system ' 
-						+ 'will be in recording mode until you have selected a device action. Then you are returned '
-						+ 'to this scene screen again. Please confirm if you want to add a device. ', 
-						// Confirm
-						function () {
-							// DO nothing....
-							// Maybe make the background red during device selection or blink or so
-							// with recording in the message area ...
-							message('<p style="textdecoration: blink; background-color:red; color:white;">RECORDING</p>');
-						
-							// Cancel	
-  							}, function () {
-								s_recording = 0;
-								return(1); // Avoid further actions for these radio buttons 
-  							},
-  							'Adding a Device action?'
-						);
-						s_recording = 1;							// Set the recording flag on!
-						s_recorder = "";							// Empty the recorder
-						init_rooms("init");
-					break;
-					
-					// Change a timer value in the scene screen
-					case "Ft":
-	// XXX MMM In LamPI, Scene id can be higher than 9, thus 2 chars (make function read_int(s,i) )
-						var val= $(e.target).val();
-						//alert("scene current time val is: "+val);
-						
-						var hh=""; for(var i=0;i<24;i++) {
-							if (i==val.substr(0,2)) hh +='<option selected="selected">'+("00"+i).slice(-2)+'</option>';
-							else hh +='<option>'+("00"+i).slice(-2)+'</option>';
-						}
-						var mm=""; for(var i=0;i<60;i++) {
-							if (i==val.substr(3,2)) mm +='<option selected="selected">'+("00"+i).slice(-2)+'</option>';
-							else mm +='<option>'+("00"+i).slice(-2)+'</option>';
-						}
-						var ss=""; for(var i=0;i<60;i++) {
-							if (i==val.substr(6,2)) ss +='<option selected="selected">'+("00"+i).slice(-2)+'</option>';
-							else ss +='<option>'+("00"+i).slice(-2)+'</option>';
-						}
-						var ret;
-						var frm = '<form id="addRoomForm"><fieldset>'
-							+ '<p>You can change the timer settings for this action. Please use hh:mm:ss</p>'
-							+ '<br />'
-							+ '<label style="width:50px;" for="val_1">hrs: </label>'
-							+ '<select id="val_1" value="'+val.substr(0,2)+'" >' + hh +'</select>'
-							+ '<label style="width:50px;" for="val_2">mins: </label>'
-							+ '<select id="val_2" value="' + val.substr(3,2)+ '">' + mm +'</select>'
-							+ '<label style="width:50px;" for="val_3">secs: </label>'
-							+ '<select id="val_3" selectedIndex="10" value="'+ val.substr(6,2)+'">' + ss +'</select>'
-							+ '</fieldset></form>'
-							;	
-						askForm(
-							frm,
-							function(ret){
-							// OK Func, need to get the value of the parameters
-							// Add the device to the array
-							// SO what are the variables returned by the function???
-							if (debug > 2) alert(" Dialog returned val_1,val_2,val_3: " + ret);
-						
-							// Value of the button pressed (eg its label)
-							var laval = ret[0]+":"+ret[1]+":"+ret[2];
-							$(e.target).val(laval);
-							if (debug>2) alert("Timer changed from "+ val+" to: "+ $(e.target).val() );
-						
-						// Now change its value in the sequence string of timers also
-						// use but_id= $(e.target).attr('id') to get the index number ...							
-							var ids = parse_int(but_id);					// Second number is gid, first scene_id
-							var gid = ids[1];
-							scene_split [((gid-1)*2) + 1] = laval;
-							
-							var my_list = '';
-							// Go over each element and assemble the list again.
-							$( "#gui_scenes .scene" ).each(function( index ) {
-								var id = 	$(this ).children().children('.dbuttons').attr('id');	
-								// parse_int can handle multi-digit numbers in id's!!
-								var ind = parse_int(id)[1];
-								console.log( "scn: " + scn + " html index: " + index + " scene ind: " + ind );
-								my_list += scene_split [(ind-1)*2] + ',' + scene_split [((ind-1)*2) + 1] + ',' ;
-							});
-							// Now we need to remove the last ","
-							console.log("my_list :" + my_list);
-							my_list = my_list.slice(0,-1);
-							console.log("scene: " + s_scene_id + ", " + scenes[s_scene_id-1]['name'] + ", my_list: " + my_list );
-							// XXX OOPS, not nice, should look up the index, not assume ind[id==1] is same as array index 0
-							scenes[s_scene_id-1]['seq'] =  my_list;
-							if (debug>2) alert("new scene_list:: "+my_list);
-							return (0);	
-  						},
-						function () {
-							return(1); // Avoid further actions for these radio buttons 
-  						},
-  						'Confirm Change'
-					); // askForm
-					break;
-					
-					default:
-						alert("Sequence action unknown: " + but_id.substr(-2) );
-				}
-			})
-		}
-	}
+				send2daemon("dbase","store_scene", scenes[j]);
+				message("Device command added to the scene");	
+			}// if recording
+		}// if 
+	}// for
 	// ------SORTABLE---REQUIRES MORE WORK -------
 	// Sortable put at the end of the function
 	// The last() makes sure only the second table is sortable with the scene elements
@@ -3846,15 +3040,15 @@ function activate_scene(scn)
 				var id = 	$(this ).children().children('.dbuttons').attr('id');	
 				// XXX Assumption that scene id is only 1 digit!!
 				var ind = id.substr(4);
-			// MMM	
-				console.log( "scn: " + scn + " html index: " + index + " scene ind: " + ind );
+			// XXX Need to implement sortable
+				logger( "scn: " + scn + " html index: " + index + " scene ind: " + ind );
 				
 				my_list += scene_split [(ind-1)*2] + ',' + scene_split [((ind-1)*2) + 1] + ',' ;
 			});
 			// Now we need to remove the last ","
-			console.log("my_list :" + my_list);
+			logger("my_list :" + my_list);
 			my_list = my_list.slice(0,-1);
-			console.log("scene: " + scn + ", " + scenes[scn-1]['name'] + ", my_list: " + my_list );
+			logger("scene: " + scn + ", " + scenes[scn-1]['name'] + ", my_list: " + my_list );
 			// XXX OOPS, not nice, should look up the index, not assume ind[1] is same as array index 0
 			scenes[scn-1]['seq'] =  my_list;
         }	 
@@ -4005,7 +3199,7 @@ function activate_timer(tim)
 				;
 				$(table).append(but); 
 			 	$(function() {
-					$( "#startd" ).datepicker({ dateFormat: "dd/mm/yy" });
+					$( "#startd" ).datepicker({ dateFormat: "dd/mm/y" });
 				});
 			}
 			else { // jqmobile version not yet released ..
@@ -4103,7 +3297,6 @@ function activate_timer(tim)
 			// After all, the user might like to change things and press some buttons
 			// NOTE::: This handler runs asynchronous! So after click we need to sort out for which device :-)
 			//
-			
 			$( "#gui_timers" ).on("click", ".dbuttons" ,function(e) 
 			{
 				e.preventDefault();
@@ -4160,14 +3353,11 @@ function activate_timer(tim)
 						+ ", months: " + timer['months'] + "\n"
 						+ ", skip: " + timer['skip'] + "\n"				// Skip one time
 						;
-						if (debug >=1) console.log("store_timer"+str);
-						send_2_dbase( "store_timer", timer); 
-						
-						// XXX Need to fix this for ICS-1000. At the moment we optimized so much for
-						// Raspberry that these functions are gone for ICS
+						if (debug >=1) logger("store_timer"+str);
+						send2daemon("dbase","store_timer", timer); 
 						
 						// Send to controller
-						//message_device("timer", timer_cmd );
+						//message_device("timer", "set", timer_cmd );
 					break;
 						
 					// CANCEL DELETE timer, but instead for timers and for this application we use 
@@ -4180,10 +3370,9 @@ function activate_timer(tim)
 					//	alert("Delete current Sequence: " + timer['name']
 					//		+ "\ntimer cmd: " + timer_cmd
 					//		  );
-					//	message_device("timer", timer_cmd);
+					//	message_device("timer", "cancel", timer_cmd);
 					//	XXX Still need to delete something....
-					//	send_2_dbase( "delete_timer", timer);
-					
+					//	send2daemon("dbase", "delete_timer", timer);
 						myConfirm('You are about to cancel this timer. If you continue, the system ' 
 							+ 'will for one time skip this timer action', 
 							// Confirm
@@ -4202,7 +3391,7 @@ function activate_timer(tim)
 						);
 						timer['skip']="1";
 						set_timer(s_timer_id,timer);
-						send_2_dbase( "store_timer", timer);
+						send2daemon("dbase","store_timer", timer);
 						$('#Fx').removeClass( 'hover' );
 					break;//Cancel
 					
@@ -4216,13 +3405,12 @@ function activate_timer(tim)
 							// DO nothing....
 							// Maybe make the background red during device selection or blink or so
 							// with recording in the message area ...
-							message('<p style="textdecoration: blink; background-color:red; color:white;">RECORDING</p>');
-						
-							// Cancel	
-  							}, function () {
+							message('<p style="textdecoration:blink; background-color:red; color:white;">RECORDING</p>');	
+  						}, function () {
+						// Cancel
 								s_recording = 0;
 								return(1); // Avoid further actions for these radio buttons 
-  							},
+  						},
   							'Adding a Timer action?'
 						);
 						s_recording = 1;							// Set the recording flag on!
@@ -4457,7 +3645,6 @@ function activate_handset(hset)
 					+ '</td>'
 					+ '<td colspan="2"><input type="input"  id="Fl'+handset_id+'" value= "'+handset_name+'" class="dlabels"> addr: '+handset_addr+'</td>' 
 					+ '<td>'
-					// + '<input type="submit" id="Fc'+handset_id+'" value="STOP" class="dbuttons">'
 					+ '<input type="submit" id="Fe'+handset_id+'" value="Store" class="dbuttons"></td>'
 					+ '</thead>'
 					;
@@ -4469,7 +3656,6 @@ function activate_handset(hset)
 			// Output the buttons for this handset
 			// Test for empty array
 			if (handset_scene != "")  {	
-			  //alert("Handset "+handset_name+", scene: <"+handset_scene+">");	// XXX
 			  
 			  var handset_split = handset_scene.split(',');			// If NO elements found, it still retuns empty array!!
 			  for (var k = 0; k < handset_split.length; k+=2 )
@@ -4502,7 +3688,7 @@ function activate_handset(hset)
 				scmd = decode_scene_string(s_recorder);
 				
 				// Return here as there is no device to handle
-				console.log("Decode s_recorder to: "+scmd);
+				logger("Decode s_recorder to: "+scmd);
 				// Should we do this, or keep on recording until the user presses the recording button again?
 				s_recording = 0;
 				ind++;												// If list was empty, ind was 0, becomes 1
@@ -4510,8 +3696,10 @@ function activate_handset(hset)
 				but = '<tr class="handset">'
 					+ '<td><input type="checkbox" id="s'+handset_id+ 'c" name="cb' + ind +'" value="yes"></td>'
 					+ '<td>But ' + ind
-					+ '<td><input type="input" id="Fs'+handset_id+'u'+handset_unit+'v'+handset_val+'i'+ind+'" value= "'+s_recorder+'" class="dlabels sval"></td>'
-					+ '<td><input type="text" id="Ft'+handset_id+'u'+handset_unit+'v'+handset_val+'i'+ind+'" value= "'+"00:00:10"+'" class="dbuttons sval"></td>'
+					+ '<td><input type="input" id="Fs'+handset_id+'u'+handset_unit+'v'+handset_val+'i'+ind
+					  +'" value= "'+s_recorder+'" class="dlabels sval"></td>'
+					+ '<td><input type="text" id="Ft'+handset_id+'u'+handset_unit+'v'+handset_val+'i'+ind
+					  +'" value= "'+"00:00:10"+'" class="dbuttons sval"></td>'
 					+ '<td colspan="2">' + scmd 
 					;
 				$(table).append(but);
@@ -4533,7 +3721,7 @@ function activate_handset(hset)
 				
 				
 				// If this is the first line in the scene database
-				send_2_dbase("store_handset", handsets[j]);
+				send2daemon("dbase","store_handset", handsets[j]);
 				message("Device command added to the handsets",1);
 				
 			} // if recording
@@ -4571,13 +3759,12 @@ function activate_handset(hset)
 			//	var handset_cmd = '!FqP"' + handset['name'] + '"';
 				// Send to device. In case of a Raspberry, we'll use the backend_rasp
 				// to lookup the command string from the database
-			//	message_device("handset", handset_cmd );
+			//	message_device("handset", "run", handset_cmd );
 
 			//break;
 					
 			// STORE button, only for Raspi Controllers
-			//
-			case "Fe": // WWW works, 131120
+			case "Fe": //  works, 131120
 				
 				var handset = get_handset(s_handset_id);
 				var handset_name = handset['name'];	
@@ -4589,21 +3776,20 @@ function activate_handset(hset)
 				for (var j=0; j<handsets.length; j++) 
 				{
 					if (handsets[j]['id'] == s_handset_id) {
-						console.log("Fe Storing handset:: "+handset_name+":"+handsets[j]['unit']+":"+handsets[j]['val'] );
+						logger("Fe Storing handset:: "+handset_name+":"+handsets[j]['unit']+":"+handsets[j]['val'] );
 						// Send to database and update the current scene record
-						send_2_dbase("store_handset", handsets[j]);
+						send2daemon("dbase","store_handset", handsets[j]);
 					}
 				}
 				// Not Applicable for the ICS-1000 controller
 				// So we need not to do the next lines for ICS-1000
 				// var handset_cmd = '!FeP"' + handset['name'] + '"=' + handset['scene'];
-				// message_device("handset", handset_cmd );
+				// message_device("handset", "set", handset_cmd );
 			break;
 
 			//
 			// DELETE handset line, ONE of the actions in the seq!!! for the button
-			//	
-			case "Fx": // WWW Works, 131120
+			case "Fx": // Works, 131120
 	
 				if (debug > 2) alert("Activate_handset:: Delete Fx button pressed" );
 				// NOTE:: See activate_handset, if the last element of a scene is deleted, we have an
@@ -4611,7 +3797,6 @@ function activate_handset(hset)
 				// When ading new handset have to check for already existing empty handsets/buttons
 				
 				var msg = "Deleted actions ";
-				// QQQ
 				if (debug>0) {
 					
 					myConfirm('You are about to delete one or more button actions for this handset. '
@@ -4653,7 +3838,6 @@ function activate_handset(hset)
 									"\nHandset id: "+handset_id+", unit: "+handset_unit+", val: "+handset_val+
 									"\nScene: "+handset_scene
 								);
-						
 								// Finding the index of the item and time to delete is difficult!
 								var removed = handset_split.splice(ind,2);
 								ind --;				// After deleting from handset_split, adjust the indexes for
@@ -4683,13 +3867,11 @@ function activate_handset(hset)
 										break;
 									}
 								}// for
-						
 							}// if checkbox
 						});//for all handsets on screen
 				
 						message(msg);
 						activate_handset(s_handset_id);	
-						
   					}, function () {
 						// Cancel
 							activate_handset(s_handset_id);	
@@ -4698,10 +3880,8 @@ function activate_handset(hset)
   					'Continue Deleting Handet(s)?'
 					);
 				}
-				// Do NOT store in dabase unless the user stores the sequence by pressing the STORE button
-												
+				// Do NOT store in dabase unless the user stores the sequence by pressing the STORE button							
 			break;
-
 			//
 			// ADD Recording, ADD
 			//
@@ -4710,32 +3890,13 @@ function activate_handset(hset)
 				// Make sure that one of the checkboxes is selected as we want to insert AFTER
 				// If there are NO buttons at all, create one, other wise append to current button.
 				// this entry
-		// QQQ
-				if (debug>=0){
-					myConfirm('You are about to add one or more button actions for this handset. '
-					+ 'If you continue, the system will add a new record AFTER a line that you checked. '
-					+ 'Please do not check more than one line if you\'re adding actions. The system will take the first '
-					+ 'line ONLY and discard other lines that are checked. \n'
-					+ 'I you like to add new buttons, just check nothing and let the system guide you to selecting a new '
-					+ 'button and a new action to the handset.'
-					, 
-					// Confirm
-					function () {
-						// Confirm
-						
-  						}, function () {
-						// Cancel
-							return(0); 					// Avoid further actions for these radio buttons 
-  						},
-  					'	Continue Adding Handet(s)?'
-					);
-				}
+				
 				// Display dialog box
 				if (debug > 2) alert("Activate_handset:: Add Fr button pressed, start recording ...");
 				
 				myConfirm('You are about to add an action to this handset. If you continue, the system ' 
 				+ 'will be in recording mode until you have selected a device action. Then you are returned '
-				+ 'to this scene screen again. Please confirm if you want to add a device. ', 
+				+ 'to this scene screen again. Please confirm if you want to add actions to this handset. ', 
 				// Confirm
 				function () {
 					// DO nothing....
@@ -4753,10 +3914,9 @@ function activate_handset(hset)
 						s_recording = 0;
 						return(1); // Avoid further actions for these radio buttons 
   					},
-  					'Adding a Device action?'
+  					'Adding a handset action?'
 				);
 			break;
-			
 			//
 			// Change a time value in the handset screen. The time field is an input action field.
 			//
@@ -4843,7 +4003,6 @@ function activate_handset(hset)
 		}
 	})// on-click handler XXX can be moved to document.ready part of the program
 	
-	
 	// ------SORTABLE---REQUIRES MORE WORK -------
 	// Sortable put at the end of the function
 	// The last() makes sure only the second table is sortable with the scene elements
@@ -4854,32 +4013,28 @@ function activate_handset(hset)
 	if (jqmobile == 1) {
 		
 		// jmobile handsets are NOT sortable at the moment
-		
 	}
 	else {
 	  $("#gui_handsets tbody").sortable({
-
 		start: function (event, ui) {
             $(ui.item).data("startindex", ui.item.index());
         },
 		// Make sure we select the second table!
 		stop: function (event, ui) {
-
 			var my_list = '';
 			// Go over each element and record the id
 			$( "#gui_handsets .scene" ).each(function( index ) {
 				var id = 	$(this ).children().children('.dbuttons').attr('id');	
 				// XXX Assumption that scene id is only 1 digit!!
 				var ind = id.substr(4);
-			// MMM	
-				console.log( "scn: " + hset + " html index: " + index + " scene ind: " + ind );
-				
+			// XXX Need to implement sortable	
+				logger( "scn: " + hset + " html index: " + index + " scene ind: " + ind );
 				my_list += scene_split [(ind-1)*2] + ',' + scene_split [((ind-1)*2) + 1] + ',' ;
 			});
 			// Now we need to remove the last ","
-			console.log("my_list :" + my_list);
+			logger("my_list :" + my_list);
 			my_list = my_list.slice(0,-1);
-			console.log("scene: " + hset + ", " + handsets[hset-1]['name'] + ", my_list: " + my_list );
+			logger("scene: " + hset + ", " + handsets[hset-1]['name'] + ", my_list: " + my_list );
 			
 			// XXX OOPS, not nice, should look up the index, not assume ind[1] is same as array index 0
 			handsets[hset-1]['scene'] =  my_list;
@@ -4890,53 +4045,40 @@ function activate_handset(hset)
 	s_handset_id = hset;
 } // activate handset
 
-
-
-// --------------------------------- ACTIVATE WEATHER -------------------------------------
-// At the moment I do have 3 temperature/humidity sensors.
-// It is quite good possible to config the sceen so that for 2 or 4 or 6 sensors
-// With 3 we will have a good layout on the screen, otherwise we'll scroll.
-//
+// --------------------------------- ACTIVATE SENSORS -------------------------------------
+// With 3 sensors we'll have a good layout on the screen, otherwise we'll scroll.
 // In next release of LamPI, we should sort the sensors in locations... as we do with
 // rooms. These will not so much the real physical location (probably is), but will be
 // container to assure we have the sensors grouped together as we want...
 //
-function activate_weather(location)
+function activate_sensors(location)
 {
 	// Cleanup work area
 	$( "#gui_messages" ).empty();
 	$( "#gui_content" ).empty();					// Empty our drawing area
 	$( "#gui_content" ).css( "overflow-x", "auto" );
-	// html_msg = '<div id="gui_weather" style="overflow-y:hidden; overflow-x:scroll;"></div>';
-	html_msg = '<div id="gui_weather"></div>';
+	html_msg = '<div id="gui_sensors"></div>';
 	$( "#gui_content" ).append (html_msg);	
 	html_msg = '<table border="0">';
-	$( "#gui_weather" ).append( html_msg );
+	$( "#gui_sensors" ).append( html_msg );
 	
-	var table = $( "#gui_weather" ).children();		// to add to the table tree in DOM
+	var table = $( "#gui_sensors" ).children();		// to add to the table tree in DOM
 	var offbut, onbut;
 	
-	// We want the length not be the weather length but the number of unique locations in the
-	// array weather (which equals actually the number of buttons in the header area)
-	//alert("activate_weather:: location: "+location);
-
+	// We want the length not be the sensors length but the number of unique locations in the
+	// array sensors (which equals actually the number of buttons in the header area)
+	//alert("activate_sensors:: location: "+location);
 	var wl = 0; 
-	for (var i= 0; i < weather.length; i++)
-	{
-		if (weather[i]['location'] == location)
-		{
+	for (var i= 0; i < sensors.length; i++) {
+		if (sensors[i]['location'] == location) {
 			wl++;									// Determines the number of dials on the active screen
 		}
 	}			
-	//alert("activate_weather:: wl: "+wl);
-	//var wl = weather.length;						// Determines the number of dials on screen
+	//var wl = sensors.length;						// Determines the number of dials on screen
 	var buf = '<tbody>' ;
 	var wi = 100/wl;
 
-	// At the moment we only do temperature and humidity. We can test for other fields here
-	// so that we can fill more rows with dial canvas for those fields (e.g. windspeed).
-	// XXX placeholder
-	
+	// At the moment we only do temperature and humidity. 
 	// First row; Create the canvasses and make room for the temprature dials..	
 	buf += '<tr>';
 	for (var i=0; i< wl; i++) {
@@ -4945,7 +4087,6 @@ function activate_weather(location)
 		buf += '</td>';
 	}
 	buf += '</tr>';
-	
 	// This is the second row, with the dials for humidity
 	buf += '<tr>';
 	for (var i=0; i< wl; i++) {
@@ -4960,14 +4101,13 @@ function activate_weather(location)
 	// XXX for windspeed etc. if the row dimensions are larger than 2
 	
 	$(table).append(buf);							// Display the table with canvas
-	//$( "#gui_weather" ).append( buf );
+	//$( "#gui_sensors" ).append( buf );
 	
-	// XXX When working OK, switch to min version of steel asap
 	// We load the .js file for steel animation. This is done in jQuery so that once
 	// loaded all functions are available, but the functions are no integral/permanent part
 	// of the code
 	$.getScript("steel/steelseries-min.js", function(){
-	//$.getScript("steel/steelseries.js", function(){
+	//$.getScript("steel/steelseries.js", function(){			// For debugging
 		
 		// sections are used for:
 		var sections = [steelseries.Section( 0, 25, 'rgba(0, 0, 220, 0.3)'),
@@ -5011,15 +4151,19 @@ function activate_weather(location)
 		
 		var radial={};
 		var i=0;
-		for (var j=0; j< weather.length; j++)
+		// Now we'll start placing the dials
+		for (var j=0; j< sensors.length; j++)
 		{
-			if (weather[j]['location'] == location ) 
+			if (sensors[j]['location'] == location ) 
 			{
 				// temperature
 				// XXX We assume that we ALWAYS have a temperature as part of the sensor
 				// reading. This may NOT be true in which case the radial below needs to be
 				// conditional as with the humidity
-				if (('temperature' in weather[j]) && (typeof weather[j]['temperature'] !== 'undefined') && (weather[j]['temperature'] !== ""))
+				if (('temperature' in sensors[j]['sensor']) 
+//					&& (typeof sensors[j]['sensor']['temperature'] !== 'undefined')  
+//					&& (sensors[j]['sensor']['temperature'] !== "")
+				)
 				{
 					radial[i] = new steelseries.RadialBargraph('canvasRadial'+(i+1), {
                             	gaugeType: steelseries.GaugeType.TYPE4,
@@ -5028,47 +4172,53 @@ function activate_weather(location)
 								maxValue: 40,
                             	valueGradient: tempGrad,
                             	useValueGradient: true,
-                            	titleString: weather[j]['name']+"@"+weather[j]['location'],
+                            	titleString: sensors[j]['name']+"@"+sensors[j]['location'],
                             	unitString: 'Temp C',
 								threshold: 30,
                             	lcdVisible: true
                         });
 					radial[i].setFrameDesign(steelseries.FrameDesign.GLOSSY_METAL);
-					radial[i].setValueAnimated(weather[j]['temperature']);
 					radial[i].setBackgroundColor(steelseries.BackgroundColor.BRUSHED_METAL);
+					radial[i].setValueAnimated(sensors[j]['sensor']['temperature']['val']);
 				}
 				else {
-					console.log("weather temperature "+i+" is not defined");
+					logger("sensors temperature "+i+" is not defined");
 				}
 				
 				// humidity radial gauges
 				
-				if (('humidity' in weather[j]) && (typeof weather[j]['humidity'] !== 'undefined') && (weather[j]['humidity'] !== ""))
+				if (('humidity' in sensors[j]['sensor'])  
+				//	&& (typeof sensors[j]['sensor']['humidity'] !== 'undefined') 
+				//	&& (sensors[j]['sensor']['humidity'] !== "")
+				)
 				{
-					//console.log("iradial "+ (i+wl) +",j: "+j+" set humidity: "+weather[j]['humidity']);
+					//logger("iradial "+ (i+wl) +",j: "+j+" set humidity: "+sensors[j]['sensor']['humidity']['val']);
 					radial[i+wl] = new steelseries.RadialBargraph('canvasRadial'+(i+wl+1), {
                             	gaugeType: steelseries.GaugeType.TYPE4,
                             	size: 201,
                             	valueGradient: valGrad,
                             	useValueGradient: true,
-                            	titleString: weather[j]['location'],
+                            	titleString: sensors[j]['location'],
                             	unitString: 'Humidity %',
 								threshold: 80,
                             	lcdVisible: true
                         });
 					radial[i+wl].setFrameDesign(steelseries.FrameDesign.GLOSSY_METAL);
 					radial[i+wl].setBackgroundColor(steelseries.BackgroundColor.BRUSHED_METAL);
-					radial[i+wl].setValueAnimated(weather[j]['humidity']);
+					radial[i+wl].setValueAnimated(sensors[j]['sensor']['humidity']['val']);
 				}
 				else {
-					console.log("weather humidity "+i+" is not defined");
+					logger("sensors humidity "+i+" is not defined");
 				}
 				
 				// Airpressure radial gauges. 
 				
-				if ( ('airpressure' in weather[j]) && (typeof weather[j]['airpressure'] !== 'undefined') && (weather[j]['airpressure'] !== '') )
+				if (('airpressure' in sensors[j]['sensor'])  
+				//	&& (typeof sensors[j]['sensor']['airpressure']['val'] !== 'undefined') 
+				//	&& (sensors[j]['sensor']['airpressure']['val'] !== '') 
+				)
 				{
-					console.log("iradial "+ (i+wl) +",j: "+j+" set airpressure: "+weather[j]['airpressure']);
+					logger("iradial "+ (i+wl) +",j: "+j+" set airpressure: "+sensors[j]['sensor']['airpressure']['val']);
 					radial[i+wl] = new steelseries.RadialBargraph('canvasRadial'+(i+wl+1), {
                             	gaugeType: steelseries.GaugeType.TYPE3,
                             	size: 201,
@@ -5079,88 +4229,93 @@ function activate_weather(location)
 								useSectionColors: true,
                             	//valueGradient: pressGrad,
                             	//useValueGradient: true,
-                            	titleString: weather[j]['location'],
+                            	titleString: sensors[j]['location'],
                             	unitString: 'Pressure Pa',
 								threshold: 80,
                             	lcdVisible: true
                         });
 					radial[i+wl].setFrameDesign(steelseries.FrameDesign.GLOSSY_METAL);
 					radial[i+wl].setBackgroundColor(steelseries.BackgroundColor.BRUSHED_METAL);
-					radial[i+wl].setValueAnimated(weather[j]['airpressure']);
+					radial[i+wl].setValueAnimated(sensors[j]['sensor']['airpressure']['val']);
 				}
 				else {
-					console.log("weather airpressure "+i+" is not defined");
+					logger("sensors airpressure "+i+" is not defined");
 				}
-			
 
 				// windspeed radial gauges
 				// XXX Make sure that the gauge is defined above
 				// before making this selectable
-				//if (weather[j]['windspeed'] != "")
+				//if (sensors[j]['windspeed'] != "")
 				//{
-				//	console.log("weather windspeed "+i+" is true");
+				//	logger("sensors windspeed "+i+" is true");
 				//	radial[i+wl*2] = new steelseries.RadialBargraph('canvasRadial'+(i+wl*2+1), {
                 //            	gaugeType: steelseries.GaugeType.TYPE4,
                 //            	size: 201,
                 //            	valueGradient: valGrad,
                 //           	useValueGradient: true,
-                //            	titleString: weather[j]['location'],
+                //            	titleString: sensors[j]['location'],
                 //            	unitString: 'Windspeed %',
                 //            	lcdVisible: true
                 //        });
 				//	radial[i+wl*2].setFrameDesign(steelseries.FrameDesign.GLOSSY_METAL);
 				//	radial[i+wl*2].setBackgroundColor(steelseries.BackgroundColor.BRUSHED_METAL);
-				//	radial[i+wl*2].setValueAnimated(weather[j]['windspeed']);
+				//	radial[i+wl*2].setValueAnimated(sensors[j]['windspeed']);
 				//}
 				//else {
-				//	console.log("weather windspeed "+i+" is not defined");
+				//	logger("sensors windspeed "+i+" is not defined");
 				//}
 				i++;
 			}
 		}
 		
 		// Once every 2 seconds we update the gauge meters based on the current
-		// value of the weather array (which might change due to incoming messages
+		// value of the sensors array (which might change due to incoming messages
 		// over websockets.
 		var id;
 		id = setInterval(function()
 		{
-			// Do work if we are in the weather screen
-			if (s_screen == "weather" )
+			// Do work if we are in the sensors screen
+			if (s_screen == "sensor" )
 			{
 				var i = 0;
-				for (var j=0; j< weather.length; j++) 
+				for (var j=0; j< sensors.length; j++) 
 				{
-					if (weather[j]['location'] == location)
+					if (sensors[j]['location'] == location)
 					{
 						// First row of dials!!
-						if (('temperature' in weather[j]) && (weather[j]['temperature'] !== undefined) && (weather[j]['temperature'] != "")) {
-							radial[i].setValueAnimated(weather[j]['temperature']);
+						if (('temperature' in sensors[j]['sensor']) && 
+							(sensors[j]['sensor']['temperature']['val'] !== undefined) && 
+							(sensors[j]['sensor']['temperature']['val'] != "")) {
+							radial[i].setValueAnimated(sensors[j]['sensor']['temperature']['val']);
 						}
 						else { message("not set temperature. ",3); }
 						
 						// Second row of dials
-						if (('humidity' in weather[j]) && (weather[j]['humidity'] !== undefined) && (weather[j]['humidity'] != "")) {
-							message("radial "+ (i+wl) +",j: "+j+" set humidity: "+weather[j]['humidity'],2);
-							radial[i+wl].setValueAnimated(weather[j]['humidity']);
+						if (('humidity' in sensors[j]['sensor']) && 
+							(sensors[j]['sensor']['humidity']['val'] !== undefined) && 
+							(sensors[j]['sensor']['humidity']['val'] != "")) {
+							message("radial "+ (i+wl) +",j: "+j+" set humidity: "+sensors[j]['sensor']['humidity']['val'],2);
+							radial[i+wl].setValueAnimated(sensors[j]['sensor']['humidity']['val']);
 						}
 						else { message("not set humidity. ",3); }
 						
 						// Experience shows that most if not all sensors show only two values
 						// Temperature+ humidity is most existent, but temperature + airpressure os also possible for example
 						// therefore, we assume that if humidity is not used, we can use that dial for other readings...
-						if (('airpressure' in weather[j]) && (weather[j]['airpressure'] !== undefined ) &&(weather[j]['airpressure'] != "" )) {
-							message("airpressure: " + weather[j]['airpressure'],2);
-							radial[i+wl].setValueAnimated(weather[j]['airpressure']);
+						if (('airpressure' in sensors[j]['sensor']) && 
+							(sensors[j]['sensor']['airpressure']['val'] !== undefined ) &&
+							(sensors[j]['sensor']['airpressure']['val'] != "" )) {
+							message("airpressure: " + sensors[j]['sensor']['airpressure']['val'],2);
+							radial[i+wl].setValueAnimated(sensors[j]['sensor']['airpressure']['val']);
 						}
 						else { message("not set airpressure. ",3); }
 						
 						// Windspeed
-						//if (('windspeed' in weather[j]) && (weather[j]['windspeed'] != "" )) {
-						//	console.log("windspeed: " + weather[j]['windspeed']);
-						//	radial[i+wl].setValueAnimated(weather[j]['windspeed']);
+						//if (('windspeed' in sensors[j]) && (sensors[j]['sensor']['windspeed']['val'] != "" )) {
+						//	logger("windspeed: " + sensors[j]['sensor']['windspeed']['val']);
+						//	radial[i+wl].setValueAnimated(sensors[j]['sensor']['windspeed']['val']);
 						//}
-						//else if (debug>=3) { console.log("not set windspeed."); }
+						//else if (debug>=3) { logger("not set windspeed."); }
 						
 						i++;
 					}
@@ -5171,21 +4326,18 @@ function activate_weather(location)
 				// State 2: Close in progress
 				// State 3: Closed
 				var state = w_sock.readyState;
-				if (state != 1) 
-				{
-					console.log("Websocket:: error. State is: "+state);
+				if (state != 1) {
+					logger("Websocket:: error. State is: "+state);
 					message("Websocket:: error. State is: "+state);
 					//w_sock = new WebSocket(w_uri);
 				}
 			}
-			else
-			{
+			else {
 				// Kill this timer temporarily
 				clearInterval(id);
 				message("Suspend Dials");
 			}
 		}, 2000);		// 2 seconds (in millisecs)
-		
 	});
 }
 
@@ -5221,26 +4373,48 @@ function activate_energy(location)
 	// First row; Create the canvasses and make room for the temprature dials..	
 	var buf = '<tbody><tr>';
 	for (var i=0; i< wl; i++) {
+		canv = 'canvasRadial'+(i+1)+'';
 		buf += '<td width="'+wi+'%" class="ce_button">';
-        buf += '<canvas id="canvasRadial'+(i+1)+'" width="201" height="201"></canvas>';
+        buf += '<canvas id="'+ canv +'" width="201" height="201">No canvas in your browser...1</canvas>';
 		buf += '</td>';
 	}
 	buf += '</tr>';
 	
-	// This is the second row, with the dials for humidity
+	// This is the second row, with the dials for electricity in and out and gas use
 	buf += '<tr>';
 	for (var i=0; i< wl; i++) {
 		var canv = 'canvasRadial'+(wl+i+1)+'';
 		buf += '<td width="'+wi+'%" class="ce_button">';
-        buf += '<canvas id="'+canv+'" width="201" height="201">No canvas in your browser...</canvas>';
+        buf += '<canvas id="'+canv+'" width="201" height="201">No canvas in your browser...2</canvas>';
 		buf += '</td>';
 	}
 	buf += '</tr>';
+	//buf += '</tbody></table>';
+	
+	// This is the third row, with the odometer for electricity use and gas use
+	buf += '<tr>';
+	for (var i=0; i< wl; i++) {
+		var canv = 'canvasRadial'+(2*wl+i+1)+'';
+		buf += '<td width="'+wi+'%" class="ce_button">';
+        buf += '<canvas id="'+canv+'" style="align:center;" width="201" height="35">No canvas in your browser...3</canvas>';
+		buf += '</td>';
+	}
+	buf += '</tr>';
+	
+	// This is the fourth row, with the odometer for electricity in
+	buf += '<tr>';
+	for (var i=0; i< wl; i++) {
+		var canv = 'canvasRadial'+(3*wl+i+1)+'';
+		buf += '<td width="'+wi+'%" class="ce_button">';
+        buf += '<canvas id="'+canv+'" style="align:center;" width="201" height="35">No canvas in your browser...3</canvas>';
+		buf += '</td>';
+	}
+	buf += '</tr>';
+	
 	buf += '</tbody></table>';
 	
 	$(table).append(buf);							// Display the table with canvas
 	
-	// XXX When working OK, switch to min version of steel asap
 	// We load the .js file for steel animation. This is done in jQuery so that once
 	// loaded all functions are available, but the functions are no integral/permanent part
 	// of the code
@@ -5261,25 +4435,25 @@ function activate_energy(location)
             areas = [steelseries.Section(75, 100, 'rgba(220, 0, 0, 0.3)')],
 			pwr_areas = [steelseries.Section(1050, 1100, 'rgba(220, 0, 0, 0.3)')],
 
-            // Define value gradient for bargraph temperature
+            // Define value gradient for total electricity and gas usage (max 10000)
             pwrGrad = new steelseries.gradientWrapper(  0,
-                                                        5000,
-                                                        [ 0, 0.20, 0.40, 0.85, 1],
+                                                        10000,
+                                                        [ 0, 0.25, 0.50, 0.75, 1],
                                                         [ new steelseries.rgbaColor(0, 0, 200, 1),
                                                           new steelseries.rgbaColor(0, 200, 0, 1),
                                                           new steelseries.rgbaColor(200, 200, 0, 1),
                                                           new steelseries.rgbaColor(200, 0, 0, 1),
                                                           new steelseries.rgbaColor(200, 0, 0, 1) ]),
-			
+			// Define value gradient for actual use ( 0 - 3500 kw per phase
 			valGrad = new steelseries.gradientWrapper(  0,
-                                                        100,
-                                                        [ 0, 0.33, 0.66, 0.85, 1],
+                                                        3.5,
+                                                        [ 0, 0.15, 0.30, 0.50, 1],
                                                         [ new steelseries.rgbaColor(0, 0, 200, 1),			// Blauw
                                                           new steelseries.rgbaColor(0, 200, 0, 1),			// Groen
                                                           new steelseries.rgbaColor(200, 200, 0, 1),		// Geel
                                                           new steelseries.rgbaColor(200, 0, 0, 1),			// Rood
                                                           new steelseries.rgbaColor(200, 0, 0, 1) ]);		// rood
-		
+
 		var radial={};
 		var i=0;
 		// dial 1 (Power actual use
@@ -5287,8 +4461,8 @@ function activate_energy(location)
                             	gaugeType: steelseries.GaugeType.TYPE4,
                             	size: 201,
 								minValue: 0,							// Set the min value on the scale
-								maxValue: 4,
-                            	valueGradient: pwrGrad,
+								maxValue: 3.5,
+                            	valueGradient: valGrad,
                             	useValueGradient: true,
                             	titleString: 'Actual',
                             	unitString: 'kW',
@@ -5300,13 +4474,12 @@ function activate_energy(location)
 		radial[0].setBackgroundColor(steelseries.BackgroundColor.BRUSHED_METAL);
 
 		// PHA 1 radial gauges
-		//console.log("iradial "+ (i+wl) +",j: "+j+" set humidity: "+weather[j]['humidity']);
 		radial[1] = new steelseries.RadialBargraph('canvasRadial'+(1+1), {
                             	gaugeType: steelseries.GaugeType.TYPE4,
                             	size: 201,
 								minValue: 0,							// Set the min value on the scale
-								maxValue: 4,
-                            	valueGradient: pwrGrad,
+								maxValue: 3.5,
+                            	valueGradient: valGrad,
                             	useValueGradient: true,
                             	titleString: 'Phase 1',
                             	unitString: 'kW',
@@ -5318,13 +4491,12 @@ function activate_energy(location)
 		radial[1].setValueAnimated(energy['kw_ph1_use']);
 
 		// PHA 2 radial gauges
-		//console.log("iradial "+ (i+wl) +",j: "+j+" set humidity: "+weather[j]['humidity']);
 		radial[2] = new steelseries.RadialBargraph('canvasRadial'+(2+1), {
                             	gaugeType: steelseries.GaugeType.TYPE4,
                             	size: 201,
 								minValue: 0,							// Set the min value on the scale
-								maxValue: 4,
-                            	valueGradient: pwrGrad,
+								maxValue: 3.5,
+                            	valueGradient: valGrad,
                             	useValueGradient: true,
                             	titleString: 'Phase 2',
                             	unitString: 'kW',
@@ -5336,13 +4508,12 @@ function activate_energy(location)
 		radial[2].setValueAnimated(energy['kw_ph2_use']);
 
 		// PHA 3 radial gauges
-		//console.log("iradial "+ (i+wl) +",j: "+j+" set humidity: "+weather[j]['humidity']);
 		radial[3] = new steelseries.RadialBargraph('canvasRadial'+(3+1), {
                             	gaugeType: steelseries.GaugeType.TYPE4,
                             	size: 201,
 								minValue: 0,							// Set the min value on the scale
-								maxValue: 4,
-                            	valueGradient: pwrGrad,
+								maxValue: 3.5,
+                            	valueGradient: valGrad,
                             	useValueGradient: true,
                             	titleString: 'Phase 3',
                             	unitString: 'kW',
@@ -5360,7 +4531,7 @@ function activate_energy(location)
                           	gaugeType: steelseries.GaugeType.TYPE4,
                           	size: 201,
 							minValue: 0,							// Set the min value on the scale
-							maxValue: 3200,
+							maxValue: 9999,
                             valueGradient: pwrGrad,
                             useValueGradient: true,
                             titleString: 'Hi Use',
@@ -5377,7 +4548,7 @@ function activate_energy(location)
                           	gaugeType: steelseries.GaugeType.TYPE4,
                           	size: 201,
 							minValue: 0,							// Set the min value on the scale
-							maxValue: 3200,
+							maxValue: 9999,
                             valueGradient: pwrGrad,
                             useValueGradient: true,
                             titleString: 'Lo Use',
@@ -5394,7 +4565,7 @@ function activate_energy(location)
                           	gaugeType: steelseries.GaugeType.TYPE4,
                           	size: 201,
 							minValue: 0,							// Set the min value on the scale
-							maxValue: 3200,
+							maxValue: 9999,
                             valueGradient: pwrGrad,
                             useValueGradient: true,
                             titleString: 'Gas Use',
@@ -5406,13 +4577,29 @@ function activate_energy(location)
 		radial[3+wl].setBackgroundColor(steelseries.BackgroundColor.BRUSHED_METAL);
 		radial[3+wl].setValueAnimated(energy['gas_use']);	
 		
+		// Some likem, other do not. Odometer is beta for the moment.
+		radial[0+(wl*2)] = new steelseries.Odometer('canvasRadial'+(0+wl*2+1), {  });
+		radial[0+(wl*2)].setValue(energy['kw_hi_use']);
+		
+		radial[1+(wl*2)] = new steelseries.Odometer('canvasRadial'+(1+wl*2+1), {  });
+		radial[1+(wl*2)].setValue(energy['kw_lo_use']);
+		
+		radial[3+(wl*2)] = new steelseries.Odometer('canvasRadial'+(3+wl*2+1), {  });
+		radial[3+(wl*2)].setValue(energy['gas_use']);
+		
+		radial[0+(wl*3)] = new steelseries.Odometer('canvasRadial'+(0+wl*3+1), {  });
+		radial[0+(wl*3)].setValue(energy['kw_hi_ret']);
+		
+		radial[0+(wl*3)] = new steelseries.Odometer('canvasRadial'+(1+wl*3+1), {  });
+		radial[0+(wl*3)].setValue(energy['kw_lo_ret']);
+
 		// Once every 2 seconds we update the gauge meters based on the current
-		// value of the weather array (which might change due to incoming messages
+		// value of the sensors array (which might change due to incoming messages
 		// over websockets.
 		var id;
 		id = setInterval(function()
 		{
-			// Do work if we are in the weather screen
+			// Do work if we are in the sensors screen
 			if (s_screen == "energy" )
 			{
 				radial[0].setValueAnimated(energy['kw_act_use']);
@@ -5432,7 +4619,7 @@ function activate_energy(location)
 				var state = w_sock.readyState;
 				if (state != 1) 
 				{
-					console.log("Websocket:: error. State is: "+state);
+					logger("Websocket:: error. State is: "+state);
 					message("Websocket:: error. State is: "+state);
 					//w_sock = new WebSocket(w_uri);
 				}
@@ -5442,7 +4629,7 @@ function activate_energy(location)
 				// Kill this timer temporarily
 				clearInterval(id);
 				message("Suspend Dials");
-				console.log("activate_energy:: s_screen is: "+s_screen)
+				logger("activate_energy:: s_screen is: "+s_screen)
 			}
 		}, 2000);		// 2 seconds (in millisecs)
 		
@@ -5454,30 +4641,72 @@ function activate_energy(location)
 // Activate the Settings screen for a certain setting
 // identified with sid.
 //
+// XXX NOTE: Settings work on id AND on index of the settings array as defined in database.cfg
 //
 function activate_setting(sid)
 {
 	// Cleanup work area
+	s_setting_id = sid;
 	$( "#gui_content" ).empty();
-
 	var offbut, onbut;	
 	switch (sid+"")
 	{
 		// DEBUG level
 		// Set the debug level and store in the settings variable
 		case "0":
-			html_msg = '<table border="0">';
-			$( "#gui_content" ).append( html_msg );
-	
-			var table = $( "#gui_content" ).children();		// to add to the table tree in DOM
-			var but =  ''	
+			var debug_help = ' <br>'
+					+ 'This is some text to explain the use of the debug parameter. '
+					+ 'During normal operation, the parameter should  be set to 0, which means no debug messages are displayed '
+					+ 'and only a condensed set of status messages will be shown. '
+					+ '<li>Level 1: Will set debug level so that more messages are displayed in the message area </li>'
+					+ '<li>Level 2: Will add popup alerts for the main things/buttons/events </li>'
+					+ '<li>Level 3: All error and comment messages are displayed </li><br><br>'
+					;
+			if (jqmobile==1) {
+				$("#gui_content").append('<span>' + debug_help + '</span>');
+				but = ''
+					//+ '<td>'
+					//+ '<div data-role="fieldcontain">'
+					+ '<fieldset data-role="controlgroup" data-type="horizontal">'
+					+ '<legend>Select the LamPI debug level: </legend>'
+					+ '<input type="radio" name="radio-choice" id="rd0" value="0" checked="checked">'
+					+ '<label for="rd0">L0</label>'
+					+ '<input type="radio" name="radio-choice" id="rd1" value="1">'
+					+ '<label for="rd1">L1</label>'
+					+ '<input type="radio" name="radio-choice" id="rd2" value="2">'
+					+ '<label for="rd2">L2</label>'
+					+ '<input type="radio" name="radio-choice" id="rd3" value="3">'
+					+ '<label for="rd3">L3</label>'
+					+ '</fieldset>'
+					//+ '</div>'
+					//+ '</td>'
+					;
+				$("#gui_content").append(but);
+				
+				$("input[type='radio']").bind( "change", function(event, ui) {
+						debug = $("input[name*=radio-choice]:checked").val();
+						//$(this).attr("checked",true).checkboxradio("refresh");
+						//$(this).prop("checked",true).checkboxradio("refresh");
+						settings[0]['val'] = debug;
+						send2daemon("dbase","store_setting", settings[0]);
+						message("Debug set to: "+debug);
+				});
+				//$("input[type='radio']").prop("checked",true).checkboxradio("refresh");
+				//var value = $("input[name*=radio-choice]:checked").val();
+			}
+			else {
+				html_msg = '<table border="0">';
+				$( "#gui_content" ).append( html_msg );
+				var table = $( "#gui_content" ).children();		// to add to the table tree in DOM
+				$(table).append('<tr><td><span>' + debug_help + '</span>');			
+				var but =  ''	
 					+ '<tr class="switch">'
 					+ '<td>'
 					+ 'Select the debug level: ' 
 					+ '</td>'
 					;
-			$(table).append(but);
-			but = ''	
+				$(table).append(but);
+				but = ''	
 					+ '<td>'
 					+ '<span id="choice" class="buttonset">'
 					+ '<input type="radio" name="choice" id="d0" value="0" class="buttonset" checked="checked"><label for="d0">L0</label>'
@@ -5486,236 +4715,224 @@ function activate_setting(sid)
 					+ '<input type="radio" name="choice" id="d3" value="3" class="buttonset"><label for="d3">L3</label>'
 					+ '</span></td>'
 					;
-			$(table).append(but);
-
-			var debug_help = ' <br>'
-					+ 'This is some text to explain the use of the debug parameter. '
-					+ 'During normal operation, the parameter should  be set to 0, which means no debug messages are displayed '
-					+ 'and only a condensed set of status messages will be shown. '
-					+ '<li>Level 1: Will set debug level so that more messages are displayed in the message area '
-					+ '<li>Level 2: Will add popup alerts for the main things/buttons/events '
-					+ '<li>Level 3: All error and comment messages are displayed <br /><br> '
-					;
-			$(table).append('<tr><td><span>' + debug_help + '</span>');
+				$(table).append(but);
+				debug = settings[0]['val'];
+				$('#choice').buttonset();
+				$('#d'+ debug).attr('checked',true).button('refresh');
+				$('#choice input[type=radio]').change(function() {
+					debug = this.value;
+					// XXX Ooops, should not update based on index but on id value
+					settings[0]['val'] = debug;
+				
+					// Write the settings to database
+					if (debug>0) myAlert("Set : " + settings[0]['name']+' to '+settings[0]['val'],"DEBUG LEVEL");
+					send2daemon("dbase","store_setting", settings[0]);	
+					message("debug level set to "+ debug);
+				})
+			}
+		break; //0
 			
-			debug = settings[0]['val'];
-			$('#choice').buttonset();
-			
-			$('#d'+ debug).attr('checked',true).button('refresh');
-			$('#choice input[type=radio]').change(function() {
-				debug = this.value;
-				// XXX Ooops, should not update bsed on index but on id value
-				settings[0]['val'] = debug;
-				if (persist>0) {
-						// Write the settings to database
-						if (debug>0) myAlert("Set : " + settings[0]['name']+' to '+settings[0]['val'],"DEBUG LEVEL");
-						send_2_dbase("store_setting", settings[0]);
-				}
-				message("debug level set to "+ debug);
-			})
-		
-		break;
-			
-		// Controller Select
+		// LAYOUT SETTING
 		// Select whether you want to use the ICS controller or the do-it-yourself of Raspberry PI
 		case "1":
-			html_msg = '<table border="0">';
-			$( "#gui_content" ).append( html_msg );
-	
-			var table = $( "#gui_content" ).children();		// to add to the table tree in DOM
-			var but =  ''	
-					+ '<tr class="switch">'
-					+ '<td>'
-					+ 'Select which controller to use: ' 
-					+ '</td>'
+			var debug_help = ' <br>'
+					+ 'This menu option allows users to choose how the devices and sensors are laid out on the screen. '
+					+ 'The standard screen layout is with rows for the devices and using dials for the sensors.'
+					+ 'The rows layout is most used on hi-resolution tables and PCs. '
+					+ 'Mobile is a special variant of rows but for mobile devices. '
+					+ 'But alternatively the user may select that all devices are resented as tiles on the screen. '
+					+ '<li>Rows: ....  </li>'
+					+ '<li>Mobile: ..... </li>'
+					+ '<li>Tiles: ....  </li><br><br>'
 					;
-			$(table).append(but);
-			if (jqmobile==1) {
-				but = '<td>'
-				+ '<div data-role="controlgroup" data-type="horizontal">'
-				+ '<input type="radio" name="choice" id="d0" value="0" class="buttonset" checked="checked"><label for="d0">ICS-1000</label>'
-				+ '<input type="radio" name="choice" id="d1" value="1" class="buttonset"><label for="d1">Raspberry</label>'
-				+ '</div></td>';
-			}
-			else {
-				but = ''	
-				+ '<td>'
-				+ '<span id="choice" class="buttonset">'
-				+ '<input type="radio" name="choice" id="d0" value="0" class="buttonset" checked="checked"><label for="d0">ICS-1000</label>'
-				+ '<input type="radio" name="choice" id="d1" value="1" class="buttonset"><label for="d1">Raspberry</label>'
-				+ '</span></td>'
-				;
-			}
-			$(table).append(but);
-
-			var debug_help = "<br>"
-							+ "	This parameter describes which controller we will use to send lamp commands to the devices. "
-							+ "	The ICS-1000 is a safe choice in case you have one. For users that have a Raspberry PI "
-							+ "	and a 433 MHz transmitter (and implemented the commands as found in backend_rasp.php) "
-							+ "	it's much more fun to use the latter. Remember to pair your device with either or both."
-							+ "	<br /><br>"
+			if (jqmobile == 1){
+				logger("activate_setting:: layout jquerymobile",1);
+								$("#gui_content").append('<span>' + debug_help + '</span>');
+				but = ''
+					//+ '<td>'
+					//+ '<div data-role="fieldcontain">'
+					+ '<fieldset data-role="controlgroup" data-type="horizontal">'
+					+ '<legend>Select the LamPI debug level: </legend>'
+					+ '<input type="radio" name="radio-choice" id="rd0" value="0" checked="checked">'
+					+ '<label for="rd0">L0</label>'
+					+ '<input type="radio" name="radio-choice" id="rd1" value="1">'
+					+ '<label for="rd1">L1</label>'
+					+ '<input type="radio" name="radio-choice" id="rd2" value="2">'
+					+ '<label for="rd2">L2</label>'
+					+ '<input type="radio" name="radio-choice" id="rd3" value="3">'
+					+ '<label for="rd3">L3</label>'
+					+ '</fieldset>'
+					//+ '</div>'
+					//+ '</td>'
 					;
-			$(table).append('<tr><td><span>' + debug_help + '</span>');	
-			
-			cntrl = settings[1]['val'];
-			
-			//alert("Before choice buttonset");
-			if (jqmobile==1) {
-				
-				$('#d'+ cntrl).attr('checked',true).button('refresh');
-				$( ".buttonset" ).bind( "click", function(e, ui) {
-					cntrl = $(e.target).val();
- 					//alert("button: "+cntrl);
-					if (cntrl == 0) {
-						alert ("Setting controller to ICS-1000");
-						s_controller = murl + 'frontend_ics.php';
-					} else {
-						alert ("Setting controller to Raspberry");
-						s_controller = murl + 'frontend_rasp.php';
-					}
-					message("Controller value value set to "+ cntrl);
-					// XXX Ooops, we directly address the array here, as controller is second array element
-					settings[1]['val'] = cntrl;
-					if (persist>0) {
-						// Write the settings to database
-						send_2_dbase("store_setting", settings[1]);
-					}
+				$("#gui_content").append(but);
+				$("input[type='radio']").bind( "change", function(event, ui) {
+						settings[1]['val'] = $("input[name*=radio-choice]:checked").val();
+						//$(this).attr("checked",true).checkboxradio("refresh");
+						//$(this).prop("checked",true).checkboxradio("refresh");
+						jqmobile = settings[1]['val'];
+						send2daemon("dbase","store_setting", settings[1]);
+						message("Layout set to: "+settings[1]['val']);
 				});
+				//$("input[type='radio']").prop("checked",true).checkboxradio("refresh");
+				//var value = $("input[name*=radio-choice]:checked").val();
 			}
 			else {
-				$('#choice').buttonset();
-				$('#d'+ cntrl).attr('checked',true).button('refresh');
-			
-				$('#choice input[type=radio]').change(function(e) {
-					//cntrl = $(e.target).val();
-					cntrl = this.value;
-					//alert("cntrl: "+cntrl);
-					if (cntrl == 0) {
-						myAlert ("Setting controller to ICS-1000");
-						s_controller = murl + 'frontend_ics.php';
-					} else {
-						myAlert ("Setting controller to Raspberry");
-						s_controller = murl + 'frontend_rasp.php';
-					}
-					message("Controller value value set to "+ cntrl);
-					// XXX Ooops, we directly address the array here, as controller is second array element
-					settings[1]['val'] = cntrl;
-					if (persist > 0) {
-						// Write the settings to database
-						if (debug>1) alert("Set : "+settings[1]['name']+' to '+settings[1]['val']);
-						send_2_dbase("store_setting", settings[1]);
-					}
-				})	
-			}
-		break;
-
-		// SQL, do we want to make use of sql or sync to an array at the backend.
-		// In this case, we either need to save to files (often) or only accept persist to be "relaxed"
-		// For the moment, files are NOT supported in combination with persist == "Strict"
-		case "2":
-			html_msg = '<table border="0">';
-			$( "#gui_content" ).append( html_msg );
-	
-			var table = $( "#gui_content" ).children();		// to add to the table tree in DOM
-			var but =  ''	
+				html_msg = '<table border="0">';
+				$( "#gui_content" ).append( html_msg );
+				var table = $( "#gui_content" ).children();		// to add to the table tree in DOM
+				$(table).append('<tr><td><span>' + debug_help + '</span>');			
+				var but =  ''	
 					+ '<tr class="switch">'
 					+ '<td>'
-					+ 'Select SQL use or plain files: ' 
+					+ 'Select the screen layout mode: ' 
 					+ '</td>'
 					;
-			$(table).append(but);
-			but = ''	
+				$(table).append(but);
+				but = ''	
 					+ '<td>'
 					+ '<span id="choice" class="buttonset">'
-					+ '<input type="radio" name="choice" id="d0" value="0" class="buttonset"><label for="d0">Files</label>'
-					+ '<input type="radio" name="choice" id="d1" value="1" class="buttonset" checked="checked"><label for="d1">SQL</label>'
+					+ '<input type="radio" name="choice" id="d0" value="0" class="buttonset" checked="checked"><label for="d0">Rows</label>'
+					+ '<input type="radio" name="choice" id="d1" value="1" class="buttonset"><label for="d1">Mobile</label>'
+					+ '<input type="radio" name="choice" id="d2" value="2" class="buttonset"><label for="d2">Tiles</label>'
 					+ '</span></td>'
 					;
-			$(table).append(but);
+				$(table).append(but);
+				$('#choice').buttonset();
+				$('#d'+ settings[1]['val']).attr('checked',true).button('refresh');
+				$('#choice input[type=radio]').change(function() {
+					settings[1]['val'] = this.value;
+				
+					// Write the settings to database
+					if (debug>=1) myAlert("The Layout mode " + settings[1]['name']+' has been set to '+settings[1]['val'],"LamPI Layout Mode");
+					send2daemon("dbase","store_setting", settings[1]);
+					jqmobile = settings[1]['val'];
+					message("The LamPI Layout mode has been set to "+ settings[1]['val']+"<br>");
+				})
+			}
+		break; //1
 
-			var debug_help = "<br>"
-							+ "	This parameter describes what kind of storage we use on the backend. "
-							+ "	The simplest solution is using files for storage, but then we will not be able to"
-							+ "	synchronize all ations on the client with storage. <br><br>"
-							+ "	At the moment, only MySQL is implemented! (and it works like a charm)"
-							+ "	<br /><br> "
-					;
-			$(table).append('<tr><td><span>' + debug_help + '</span>');	
-
-			mysql = settings[2]['val'];
-			$('#choice').buttonset();
-			$('#d'+ mysql).attr('checked',true).button('refresh');
-			$('#choice input[type=radio]').change(function() {
-					mysql = this.value;
-					settings[2]['val'] = mysql;
-					if (persist > 0) {
-						// Write the settings to database
-						if (debug > 0) alert("Set : " + settings[2]['name'] + ' to ' + settings[2]['val']);
-						send_2_dbase("store_setting", settings[2]);
-					}
-					message("MySQL value set to "+ mysql);
-			})		
-		break;	
+		// 2 USERS SETTING, Since May 2015 this entry is used for 'users' !!!
+		case "2":
+			logger("activate_setting:: users selected",2);
+			send2daemon("dbase","list_user", settings[2] );
+		case "2b":
+			$( "#gui_content" ).empty();
+			html_msg = '<div id="gui_uset"></div>';			// sensors set
+			$( "#gui_content" ).append (html_msg);
 		
-		// persistence	XXX At the moment not really used. Could be once we build the daemon process
-		//
+			var uset_help = "<br>"
+					+ "This page allows you to perform some user setting functions.<br>"
+					;
+			$(table).append('<tr><td colspan="2"><span>'+uset_help+'</span></td>');	
+
+			if (debug > 2) alert("Activate_setting 2:: Making buttons for setting: " + sid);
+			// Start a table for the control buttons
+			html_msg = '<table border="0">';
+			$( "#gui_uset" ).append( html_msg );
+	
+			var table = $( "#gui_uset" ).children();		// to add to the table tree in DOM
+
+			// By making first row head, we make it non sortable as well!!
+			var but =  '<thead>'	
+					+ '<tr class="switch">'
+					+ '<td colspan="2">'
+					+ '<input type="submit" id="Fx'+sid+'" value="X" class="dbuttons scene_button del_button">'
+					+ '<input type="submit" id="Fr'+sid+'" value="+" class="dbuttons scene_button new_button">'
+					+ '</td>'
+					+ '<td colspan="2"><input type="input"  id="Fl'+sid+'" value= "'+"Users"+'" class="dlabels"></td>' 
+					+ '<td>'
+					+ '<input type="submit" id="Fe'+sid+'" value="Store" class="dbuttons scene_button">'
+					+ '</td></thead>'
+					;
+			$(table).append(but);
+			$(table).append('<tbody>');
+
+			for (var k = 0; k < users.length; k++ ){
+				but = '<tr class="scene">'
+					+ '<td><input type="checkbox" id="s'+sid+'c" name="cb'+k+'" value="yes"></td>'
+					+ '<td> ' + k
+					+ '<td> ' + users[k]['name']
+					+ '<td><input type="text" id="Fs'+sid+'i'+k+'" value= "'+users[k]['login']+'" class="dlabels sval"></td>'
+					+ '<td><input type="text" id="Ft'+sid+'t'+k+'" value= "'+users[k]['passw']+'" class="dbuttons scene_button sval"></td>'
+					//+ '<td>' + scmd 
+					;
+				$(table).append(but);
+			} // for
+
+			// Handle the content of the Backup/Restore screen
+			$( "#gui_uset" ).on("click", ".dbuttons" ,function(e) 
+			{
+
+				bak = this.value;
+				message("Backup Restore function chosen "+ bak);
+				
+				switch ( bak ) {
+					case "store":
+						var config_file = $( "#store_config").val();
+						if (config_file.substr(-4) != ".cfg") config_file += ".cfg" ;
+						send2daemon("setting","store_config",config_file);
+						if (debug>0) myAlert("Backup: "+ config_file);
+					break;
+						
+					case "load":
+						var config_file = $( "#load_config").val();
+						//alert("config_file: "+config_file);
+						send2daemon("setting","load_config",config_file);
+						if (debug>=1) myAlert("The configuration file is now set to: "+config_file,"CONFIGURATION");
+						else message("Configuration file loaded "+config_file)
+					break;
+					default:
+						myAlert("Unknown option for Users Setting: "+bak);
+				}
+			})
+		break; //2
+		
+		// ALARM 3
 		case "3":
 			html_msg = '<table border="0">';
 			$( "#gui_content" ).append( html_msg );
 	
 			var table = $( "#gui_content" ).children();		// to add to the table tree in DOM
-			var but =  ''	
-					+ '<tr class="switch">'
-					+ '<td>'
-					+ 'Select persistence to the database: ' 
-					+ '</td>'
+			var but = ''	
+					+ '<tr class="switch">'	+ '<td>Alarm status: </td>'
 					;
 			$(table).append(but);
 			but = ''	
-					+ '<td>'
-					+ '<span id="choice" class="buttonset">'
-					+ '<input type="radio" name="choice" id="d0" value="0" class="buttonset"><label for="d0">Easy</label>'
-					+ '<input type="radio" name="choice" id="d1" value="1" class="buttonset" checked="checked"><label for="d1">Relaxed</label>'
-					+ '<input type="radio" name="choice" id="d2" value="2" class="buttonset"><label for="d2">Strict</label>'
+					+ '<td><span id="choice" class="buttonset">'
+					+ '<input type="radio" name="choice" id="d0" value="0" class="buttonset"><label for="d0">Armed</label>'
+					+ '<input type="radio" name="choice" id="d1" value="1" class="buttonset"><label for="d1">Home</label>'
+					+ '<input type="radio" name="choice" id="d2" value="2" class="buttonset" checked="checked"><label for="d2">Disarmed</label>'
 					+ '</span></td>'
 					;
 			$(table).append(but);
 
 			var debug_help = "<br>"
-				+ "		This parameter deals with the persistence of the data to the SQL database. "
-				+ "<li>Easy: Button changes are locally saved, and will be remembered in this session. "
-				+ "		Configuration changes to scenes/timers are saved to memory only. "
-				+ "		Re-ordering buttons in sequences are cosmetic only, as soon as you move away from the page "
-				+ "		changes are forgotten "
-				+ "<li>Relaxed: Changes in devices are remembered during the session and are written to the backend "
-				+ "		changes in sequences are not. When other users use remotes or other jqmobile apps,"
-				+ "		relaxed still has advantages, although remembering buttons settings between sessions is less useful"
-				+ "<li>Strict: As far as possible, every change in configuration data will be written to the "
-				+ "		backend database. More traffic overhead, slower performance, but maximum consistency of "
-				+ "		the database also between different webusers or sessions."
+				+ "		This parameter deals with the status of the alarm system. "
+				+ "<li>Armed: The system is armed and every alarm will reach the main subscriber of alarm events."
+				+ "<li>Home: The alarm system is armed, but only on outgoing sensors and on places that are not "
+				+ "		used in the house during night. "
+				+ "<li>Disarmed: The alarm system is switched of. All sensors are not active."
+				+ "<br><br>"
 			;
 			$(table).append('<tr><td><span>' + debug_help + '</span>');	
-			persist = settings[3]['val'];	
+			
+			alarmStatus = settings[3]['val'];
+			//console.log("alarm: "+settings[3]['login']+":"+settings[3]['passw']);
 			$('#choice').buttonset();
-			$('#d'+ persist).attr('checked',true).button('refresh');
+			$('#d'+ alarmStatus).attr('checked',true).button('refresh');
 			$('#choice input[type=radio]').change(function() {
-					persist = this.value;
-					settings[3]['val'] = persist;
-					message("Persist value set to "+ persist);
-					// For persist, we ALWAYS write this value to the database as
-					// we have to remember this one (really)
-					if (persist >= 0) {
-						// Write the settings to database
-						if (debug > 0) alert("Set : " + settings[3]['name'] + ' to ' + settings[3]['val']);
-						send_2_dbase("store_setting", settings[3]);
-					}
+					alarmStatus = this.value;
+					settings[3]['val'] = alarmStatus;
+					message("alarmStatus value set to "+ alarmStatus);
+					// Write the settings to database
+					if (debug >= 1) alert("Set : " + settings[3]['name'] + ' to ' + settings[3]['val']);
+					send2daemon("dbase","store_setting", settings[3]);
 			});
 			// Init the current value of the button
-			
-		break;
+		break; //3
 		
-		// SKIN Since 1.4 we use it for skin/style selection
-		// 
+		// 4 SKIN
 		case "4":
 			$( "#gui_content" ).empty();
 			html_msg = '<div id="gui_skin"></div>';
@@ -5724,14 +4941,15 @@ function activate_setting(sid)
 			html_msg = '<table border="0">';
 			$( "#gui_skin" ).append( html_msg );
 			
+			if(typeof(Storage)!=="undefined") {
+  				 var effe = localStorage.getItem('skin');				// Skin setting
+ 			}
+			
 			var table = $( "#gui_skin" ).children();		// to add to the table tree in DOM
 					
-			var but =  ''	
-					+ '<thead><tr class="switch">'
-					+ '<td colspan="2">'
-					+ 'Choose your Style/Skin setting ' 
-					+ '</td></tr></thead>'
-					;
+			var but = ''	
+				+ '<thead><tr class="switch"><td colspan="2">Choose your Style/Skin setting </td></tr></thead>'
+				;
 			$(table).append(but);
 
 			var skin_help = "This option allows you to set the skin for your LamPI application. ";
@@ -5740,21 +4958,45 @@ function activate_setting(sid)
 			skin_help += "Note: Not supported on mobile devices!<br>";
 			skin_help += "Note: Better not choose a files for use on mobile devices ...<br><br>";
 			
-			$(table).append('<tr><td colspan="2"><span>' + skin_help + '</span>');		
-				
-			var list = [];
-			var str = '<fieldset><label for="load_skin">Select File: </label>'
-						+ '<select id="load_skin" value="styles/classic-blue.css" style="width:200px;" class="dlabels">' ; 
-			var files = {};
-			files = send_2_set("list_skin","*css");
-			//str += '<option>' + '   ' + '</option>';
-			for (var i=0; i<files.length; i++) {
-					str += '<option>' + files[i] + '</option>';
-			}
-			str += '</select>';
-			str += '</fieldset>';
+			$(table).append('<tr><td colspan="2"><span>' + skin_help + '</span>');	
 			
-			but = ''
+			$(table).append( '<tr><td colspan="2">current skin is: <a class="dlabels">' + skin + '</a></td></tr><br><br><br>' );
+			
+			//var list = [];
+			var str = '<fieldset><label for="load_skin">Select File: </label>'
+						+ '<select id="load_skin" value="styles/classic-blue.css" style="width:300px;" class="select-file">'; 
+			var files = [];
+			// files = send2daemon("setting","list_skin","*css");	// XXX Synchronous does not work for node and websockets
+			// The message reception takes place elsewhere, so we have to wait for the correct
+			// message to arrive. Name of the active skin is in settings[4]['val']
+			var dir = "styles";							// XXX This is a temporary fix since root directory of node is /home/pi and not /home/pi/wwww
+			var fileextension=".css";
+			logger("Calling dir read for: "+dir,0);
+			logger("Host: "+window.location.host,1);
+			var h = window.location.host.split(":");	// XXX Remove the special port and use standard Apache port nr. 80
+			
+			$.ajax({
+    			//This will retrieve the contents of the folder if the folder is configured as 'browsable'
+				url: "http://"+h[0] + "/" +dir,
+    			success: function (data) {
+        		//List all jpg files on the page
+            		$(data).find("a:contains(" + fileextension + ")").each(function () {
+             			var filename = this.href.replace(window.location.host,"").replace(window.location.pathname, "").replace("http://","");
+            			var len = files.push(dir + "/"+filename);
+						logger("Filename: "+filename+", new files length: "+len);
+
+        			});
+					logger("Skin selection #files: "+files.length);
+					//files = settings[4]['files'];
+					// List the files
+					for (var i=0; i<files.length; i++) {
+						if (files[i] == settings[4]['val']) str += '<option selected>' + files[i] + '</option>';
+						else str += '<option>' + files[i] + '</option>';
+					}
+					str += '</select>';
+					str += '</fieldset>';
+			
+					but = ''
 					+ '<tr><td>'
 					+ '<input type="submit" name="load_button" id="d1" value="load" class="dbuttons cc_button">'
 					+ '<label for="d1">Load Configuration</label>'
@@ -5763,7 +5005,10 @@ function activate_setting(sid)
 					+ '</form>'
 					+ '</td></tr>'
 					;
-			$(table).append(but);	
+					$(table).append(but);
+    			}
+			});
+
 			// Handle the content of the Backup/Restore screen
 			$( "#gui_skin" ).on("click", ".dbuttons" ,function(e) 
 			{
@@ -5772,27 +5017,47 @@ function activate_setting(sid)
 				switch ( skin_val ) {
 						
 					case "load":
-						var skin_file = $( "#load_skin").val();
+						skin = $( "#load_skin" ).val();
 						// Trick!! only replace hrefs that start with our styles directory!!!
-						$("link[href^='styles']").attr("href", skin_file);
-						settings[4]['val']=skin_file;
-						//alert("Settings 4: "+ settings[4]['val']);
-						send_2_dbase("store_setting", settings[4]);
+						$("link[href^='styles']").attr("href", skin);
+						myConfirm('Do you want to set the '+skin+' Skin file as your default skin for users that start the application? ' +
+									  'Otherwise the existing default skin '+settings[4]['val']+' will be used. ' +
+									  'Please note that if you press cancel this skin will still be used in your current browser sesssion until you load another skin',
+							// Confirm
+							function () {
+								// Update the database
+								message('updating the database');
+								settings[4]['val'] = skin;
+								send2daemon("dbase","store_setting", settings[4]);
+  							}, 
+							// Cancel	
+							function () {
+								message("Not updated");
+								return(0);
+  							},
+  							'Set Default?'
+						);
+						if(typeof(Storage)!=="undefined") {
+  							// Code for localStorage/sessionStorage.
+							// alert("Support for localstorage");
+							localStorage.setItem('skin', skin);				// Skin setting
+							if (debug>=1) {
+								logger("Set localstorage skin: "+skin);
+							}
+ 						}
+						activate_setting(4);
 					break;
 						
 					default:
 						myAlert("Unknown option for Skin/Styles Setting: "+bak);
 				}
 			})
-			
 			// XXX make sure we write this to the mysql backend too!
 	
-		break;	
-		
+		break; //4	
 		// Backup and Restore
 		//
 		case "5": 
-		
 			$( "#gui_content" ).empty();
 			html_msg = '<div id="gui_backup"></div>';
 			$( "#gui_content" ).append (html_msg);
@@ -5823,13 +5088,14 @@ function activate_setting(sid)
 					+ "so please use another name for your backup.<br/><br/>"
 					+ "NOTE: At this moment we do not check for overwriting existing files.<br/>"
 					;
-			$(table).append('<tr><td colspan="2"><span>' + debug_help + '</span></td>');	
+			$(table).append('<tr><td colspan="2"><span>'+debug_help+'</span></td>');	
 
 			var list = [];
 			var str = '<fieldset><label for="load_config">Select File: </label>'
 						+ '<select id="load_config" value="load" class="dlabels" style="width:200px;">' ;   // onchange="choice()"
+						// XXX see skin settings
 			var files = {};
-			files = send_2_set("list_config","*cfg");
+			files = send2daemon("setting","list_config","*cfg");
 			str += '<option>' + '   ' + '</option>';
 			for (var i=0; i<files.length; i++) {
 					str += '<option>' + files[i] + '</option>';
@@ -5864,15 +5130,15 @@ function activate_setting(sid)
 					case "store":
 						var config_file = $( "#store_config").val();
 						if (config_file.substr(-4) != ".cfg") config_file += ".cfg" ;
-						send_2_set("store_config",config_file);
+						send2daemon("setting","store_config",config_file);
 						if (debug>0) myAlert("Backup: "+ config_file);
 					break;
 						
 					case "load":
 						var config_file = $( "#load_config").val();
 						//alert("config_file: "+config_file);
-						send_2_set("load_config",config_file);
-						if (debug>0) myAlert("The configuration file is now set to: "+config_file,"CONFIGURATION");
+						send2daemon("setting","load_config",config_file);
+						if (debug>=1) myAlert("The configuration file is now set to: "+config_file,"CONFIGURATION");
 						else message("Configuration file loaded "+config_file)
 					break;
 					default:
@@ -5880,7 +5146,7 @@ function activate_setting(sid)
 				}
 			})
 		break; //5
-		
+		//
 		// Console
 		//
 		case "6": 
@@ -5914,13 +5180,13 @@ function activate_setting(sid)
 				but += '<input type="submit" id="Cc" value="Connected Clients" class="dbuttons" >';
 				but += '<input type="submit" id="Cs" value="Sunrise Sunset" class="dbuttons" >';
 				but += '<input type="submit" id="Cl" value="Daemon log" class="dbuttons" >';
+				but += '<input type="submit" id="Cz" value="Zway log" class="dbuttons" >';
 				but += '<input type="submit" id="Cr" value="Daemon Restart" class="dbuttons" >';
+				but += '<input type="submit" id="Cp" value="Config Print" class="dbuttons" >';
 				but += '</td>';
 			}
 			$(table).append(but);
 			$(table).append('</tr>');
-			
-
 
 			// Now define the callback function for this config screen
 			//
@@ -5937,53 +5203,57 @@ function activate_setting(sid)
 				// First chars of the button id contain the action to perform
 				// Then we have the id of the handset, followed by "u" and unit number
 				// and "v"<value>
-				
 				switch (but_id.substr(0,2))
 				{
-					
-					// STORE button, only for Raspi Controllers
-					//
 					case "Cl": 
-						//alert("Activate_settings:: console - Log pressed" );
+						//alert("Activate_setting:: console - Log pressed" );
 						var client_msg = {
 							tcnt: ++w_tcnt%1000,
 							action: 'console',
 							request: 'logs'
 						}
-						console.log(client_msg);
-									
+						logger(client_msg);
 						// Send the password back to the daemon
 						message("Console Log request sent to server",1);
 						w_sock.send(JSON.stringify(client_msg));	
 					break;
-						
+
+					case "Cz": 
+						//alert("activate_setting:: console - Zway Log pressed" );
+						var client_msg = {
+							tcnt: ++w_tcnt%1000,
+							action: 'console',
+							request: 'zlogs'
+						}
+						logger(client_msg);
+						// Send the zwave log request back to the daemon
+						message("Console ZLog request sent to server",1);
+						w_sock.send(JSON.stringify(client_msg));	
+					break;
+
 					case "Cs":
 						var client_msg = {
 							tcnt: ++w_tcnt%1000,
 							action: 'console',
 							request: 'sunrisesunset'
 						}
-						console.log(client_msg);
-									
-						// Send the password back to the daemon
+						logger(client_msg);
+						// Send the sunset request back to the daemon
 						message("Console Sunrise/Sunset request sent to server",1);
 						w_sock.send(JSON.stringify(client_msg));
 					break;
-					
 					//
 					// Client button, list all active clients on the daemon
 					//	
 					case "Cc": 
-						//alert("Activate_settings:: Console - Client pressed" );
 						var client_msg = {
 							tcnt: ++w_tcnt%1000,
 							action: 'console',
 							request: 'clients'
 						}
-						console.log(client_msg);
-									
+						logger(client_msg);
 						// Send the password back to the daemon
-						message("Console Client request sent to server",1);
+						message("Console Clients request sent to server",1);
 						w_sock.send(JSON.stringify(client_msg));						
 					break;
 					
@@ -5994,10 +5264,20 @@ function activate_setting(sid)
 							action: 'console',
 							request: 'rebootdaemon'
 						}
-						console.log(client_msg);
-									
+						logger(client_msg);
 						// Send the password back to the daemon
-						message("Console Client request sent to server",1);
+						message("Console Client request rebootDaemon sent to server",1);
+						w_sock.send(JSON.stringify(client_msg));
+					break;
+					case "Cp":
+						var client_msg = {
+							tcnt: ++w_tcnt%1000,
+							action: 'console',
+							request: 'printConfig'
+						}
+						logger(client_msg);
+						// Send the password back to the daemon
+						message("Console Client request printConfig sent to server",1);
 						w_sock.send(JSON.stringify(client_msg));
 					break;
 					
@@ -6008,21 +5288,19 @@ function activate_setting(sid)
 			})// on-click handler XXX can be moved to document.ready part of the program
 			
 		break; //6
-		
-		// weather
+		//
+		// rules
+		//
 		case '7':
-			console.log("init_settings:: weather selected");
-		break;
-		
-		// Energy
-		case '8':
-			console.log("init_settings:: energy selected");
-		break;
-		
+			logger("activate_setting:: rules selected for w_url: "+w_url,2);
+			var win=window.open('http://'+w_url+'/rules/index.html', '_parent');
+
+		break; //7
 		default:
 			myAlert("Config encountered internal error: unknown button "+sid);
+		break;
 	}
-}// activate_settings
+}// activate_setting
 
 
 // --------------------------------- BUTTONS ----------------------------------------------
@@ -6083,10 +5361,10 @@ function handset_button(id, val, hover)
 	return ( but );	
 }
 //
-// Print a weather button
+// Print a sensors button
 //
 //
-function weather_button(id, val, hover) 
+function sensors_button(id, val, hover) 
 {
 	var but = ''
 	+ '<input type="submit" id="'+id+'" value= "'+val+'" class="hw_button '+hover+'">'
@@ -6106,9 +5384,10 @@ function setting_button(id, val, hover)
 // ------------------------------------- DEVICES -----------------------------------------
 //
 // STORE_DEVICE
+//
 // Store the value of the device_id in the GUI back in the devices object 
 // Local on the client. The daemon will as of release 1.4 take care of syncing the value
-// to the dtabase (should that be necessary based on persist)
+// to the database 
 //
 // Inputs:
 //	room: The room id of the object in the devices array (is a number)
@@ -6134,10 +5413,10 @@ function store_device(room, dev_id, val)
 			// This would then not be a switch in OFF
 			if (( val == 'OFF' ) && (device_type == "switch")) { 
 				devices[j]['val'] = 0; 
-				}
+			}
 			else if (( val == 'ON' ) && (device_type == "switch")) { 
 				devices[j]['val'] = 1; 
-				}
+			}
 			else if (( val == 'ON' ) && (device_type == "dimmer")) { 
 				devices[j]['val'] = devices[j]['lastval'] ; 
 			}
@@ -6148,44 +5427,14 @@ function store_device(room, dev_id, val)
 				devices[j]['val'] = val ;  
 				devices[j]['lastval'] = val;
 			}
-
-			// If we are here, there is a match with room_ and dev_id found
-			// in the database, and the client-side has been updated.
-			
-			// XXX We can now also update the server side!
-			// Just to test the function!!
-			// send_2_dbase can handle several "command", "message" combinations
-			// Only store if the persist mode is NOT easy == 0
-			
-			//if (persist > 0)
-			//	send_2_dbase("store_device", devices[j]);
-			
-			return(1)								// Stop loop
+			return(1);								// Stop loop
 		}
-	}
+	}// for
 	return(1);	
 }
 
-//
-// Find the device in the devices array and return the array index
-//
-function find_device(rm_id, dev_id)
-{
-	for (var j = 0; j<devices.length; j++ )
-	{
-  		var device_id = devices[j]['id'];
-		var room_id = devices[j]['room'];
-			
-       	if (( room_id == rm_id ) && ( device_id == dev_id ))
-		{
-			return( j );
-		}
-	}
-	return(-1);		
-}
 
-
-// --------------------- LOAD DEVICE ------------------------------------
+// -------------------------------------------------------------------------
 // Load the value of a device from the gui variable
 // Inputs:
 //			rm_id: The index for the room to load (probably the active room)
@@ -6193,69 +5442,64 @@ function find_device(rm_id, dev_id)
 // XXX we need to change the load/store functions so that they store
 // complete object of one device: array of values for that rm_id and that dev_id
 //
-function load_device(rm_id, dev_id)
-{
-	for (var j = 0; j<devices.length; j++ )
-	{
+function load_device(rm_id, dev_id) {
+	for (var j = 0; j<devices.length; j++ ) {
   		var device_id = devices[j]['id'];
 		var room_id   = devices[j]['room'];	
-       	if (( room_id == rm_id ) && ( device_id == dev_id ))
-		{
-			// we might use the 2 values below to change the name of the device as well
-//			var device_name = devices[j]['name'];
-//			var device_type = devices[j]['type'];
+       	if (( room_id == rm_id ) && ( device_id == dev_id )) {
 			// add value to the devices object
 			var val = devices[j]['val'];
-			// Stop loop
-			return( val );
+			return( val );						// Stop loop
 		}
 	}
 	return(1);		
 }
 
-// ---------------------------------- GET SCENE ------------------------------------
+// ---------------------------------- SCENES ------------------------------------
 
 // This function takes the id of a scene ( index 0-31 in the array, id 1-32 in the database )
 // and returns the corresponding scene in the database
 // We could (sometimes) have worked with the index -1, but this would then not allow
 // us to shuffle sequences (where at a moment the scene with id 6 might be located in scenes[2])
 //
-function get_scene(scn_id)
-{
-	for (var j = 0; j<scenes.length; j++ )
-	{
-       	if ( scenes[j]['id'] == scn_id )
-		{
+function get_scene(scn_id) {
+	for (var j = 0; j<scenes.length; j++ ) 	{
+       	if ( scenes[j]['id'] == scn_id ) {
 			return( scenes[j] );
 		}
 	}
-	return(1);		
+	return(-1);		
 }
 
+function idx_scene(scn_id) {
+	for (var j = 0; j<scenes.length; j++ ) {
+       	if ( scenes[j]['id'] == scn_id ) {
+			return(j);
+		}
+	}
+	return(-1);		
+}
+
+// ---------------------------------- HANDSETS -------------------------------------
 //
 // Same function but now for handset
 //
-function get_handset(hs_id)
-{
-	for (var j = 0; j<handsets.length; j++ )
-	{
-       	if ( handsets[j]['id'] == hs_id )
-		{
+function get_handset(hs_id) {
+	for (var j = 0; j<handsets.length; j++ ) {
+       	if ( handsets[j]['id'] == hs_id ) {
 			return( handsets[j] );
 		}
 	}
 	return(1);		
 }
 
+// ---------------------------------------------------------------------------------
 //
-// Get Handset Record
+// Get Handset object
 //
-function get_handset_record(hs_id,hs_unit,hs_val)
-{
-	for (var j = 0; j<handsets.length; j++ )
-	{
-       	if ((handsets[j]['id'] == hs_id) && (handsets[j]['unit'] == hs_unit) && (handsets[j]['val'] == hs_val))
-		{
+function get_handset_record(hs_id,hs_unit,hs_val) {
+	for (var j = 0; j<handsets.length; j++ ) {
+       	if ((handsets[j]['id'] == hs_id) && (handsets[j]['unit'] == hs_unit) && (handsets[j]['val'] == hs_val)) {
 			return( handsets[j] );
 		}
 	}
@@ -6263,20 +5507,15 @@ function get_handset_record(hs_id,hs_unit,hs_val)
 }
 
 // ---------------------------------- GET TIMER ------------------------------------
-
 // This function takes the id of a scene ( index 0-31 in the array, id 1-32 in the database )
 // and returns the corresponding scene in the database
 // We could (sometimes) have worked with the index -1, but this would then not allow
 // us to shuffle sequences (where at a moment the scene with id 6 might be located in scenes[2])
 //
-function get_timer(tim_id)
-{
-	for (var j = 0; j<timers.length; j++ )
-	{
-       	if ( timers[j]['id'] == tim_id )
-		{
-			// return value of the object
-			return( timers[j] );
+function get_timer(tim_id) {
+	for (var j = 0; j<timers.length; j++ ) {
+       	if ( timers[j]['id'] == tim_id ) {
+			return( timers[j] );				// return value of the object
 		}
 	}
 	return(-1);		
@@ -6284,110 +5523,15 @@ function get_timer(tim_id)
 
 // ---------------------------------- SET TIMER ------------------------------------
 //
-function set_timer(tim_id,timer)
-{
-	for (var j = 0; j<timers.length; j++ )
-	{
-       	if ( timers[j]['id'] == tim_id )
-		{
-			// add value to the  object
-			timers[j]=timer;
+function set_timer(tim_id,timer) {
+	for (var j = 0; j<timers.length; j++ ) {
+       	if ( timers[j]['id'] == tim_id ) {
+			timers[j]=timer;					// add value to the  object
 			return(0);
 		}
 	}
 	return(-1);		
 }
-
-// -------------------------------------------------------------------------------------------------------------
-//	Handle incoming device requests, translate to a standard message and send to device by AJAX
-//
-//	Input: The id of the calling button (!). Which for ICS in general is the same id as the real device name
-//			in the ICS appliance. 
-// 			The Value of the button pressed
-//
-//	Maybe we do not really need this function, but it's there to make translations
-//	between the gui id's and the real device id's simpler, and allows commands for
-//	other devices than just the ICS-1000 (we need to add a devicetype parameter)
-//
-// XXX We will standardize in the client application on the messaging format that is used by KlikAanKlikUit.
-// However, onze received by the backend these messages may either be forwarded to the ICS or
-// translated to another controller so that it operates independent from the 
-// device controller used. 
-
-// The choice for the ICS-1000 initially is OK, but we should expect other
-// controllers as well, and for that matter other destinations to send the message to might pop-up...
-//
-function handle_device(id,val) 
-{
-	// We know the current room s_room_id
-	// and the current device_id is passed by the handler to this function
-	// NOTE: This function now ONLY works correct for the ICS-1000 device. If we like
-	// to work with other technologies such as Zwave we need a translation between buttons and device codes
-	// specific for such a device.
-	var str = "!R" + s_room_id + id;	// str bcomes something like: !R1D2"
-											// val is like "F1" "ON" "OFF"
-	if ( debug>2 ) 
-			alert ("handle_device:: \nstr: " + str + "\nval: " + val );
-	switch (val) {
-		case "Fo":
-			str = str + "Fo";
-		break;
-			// For type dimmer/slider we  have set the behaviour so that
-			// pressing the ON button twice will not start dimming up/down, but
-			// only restore to last light setting
-		case "ON":
-		case "F1":
-			//console.log("handle_device:: F1 recognized");
-			for (var i=0; i< devices.length; i++) {
-				if(( devices[i]['id'] == id) && (devices[i]['room'] == s_room_id)){
-					if (devices[i]['type'] == "dimmer") {
-						//alert ("handle_device:: dimmer translate");
-						// translate F1 into 
-						str = str + "FdP" + devices[i]['lastval'];
-						// update of value done by database handler
-						break;
-					}
-					else {
-						str = str + "F1";
-						break;
-					}
-				}
-			}
-		break;
-			
-		case "OFF":
-		case "F0":
-				str = str + "F0";
-		break;
-			
-		case "DUP":
-				str = str + "S1";
-		break;
-			
-		case "D":
-				alert("handle_device:: " + val + " command not recognized");
-		break;
-			
-		default:
-			// must be dimmer, val is P0 through P32
-			// Need to have better pasing of the arguments
-			str = str + val;
-		}	
-		// str is now complete. Next we need to find out where to send the command string to.
-		var brand = "";
-		for (var i=0; i< devices.length; i++) {
-			if (( devices[i]['id'] == id.substr(0,2) ) && ( devices[i]['room'] == s_room_id )) {
-				
-				var brand_id = devices[i]['brand'];
-				brand = brands[brand_id]['fname'];
-				break;
-			}
-		}
-		console.log("handle_device:: lamp code is: "+str);
-		//alert("handle_device:: brand: "+brand+", str:"+str);
-		message_device(brand,str);	
-}
-
 
 // ---------------------------------------------------------------------------------------
 // Decode a timers scene 'seq' command string in ICS format back to human readable form so that we can build 
@@ -6396,9 +5540,7 @@ function handle_device(id,val)
 //
 function decode_scene_string (str)
 {
-	if (debug > 1)
-	{ console.log("decode_scene_string: " + str);
-	}
+	logger("decode_scene_string: " + str,2);
 	var pos1, room, dev, cmd, res;
 	pos1 = 0;
 	switch (str.substr(pos1,1))
@@ -6442,24 +5584,21 @@ function decode_scene_string (str)
 			else { 
 				// Shift one position for rooms 10-31
 				dev = str.substr(pos1,2); 
-				pos1+=2; }
-		
+				pos1+=2; 
+			}
 			for (var i=0; i < devices.length; i++ ) {
-				if ((devices[i]['id'] == 'D'+dev ) && (devices[i]['room'] == room )) { 
+				if ((devices[i]['uaddr'] == dev ) && (devices[i]['room'] == room )) { 
 					res += devices[i]['name'] 
-					switch (devices[i]['type'])
-					{
-					case "dimmer": 
-						res += ', dimmer' ;
-					break;
-					
-					case "switch":
-						res += ', switch' ;
-					break;
-					
-					// Sunblinds and energy not implemented 
-					default:
-						alert("decode_scene:: Unsupported devicetype: " + devices[i]['type']);
+					switch (devices[i]['type']) {
+						case "dimmer": 
+							res += ', dimmer' ;
+						break;
+						case "switch":
+							res += ', switch' ;
+						break;
+						// Sunblinds and energy not implemented 
+						default:
+							alert("decode_scene:: Unsupported devicetype: " + devices[i]['type']);
 					}
 				} 
 			} 
@@ -6468,29 +5607,15 @@ function decode_scene_string (str)
 				pos1++;
 				cmd = str.substr(pos1,1);
 				switch (cmd) {
-					case 'a':
-						res += ', ALL OFF';
-					break;
-					case 'o':
-						res += ', set dimmer';
-					break;
-					case '0':
-						res += ', OFF';
-					break;
-					case '1':
-						res += ', ON';
-					break;
-					case 'k':
-						res += ', Man. Lock';
-					break;
-					case 'l':
-						res += ', Full Lock';
-					break;
-					case 'd':
-						pos1++;
-						if (str.substr(pos1,1) == 'P') {
-							pos1++;
-							res += ', dim value: ' + str.substr(pos1);
+					case 'a': 	res += ', ALL OFF'; break;
+					case 'o':	res += ', set dimmer'; break;
+					case '0':	res += ', OFF'; break;
+					case '1':	res += ', ON'; break;
+					case 'k': 	res += ', Man. Lock'; break;
+					case 'l':	res += ', Full Lock'; break;
+					case 'd':	
+						pos1++; if (str.substr(pos1,1) == 'P') {
+						pos1++;	res += ', dim value: ' + str.substr(pos1);
 						}
 					break;
 				}
@@ -6512,176 +5637,106 @@ function decode_scene_string (str)
 	return (res);
 }
 
-// ---------------------------------------------------------------------------------------
-// SEND2DAEMON
+
+
+// -------------------------------------------------------------------------------------------------------------
+//	Handle incoming device requests, translate to a standard message and send to device 
+// This function translate the id's used by the LamPI GUI to the device uaddr addresses
 //
-// Universal function for sending buffers to the daemon
-// action: "gui","dbase","login"
+//	Input: The id of the calling button (!). Which for ICS in general is the same id as the real device name
+//			in the ICS appliance. 
+// In order to be independent of id's used by this LamPI gui, we translate its id's to "uaddr" addresses that will
+// be used by the physical devices.
 //
-function send2daemon(action,cmd,message)
+function handle_device(id,val) 
 {
+	// We know the current room s_room_id and the current device_id is passed by the handler to this function
 	//
-	if (debug>=1) console.log("send2daemon: action: "+action+", cmd: "+cmd);
-	// Make the buffer we'll transmit. As you see, the message(s) are really simple
-	// and be same as ICS-1000, and will not be full-blown json.
-	var data = {
-		tcnt: ++w_tcnt%1000+"",
-		type: "raw",
-		action: action,				// actually the class of the action
-		cmd: cmd,					// The command for that class
-		message: message			// Message contains the parameter(s) necessary
-	};
-	//if (debug>=1) console.log("send2daemon:: jSon: "+JSON.stringify(data));
-		
-	// Now check the state of the socket. This could take forever, have to build a limit ...
-	// In practice, this sending part will likely NOT find out that the connection is lost,
-	// but the registered receiver handler (somewhere around line 1800) will.
+	var str = "";
+	var action = "";
+	var cmdString = "";	
+
+	// Decode val and validate/correct its value
+	if ( debug>=3 ) alert ("handle_device:: \nid: " + id + "\nval: " + val );
 	
-	for (var i=0; i<4; i++) {				
-		switch (w_sock.readyState) {
-		// 0: Not yet ready, wait for connect
-		case 0:
-			console.log("send2daemon:: readystate not ready: "+w_sock.readyState);
-			setTimeout( function() { console.log("send2daemon:: socket not ready: "+w_sock.readyState); }, 1000);
+	switch (val) {
+		case "Fo":
+			str = str + "Fo";
 		break;
-		// 1: socket is ready, send the data
-		case 1: 
-			if (debug>=1) console.log("send2daemon:: sending: "+JSON.stringify(data));
-			w_sock.send(JSON.stringify(data));
-			return(0);
+		// For type dimmer/slider we  have set the behaviour so that
+		// pressing the ON button twice will not start dimming up/down, but
+		// only restore to last light setting
+		case "ON":
+		case "F1":
+			//logger("handle_device:: F1 recognized");
+			for (var i=0; i< devices.length; i++) {
+				if (( devices[i]['id'] == id) && (devices[i]['room'] == s_room_id)) {
+					if (devices[i]['type'] == "dimmer") {
+						//alert ("handle_device:: dimmer translate");
+						str = str + "FdP" + devices[i]['lastval'];
+						break;
+					}
+					else {
+						str = str + "F1";
+						break;
+					}
+				}//if
+			}//for
 		break;
-		// 2: close in progress
-		// Must wait the disconnect out?
-		case 2:
-			console.log("send2daemon:: readystate close in progress: "+w_sock.readyState);
+		// Switch OFF command
+		case "OFF":
+		case "F0":
+			str = str + "F0";
 		break;
-		// 3: closed
-		// if closed, reopen the socket again
-		case 3:
-			console.log("send2daemon:: readystate closed: "+w_sock.readyState);
-			// wait with execution for 500 mSec
-			//setTimeout( function() { w_sock = WebSocket(w_uri); }, 1500);
-			//console.log("Websocket:: socket re-opened: "+w_sock.readyState);
+		case "DUP":
+			str = str + "S1";
 		break;
-	
+		case "D":
+			alert("handle_device:: " + val + " command not recognized");
+		break;
+		// All Off command
+		case "Fa":
+			cmdString = "!R" + s_room_id + "Fa";
+			message_device("gui", action, cmdString);
+			return(1);
+		break;
+		// If not a switch, it must be a dimmer (or thermostat)
 		default:
-			console.log("send2daemon:: readystate not defined: "+w_sock.readyState);
+			// must be dimmer, val is P0 through P32
+			// Need to have better pasing of the arguments
+			str = str + "Fd" + val;
+	}	
+	// str is now complete. Next we need to find out where to send the command string to.
+
+	for (var i=0; i< devices.length; i++) {
+		if (( devices[i]['id'] == id.substr(0,2) ) && ( devices[i]['room'] == s_room_id )) {
+			
+			var uaddr = devices[i]['uaddr'];
+			var brand_id = devices[i]['brand'];
+			// The message_device() function will use the brand name as the action description
+			action = brands[brand_id]['fname'];
+			// str bcomes something like: !R1D2FdP16"
+			cmdString = "!R" + s_room_id + "D" + uaddr + str;
+			break;
 		}
-	}// for
-	console.log("send2daemon:: unable to transmit message 4 times: "+w_sock.readyState);
-	return(-1);
-}
-
-
-// ---------------------------------------------------------------------------------------
-//	Function database inits all communication with the database backend
-//
-//  This is the only AJAX function in the file that is sort of synchronous.
-//	This because we need the values before we can setup rooms, devices, debug etc settings
-//
-function load_database(dbase_cmd) 
-{
-	var sqlServer = murl + 'frontend_sql.php';
-	if (debug>=2) alert("load_database:: sqlServer:: " + sqlServer);
-	else console.log("load_database:: sqlServer: "+ sqlServer);
-	
-	if ( phonegap != 1 ) 
-	{
-		if (debug>=2) console.log("load_database:: XXX Should be Calling send2daemon with load_database, xxx, xxxx");
-		console.log("load_database:: XXX Should be Calling send2daemon with load_database, xxx, xxxx");
-		// Make the buffer we'll transmit. As you see, the GUI messages are really simple
-		// and be same as ICS-1000, and will not be full-blown json.
-		//while (w_sock.readyState != 1) { };
-		//send2daemon("load_database",dbase_cmd,dbase_cmd);
-		//return(1);
 	}
-	else if (( phonegap == 1 ) || (settings[1]['val'] == 0 ))
-	{
-		console.log("load_database:: Using good old ajax style");
-	}
-	
-	$.ajax({
-        url: sqlServer,	
-		async: false,					// Synchronous operation 
-		type: "POST",								
-        dataType: 'json',
-		data: {
-			action: "load_database",
-			message: dbase_cmd
-		},
-		timeout: 6000,
-        success: function( data )
-		{
-			// XXX Future improvement: Only get one room or scene at a time, not the whole array !!
-			// On the other hand, for TCP/IP sending a large array or just a smaller one
-			// does not make a lot of difference in time and processing
-			rooms = data.appmsg['rooms'];			// Array of rooms
-			devices = data.appmsg['devices'];		// Array of devices			
-			scenes = data.appmsg['scenes'];
-			timers = data.appmsg['timers'];
-			handsets = data.appmsg['handsets'];
-			settings = data.appmsg['settings'];
-			brands = data.appmsg['brands'];
-			weather = data.appmsg['weather'];		// we want the id and name values
-
-			// For all rooms write a button to the document
-			$("#gui_header").append('<table border="0">');	// Write table def to DOM
-			var table = $( "#gui_header" ).children();		// to add to the table tree in DOM
-
-			// INIT IS THE ONLY FUNCTION DONE AFTER LOADING THE DATABASE
-			// FIRST TIME. AND BY PUTTING IT IN SUCCESS WE MAKE IT SYNCHRONOUS!
-			init();
-			// XXX If we run load_dbase sync, then we can
-			// call init separately in the ready() function which is cleaner
-
-			// Send debug message is desired
-			if (debug > 1) {							// Show result with alert		
-          			alert('Ajax call load_database success. '
-					+ '\nTransaction Nr: ' + data.tcnt
-				  	+ ',\nStatus: ' + data.status 
-					+ '.\nApp Msg: ' + data.appmsg 
-					+ '.\nApp Err: ' + data.apperr 
-				);
-			}
-			// Function finished successfully
-			but = 'Load_database success' ;
-			if (debug > 1) {
-				but += "<br>AppErr: " + data.apperr;
-			}
-			message(but);
-			return(0);
-        }, 
-		error: function(jqXHR, textStatus, errorThrown)
-		{
-          	// data.responseText is what you want to display, that's your error.
-			if (debug>1) {
-          		alert("load_database:: Error " + sqlServer
-					+ " sending cmd:: " + dbase_cmd
-					+ "\nError: " + jqXHR.status
-					+ "\nTextStatus: "+ textStatus
-					+ "\nerrorThrown: "+ errorThrown
-					+ "\n\nFunction load_database will finish now!" );
-			}
-			else
-				alert("Timeout connecting to database on "+sqlServer);
-			return(-1);
-         }
-	});		
-}
+	logger("handle_device:: action is: "+action+", lamp command code is: "+cmdString);
+	message_device( "gui", action, cmdString);	
+} 
 
 
 // -----------------------------------------------------------------------------------	
-//	This is a universal piece of code for sending commands to lamp devices
-//  The function only knows about lamp id's. Commands for switching on/off
+//	This is a universal piece of code for sending commands for lamp devices
+//  The function only knows about devices "id" 's. Commands for switching on/off
 //  are based on those buttons
 //
 //	The backend function will take care of the command interpretation, at this
 // moment the ICS command structure serves as a universal piece of code
 //
 // input : STRING action setting "device", "scene", "timer" makes easier for backend
-// input : STRING controller_cmd (only ics) in the form of "!R1D2F1"
+// input : STRING controller_cmd (only ics) in the form of "!R1D2F1" or "!R1D2FdP15" for dimmers
 //
-function message_device(action, controller_cmd) 
+function message_device(action, cmd, controller_cmd) 
 {
 	// We could also put this part at the end of the function. Then the command
 	// would be executed, now we exit without sending the command
@@ -6690,195 +5745,9 @@ function message_device(action, controller_cmd)
 		activate_scene(s_scene_id);
 		return(1);
 	}
-	//
-	// WEBSOCKETS
-	// if not using phonegap, and controller == raspberry, use websockets 
-	if (( phonegap != 1 ) && (settings[1]['val'] == 1 ))
-	{
-		if (debug>=2) console.log("message_device:: Calling send2daemon with gui, set, "+controller_cmd);
-		// Make the buffer we'll transmit. As you see, the GUI messages are really simple
-		// and be same as ICS-1000, and will not be full-blown json.
-		send2daemon("gui","set",controller_cmd);
-	}
-	
-	// AJAX used
-	else if (( phonegap == 1 ) || (settings[1]['val'] == 0 ))
-	{
-		$.ajax({
-        	url: s_controller,
-			type: "POST",
-         	dataType: 'json',
-			data: {
-				action: action,
-				message: controller_cmd
-			},
-			timeout: 5000,										// 8 Seconds
-         	success: function( data ){
-				switch (data.status) {
-					case "OK":
-						var but = '' 
-						+ 'Dev cmd '+ controller_cmd 
-						+' <br>Status: ' + data.status 
-						+', Return: ' + data.appmsg
-						;
-						if (debug >= 2) {
-							but += "\nAppErr: " + data.apperr;
-						}
-						message(but);
-					break;
-					case "ERR":
-						var but = ''  
-						+ 'Dev cmd:'+ action +','+ controller_cmd 
-						+' <br>Status: ' + data.status 
-						+' Error: ' + data.apperr
-						;
-						message(but);
-					break;
-				}
-          		if (debug>=2) {
-          			myAlert('message_device: ' + action
-						  + '\ntransaction:' + data.tcnt
-						  + '\nStatus: '    + data.status
-						  + '\n\nApp Msg: ' + data.appmsg
-						  + '\n\nApp Err: ' + data.apperr);
-				}
-         	}, 
-			error: function(jqXHR, textStatus, errorThrown){
-          		// data.responseText is what you want to display, that's your error.
-          		myAlert("Message_device Error on " + action 
-					  + "\ncontroller_cmd: " + controller_cmd 
-					  + "\njqXHR: " + jqXHR 
-					  + "\ntextstatus" + textStatus + ", " + errorThrown);
-         	}
-		}); // ajax
-	} // if ics
-
-	//
-	// nothing else
-	//
-	else {
-		message("message_device:: xmit faked");
-	}
+	logger("message_device:: Calling send2daemon with "+action+", "+cmd+", "+controller_cmd,1);
+	// Make the buffer we'll transmit. As you see, the GUI messages are really simple
+	// and be same as ICS-1000, and will not be full-blown json.
+	send2daemon(action,cmd,controller_cmd);
 	return(1);
 }
-
-
-// -------------------------------------------------------------------------------------------
-// Sync the MySQL or file database on the backend
-// This function uses webbservices (preferred) or old style ICS/Ajax
-// For Ajax the function gets called by a button on the GUI Parameter for the Ajax peer; "store_xxx" command
-//		followed by the records in rooms, devices and scenes
-//
-//	We want to store the data to the other side and there they need to sort whether that is in files or SQL
-//
-function send_2_dbase(dbase_cmd, dbase_arg) 
-{
-	// WEBSOCKETS
-	if (( phonegap != 1 ) && (settings[1]['val'] == 1 ))
-	{
-		console.log("send_2_dbase:: Receiving websocket command "+dbase_cmd+", dbase_arg: <"+dbase_arg+">");
-		// Make the buffer we'll transmit. As you see, the GUI messages are really simple
-		// and be same as ICS-1000, and will not be full-blown json.
-		send2daemon("dbase",dbase_cmd,dbase_arg);
-	}
-	// AJAX
-	else if (( phonegap == 1 ) || (settings[1]['val'] == 0 ))
-	{
-		console.log("send_2_database:: Receiving ajax command "+dbase_cmd);
-		$.ajax({
-   		url: murl + 'frontend_sql.php',				   
-		type: "POST",
-    	dataType: 'json',								// TO receive json ...
-		//contentType: 'application/json; charset=UTF-8',				// MMM To SEND(!) json???
-		data: {
-			action: dbase_cmd,
-			message: dbase_arg							// Can be several command types !!
-		},
-		timeout: 8000,
-    	success: function( data )
-		{
-			// Make room 1 default
-			if ( debug > 0 ) message("Send 2 dbase:: Success");	
-					
-			// Send debug message if desired
-			if (debug > 1) {							// Show result with alert		
-          			alert('Ajax call send_2_dbase: ' + dbase_cmd + ' success: \n' 
-				  	+ ',\nStatus: ' + data.status 
-					+ '.\nApp Msg: ' + data.appmsg 
-					+ '.\nApp Err: ' + data.apperr 
-					);
-			}
-			message (data.appmsg);						// Function finished successfully
-		},
-		error: function(jqXHR, textStatus, errorThrown)
-		{
-			// data.responseText is what you want to display, that's your error.
-			alert("send_2_dbase:: request failed "
-			+ "\nError: " + jqXHR.responseText
-			+ "\nTextStatus: "+ textStatus
-			+ "\nerrorThrown: "+ errorThrown
-			+ "\n\nFunction send_2_dbase will finish now!" );
-			return(-1);
-		}
-		});
-	}
-	else {
-		message("send_2_dbase:: Error database message");
-	}
-};
-
-// --------------------------------------------------------------------------------------
-// Send_2_set: Send commands to the backend PHP system, mainly for changing LamPI settings. 
-// These commands are used for retrieving skins, settings and other stuff
-// supporting the GUI program.
-// As we need the results of this call for our program, we need SYNC call, so
-// we can wait for the results in our program.
-//
-// NOTE: We call init functions SYNCHRONOUS, as it modifies the app under our hands
-// This may be the only function therefore that we keep separate from the daemon.
-//
-function send_2_set(command, parameter)
-{
-	var result = {};
-	$.ajax({
-		async: false,									// Synchronous operation
-   		url: murl + "frontend_set.php",
-		type: "POST",
-    	dataType: 'json',
-		//contentType: 'application/json',
-		data: {
-			action: command,
-			message: parameter							// Can be several command types !!
-		},
-		timeout: 7000,
-    	success: function( data )
-		{
-			// Make room 1 default
-			if (debug>0) message("send_2_set:: Success");
-					
-			// Send debug message if desired
-			if (debug>1) {								// Show result with alert	
-          		alert('Ajax call send_2_set success: \n' 
-					+ ',\nStatus: ' + data.status
-					+ '.\nApp Msg: ' + data.appmsg
-					+ '.\nApp Err: ' + data.apperr
-				);
-			}
-			result = data.appmsg;
-			return(result);
-			// Function finished successfully
-		}, 
-		error: function(jqXHR, textStatus, errorThrown)
-		{
-			// data.responseText is what you want to display, that's your error.
-			alert("send_2_set:: command: " + command
-				+ "\nError:" + jqXHR
-				+ "\nTextStatus: "+ textStatus
-				+ "\nerrorThrown: "+ errorThrown
-				+ "\n\nFunction send_2_set will finish now!" );
-			return(-1);
-		}
-	});
-	if (debug>2) alert("send_2_set:: returning"+ result);
-	return (result);
-};

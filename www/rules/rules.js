@@ -378,7 +378,7 @@ function init_blockly() {
 
 	var toolbox = '<xml>';
 	//toolbox += '<xml id="toolbox" style="display: none">';
-	toolbox += "<category name='controls'>";
+	toolbox += "<category name='controls' class='widget' >";
 		toolbox += '<block type="controls_if"></block>';
 		toolbox += '<block type="controls_repeat_ext"></block>';
 		toolbox += '<block type="controls_whileUntil"></block>';

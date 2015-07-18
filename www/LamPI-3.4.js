@@ -108,7 +108,7 @@ function start_LAMP(){
 //
 	$("#gui_header").on("click", ".hr_button", function(e){
 			e.preventDefault();
-//			e.stopPropagation();
+			e.stopPropagation();
 			selected = $(this);
 						
 			value=$(this).val();								// Value of the button
@@ -124,7 +124,7 @@ function start_LAMP(){
 //
 	$("#gui_header").on("click", ".cr_button", function(e){
 		e.preventDefault();
-//		e.stopPropagation();
+		e.stopPropagation();
 		selected = $(this);
 		$( '.cr_button' ).removeClass( 'hover' );
 		$( this ).addClass ( 'hover' );
@@ -290,7 +290,7 @@ function start_LAMP(){
 //
 	$("#gui_header").on("click", ".hs_button", function(e){
 		e.preventDefault();
-//		e.stopPropagation();
+		e.stopPropagation();
 		selected = $(this);
 		$( '.hs_button' ).removeClass( 'hover' );
 		$( this ).addClass ( 'hover' );
@@ -305,7 +305,7 @@ function start_LAMP(){
 //
 	$("#gui_header").on("click", ".cs_button", function(e){
 		e.preventDefault();
-//		e.stopPropagation();
+		e.stopPropagation();
 		selected = $(this);
 		$( '.cs_button' ).removeClass( 'hover' );
 		$( this ).addClass ( 'hover' );
@@ -496,7 +496,7 @@ function start_LAMP(){
 	
 	$("#gui_header").on("click", ".ht_button", function(e){
 			e.preventDefault();
-//			e.stopPropagation();
+			e.stopPropagation();
 			selected = $(this);
 			$( '.ht_button' ).removeClass( 'hover' );
 			$( this ).addClass ( 'hover' );
@@ -512,7 +512,7 @@ function start_LAMP(){
 		
 	$("#gui_header").on("click", ".ct_button", function(e){
 		e.preventDefault();
-//		e.stopPropagation();
+		e.stopPropagation();
 		selected = $(this);
 		$( '.ct_button' ).removeClass( 'hover' );
 		$( this ).addClass ( 'hover' );
@@ -685,7 +685,7 @@ function start_LAMP(){
 //
 	$("#gui_header").on("click", ".hh_button", function(e){
 			e.preventDefault();
-//			e.stopPropagation();
+			e.stopPropagation();
 			selected = $(this);
 						
 			value=$(this).val();								// Value of the button
@@ -703,7 +703,7 @@ function start_LAMP(){
 //
 	$("#gui_header").on("click", ".ch_button", function(e){
 		e.preventDefault();
-//		e.stopPropagation();
+		e.stopPropagation();
 		selected = $(this);
 		$( '.ch_button' ).removeClass( 'hover' );
 		$( this ).addClass ( 'hover' );
@@ -960,7 +960,7 @@ function start_LAMP(){
 //
 	$("#gui_content").on("click", ".cw_button", function(e){
 			e.preventDefault();
-//			e.stopPropagation();
+			e.stopPropagation();
 			selected = $(this);
 						
 			value=$(this).val();							// Value of the button
@@ -981,7 +981,7 @@ function start_LAMP(){
 //
 	$("#gui_header").on("click", ".cw_button", function(e){
 		e.preventDefault();
-//		e.stopPropagation();
+		e.stopPropagation();
 		selected = $(this);
 		$( '.cw_button' ).removeClass( 'hover' );
 		$( this ).addClass ( 'hover' );
@@ -1237,7 +1237,7 @@ function start_LAMP(){
 //
 	$("#gui_header").on("click", ".hc_button", function(e){
 			e.preventDefault();
-//			e.stopPropagation();
+			e.stopPropagation();
 			selected = $(this);
 			
 			$( '.hc_button' ).removeClass( 'hover' );
@@ -1254,7 +1254,7 @@ function start_LAMP(){
 		
 	$("#gui_header").on("click", ".cc_button", function(e){
 		e.preventDefault();
-//		e.stopPropagation();
+		e.stopPropagation();
 		selected = $(this);
 		$( '.cc_button' ).removeClass( 'hover' );
 		$( this ).addClass ( 'hover' );
@@ -1920,7 +1920,6 @@ function init_timers(cmd)
 	var msg = 'Init Timers, timers read: ';	
 	var but = '' ;
 	for (var j = 0; j<timers.length; j++ ){
-  
 		var timer_id = timers[j]['id'];
 		var timer_name = timers[j]['name'];
 		var timer_seq = timers[j]['seq'];
@@ -1934,9 +1933,6 @@ function init_timers(cmd)
 	}
 	if (debug>1) message(msg);
 	$("#gui_header_content").append(but);
-	
-	// Add special buttons for controlling the scenes
-	// Add a scene
 	but  =  '';
 	but += '<input type="submit" id="Add" value= "+" class="ct_button new_button">'  ;
 	but += '<input type="submit" id="Del" value= "X" class="ct_button del_button">'  ;
@@ -2179,9 +2175,7 @@ function init_menu(cmd)
 			}
 		}); 
 	}
-	// EVENT HANDLER
 }
-
 
 
 // --------------------------------------------------------------------------------
@@ -2243,7 +2237,6 @@ function activate_room(new_room_id, selectable)
 	table = $( "#gui_devices tbody" ).last();
 		
 	for (var j = 0; j<devices.length; j++ ){
-  
 		var device_id = devices[j]['id'];
 		var room_id = devices[j]['room'];
 			
@@ -2254,20 +2247,13 @@ function activate_room(new_room_id, selectable)
 			var device_val  = devices[j]['val'];				// Do NOT use lastval here!
 			var offbut, onbut;
 				
-			if ( device_val == 0 ) {							// device value, not the button value
-				offbut = " hover";
-				onbut = "";
-			}
-			else {
-				offbut = "";
-				onbut = " hover" ;
-			};
+			if ( device_val == 0 )	{ offbut = " hover"; onbut = ""; }
+			else					{ offbut = ""; onbut = " hover"; }
 				
 			// add the html of button, depending on the type switch or dimmer
 			switch (device_type) 
 			{ 
-			case "switch": 
-				
+			  case "switch": 
 				// Below is the on/off device. Some code double, but better readable
 				// For jqmobile the layout, but also slider difinitions are different
 				if (jqmobile == 1) {
@@ -2278,7 +2264,7 @@ function activate_room(new_room_id, selectable)
 					but += '<td><input type="submit" id="'+device_id+'F0'+'" value="OFF" class="dbuttons off_button'+offbut+'">';
 					but += '<input type="submit" id="'+device_id+'F1'+'" value="ON" class="dbuttons on_button'+onbut+'"></td>';
 				}		
-				// NOT jqmobile, but BROWSER
+				// NOT jqmobile
 				else {
 					var but =  '<tr class="devrow switch">' ;
 					if (selectable == "Del") 
@@ -2290,9 +2276,9 @@ function activate_room(new_room_id, selectable)
 				}
 				$(table).append(but);
 				// Set the value read from load_device in the corresponding button
-			break;
+			  break;
 			
-			case "dimmer":	
+			  case "dimmer":	
 					// Unfortunately, code for jqmobile and Web jQuery UI is not the same
 				if (jqmobile == 1) {	
 					var slid = '<tr class="devrow dimrow">';
@@ -2323,14 +2309,13 @@ function activate_room(new_room_id, selectable)
 				//XXX		
 				// eventhandler for the slider. Use a div and id to make distinct sliders
 				// This function works only if the handler is put AFTER the sliders generated
-				// So if we want to connect to a
 					
 				var label ="#"+device_id+"Fl"; 
 				var slidid="#"+device_id+"Fd";
 
 				//XXX	Dimmer/Slider handling must be here for the moment. Every slider is "static" and belongs to
 				//		and is declared for a specific device
-				//		Move to doc ready section as soon as possible 
+				//		Move to doc ready section when possible 
 
 				// eventhandler for the slider. Use a div and id to make distict sliders
 				// This function works only if the handler is put AFTER the sliders generated
@@ -2408,9 +2393,8 @@ function activate_room(new_room_id, selectable)
 								val = 0 ;	
 								// strip id and change val "D1Fd"+"P0" ==>> "D1"+"F0"
 								handle_device( id.slice(0,-2), "F" + val );		 
-								// Remove the hover from the current button (probably "ON")
+								// Remove old hover from the current button (probably "ON") and place new hover
 								$( this ).parent().siblings().children().removeClass( 'hover' );
-								// Now put the hover on the OFF button
 								$( this ).parent().siblings().children("#"+id.slice(0,-2)+"F0").addClass( 'hover' );
 							} 
 							else { 
@@ -2426,10 +2410,9 @@ function activate_room(new_room_id, selectable)
 					$( label ).val( val );
   				}); // Slider Function
 				
-			break;
+			  break;
 			
-			case "thermostat":
-			
+			  case "thermostat":
 					// Unfortunately, code for jqmobile and Web jQuery UI is not the same
 				if (jqmobile == 1) {	
 					var slid = '<tr class="devrow dimrow">';
@@ -2542,12 +2525,12 @@ function activate_room(new_room_id, selectable)
 					});
 					// Initial value of the slider at time of definition
 					$( label ).val( val );
-  				}); // Slider Function
-			break;
+  				});// Slider Function
+			  break;
 			
-			default:
+			  default:
 					alert("lamp_button, type: "+device_type+" unknown");
-			} // switch	
+			}// switch	
 				
 		}// room
 	};//for		

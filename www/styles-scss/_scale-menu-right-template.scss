@@ -336,7 +336,7 @@
 		margin: 1px;
 	}
 		
-	/* Command Weather button */
+	/* Command Weather/Sensor button */
 	.cw_button {
 		height:35px;
 		width: 35px;
@@ -683,3 +683,17 @@
 		background-color:$button_active_bg_color; 
 		color:$button_active_fg_color;
 	}
+	
+/* Blockly Settings (if any */
+	.blocklyToolboxDiv {
+		color: $dlabel_fg_color;
+		background:$dlabel_bg_color;
+		background-color:$dlabel_bg_color;
+	}
+	/*
+	.blocklyTreeRoot {
+		color: $dlabel_fg_color;
+		background-color:$dlabel_bg_color;
+	}
+	*/
+

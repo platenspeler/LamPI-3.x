@@ -321,7 +321,7 @@ input#lbl {
   align: right;
   margin: 1px; }
 
-/* Command Weather button */
+/* Command Weather/Sensor button */
 .cw_button {
   height: 35px;
   width: 35px;
@@ -631,3 +631,16 @@ input#lbl {
 .buttonset:checked {
   background-color: #111;
   color: yellow; }
+
+/* Blockly Settings (if any */
+.blocklyToolboxDiv {
+  color: black;
+  background: #eee;
+  background-color: #eee; }
+
+/*
+.blocklyTreeRoot {
+	color: $dlabel_fg_color;
+	background-color:$dlabel_bg_color;
+}
+*/

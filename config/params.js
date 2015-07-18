@@ -7,7 +7,7 @@ par.homeDir = process.env.HOME || '/home/pi'
 
 par.dbHost = process.env.DBHOST || 'localhost';
 par.dbUser = process.env.DBUSER || 'coco';
-par.dbPassword = process.env.PASSWD || 'coco';
+par.dbPassword = process.env.DBPASSWD || 'coco';
 
 par.zHost = process.env.ZHOST || '192.168.1.52';
 

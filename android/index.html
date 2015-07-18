@@ -6,16 +6,6 @@
 // Author: M. Westenberg (mw12554 @ hotmail.com)
 // (c). M. Westenberg
 //
-// Version 1.0, Aug 20, 2013. Working version for ICS-1000. Initial configuration hardcoded in backend_main.php
-// Version 1.1, Sep 10, 2013. Added initial support for scenes, and implemented basic timer functions.
-// Version 1.2, Sep 12, 2013. Added Backup/Restore and implemented timer daemon 
-// Version 1.3, Sep 16, 2013. Version for Android added
-// Version 1.5, Oct 24, 2013. Version with websockets
-// Version 1.6, Nov 10, 2013. Backend improvements and adding support for handsets
-// Version 1.7, Dec 10, 2013. Working on the mobile app and jQuery Mobile
-// Version 1.8, Jan 20, 2014. Version with Weather station support
-// Version 1.9, Mar 10, 2014. Start spport for wired sensors and logging
-// Version 2.1, Jul 31, 2014. Support for new devices and weather sensors
 //
 // This is the code to animate the front-end of the application. The main screen is divided in 3 regions:
 // #gui_header: Here are the buttons for selecting the active rooms 
@@ -28,32 +18,9 @@
 // There can be up to 16 devices made for the ICS-1000. AT the moment the application is working fo the
 // ICS-1000 device of COCO/Klikaanklikuit and a UK company only. 
 //
-// SWITCHES
-// Switches can be implemented strightforward by printing two buttons for each lamp for OFF and ON.
-// The value in the devices database is either 0 or 1 for switches
-// We can use the value of the button to do further action.
-//
-// DIMMERS
-// Dimmers are inplemented with slider elements. Sliders are an elegant way to select the value for
-// a dimmed lamp. However, sliders do have a problem in jquery: They are created and destroyed but
-// having more than one active on dynamic variables is difficult.
-// In html: For each slider we need to set the class to .sliders and the index to id.
-//
-// MOODS
-// There are moods (related to rooms) and there are scenes. I do not yet know why there are 2,
-// but if I know where moods are better than scenes I might implement moods
-//
-// SCENES
-// Scenes are a set of device commands that are recorded, given a name and then stored on the ICS-100 
-// (or on a webserver in this case). The use can recall valid scenes and use them to apply a lighting scene 
-// to his/her house.
-//
-// TIMERS
-// Timers are a sort of scenes. In fact, it is a scene with a timer label on it. Timers are quite complex,
-// and for that reason I will first program support for scenes and then for timers.
 //
 // For Mobile Devices
-// NOte that the viewport width in portrait of the Galaxy S device is 320*452, display resolution is 480*640.
+// Note that the viewport width in portrait of the Galaxy S device is 320*452, display resolution is 480*640.
 // Unknown why the viewport is made smaller that th e actual pixels for the display (480 * 640).
 //
 -->
@@ -72,7 +39,8 @@
     <script src="http://mobipick.sustainablepace.net/js/mobipick.js"></script>
     
     <script src="phonegap.js"></script>
-    <script src="LamPI-2.0.js"></script> 
+    <script src="LamPIlib-3.4.js"></script>
+    <script src="LamPI-3.4.js"></script> 
 
 	<meta name="viewport" content="width=device-width, initial-scale=0.8, minimum-scale=0.7, maximum-scale=1.5" />
     
@@ -98,7 +66,7 @@ debug=1;									// Init debug
 dynamicIP=0;								// ==1: If IP not known, ask user for IP. 
 											// ==0: Use fixed IP in murl
 
-murl='http://192.168.2.53/'; 				// XXX Normally we could assume this to be the webaddress, but not for phonegap
+murl='http://192.168.2.50/'; 				// XXX Normally we could assume this to be the webaddress, but not for phonegap
 s_controller = murl + 'backend_rasp.php';
 
 

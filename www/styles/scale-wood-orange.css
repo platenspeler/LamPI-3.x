@@ -320,7 +320,7 @@ input#lbl {
   align: right;
   margin: 1px; }
 
-/* Command Weather button */
+/* Command Weather/Sensor button */
 .cw_button {
   height: 35px;
   width: 35px;
@@ -631,6 +631,18 @@ input#lbl {
   background-color: #111;
   color: yellow; }
 
+/* Blockly Settings (if any */
+.blocklyToolboxDiv {
+  color: #F7E3AB;
+  background: #957a0f;
+  background-color: #957a0f; }
+
+/*
+.blocklyTreeRoot {
+	color: $dlabel_fg_color;
+	background-color:$dlabel_bg_color;
+}
+*/
 /* ------------------------------------------------------------------------------------	*/
 /* OVERRIDE AREA 																		*/
 /* If you want to change template settings for this specific skin you can do this here	*/
