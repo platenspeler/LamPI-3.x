@@ -36,7 +36,7 @@
 //
 
 // XXX Stop animations when initi or redraw of grid
-// XXX Find a way to update a device or any other widget withou complete redraw
+// XXX Find a way to update a device or any other widget without a complete redraw
 
 //
 // WebSocket definitions
@@ -61,12 +61,13 @@ var murl='/';											// For Phonegap and Ajax usage, build a url. DO NOT CHAN
 // 
 //
 var skin = "";
-var debug = 1;											// debug level. Higher values >0 means more debug
-var persist = "1";										// Set default to relaxed
+var debug = "1";										// debug level. Higher values >0 means more debug
 var mysql = "1";										// Default is using mySQL
 var cntrl = "1";										// ICS-1000== 0 and Raspberry == 1
 var loginprocess=false;									// Is there a login process going on?
 
+// ----------------------------------------------------------------------------
+// Grid specific declaratons
 var gridster;
 var gSort = ['g_none'];										// No sorting initially
 var gScreen = [ 'g_devices' ];
@@ -91,12 +92,14 @@ function start_Grids()
   $(window).load(function(){
 
 	// --------------------------------------------------------------------------
-	// HEADER GRID SELECTION
+	// HEADER SORT GRID SELECTION
 	// Handle the selection for the grid (.hr_buttons used)
+	// NOTE: We use gui_header as its chidren are NOT known yet at this moment
 	//
 	$("#gui_header").on("click", ".hr_button", function(e){
 			e.preventDefault();
 			e.stopPropagation();
+			logger("event row2",1);
 			selected = $(this);
 			value=$(this).val();								// Value of the button
 			id = $(e.target).attr('id');						// should be id of the button (array index substract 1)
@@ -107,7 +110,7 @@ function start_Grids()
 			case "g_none":  gSort = [ "g_none" ]; break;
 			case "g_room":	if (! gSort.contains("g_room")) gSort.push("g_room"); break;
 			case "g_type":  if (! gSort.contains("g_type")) gSort.push("g_type"); break;
-			case "g_user":  if (! gSort.contains("g_user")) gSort.push("g_user"); break;
+			case "g_alpha":  if (! gSort.contains("g_alpha")) gSort.push("g_alpha"); break;
 			default:
 				message('click header:: id: ' + id + ' not a valid menu option');
 			}
@@ -115,12 +118,41 @@ function start_Grids()
 	});					  
 	
 	// --------------------------------------------------------------------------
+	// WIDGETS BUTTONS HANDLING
+	// Handle clicks in the SORTING area with DIV hs_button (borrowed from header scene)
+	//
+	$("#gui_header").on("click", ".hs_button", function(e){
+		e.preventDefault();
+		e.stopPropagation();
+		logger("event row1",1);
+		selected = $(this);
+		value=$(this).val();								// Value of the button
+		id = $(e.target).attr('id');						// should be id of the button (array index substract 1)
+		//$( '.hm_button' ).removeClass( 'hover' );
+		$( this ).toggleClass ( 'hover' );
+		switch(id)
+		{
+			case "s_devices": gToggle(gScreen,"g_devices"); break;
+			case "s_scenes": gToggle(gScreen,"g_scenes"); break;
+			case "s_timers": gToggle(gScreen,"g_timers"); break;
+			case "s_handsets": gToggle(gScreen,"g_handsets"); break;
+			case "s_sensors": gToggle(gScreen,"g_sensors"); break;
+			case "s_energy": gToggle(gScreen,"g_energy"); break;
+			case "s_reset": $('.hs_button').removeClass( 'hover' ); gScreen=[] ; break;
+			default:
+				message('click menu:: id: ' + id + ' not a valid menu option');
+		}
+		init_grid(gScreen,gSort)
+	}); 
+
+	// --------------------------------------------------------------------------
 	// MENU BUTTONS HANDLING
 	// Handle clicks in the menu area with DIV hm_button
 	//
 	$("#gui_menu").on("click", ".hm_button", function(e){
 		e.preventDefault();
 		e.stopPropagation();
+		logger("event menu",1);
 		but = "";
 		selected = $(this);
 		value=$(this).val();								// Value of the button
@@ -183,20 +215,23 @@ function start_Grids()
 
 	// --------------------------------------------------------------------------
 	// WIDGET Single Click HANDLING
+	// NOTE: Not necessary as gridster will itself make these event handlers
 	//
-	$("#gui_content").on("click", ".widget", function(e){
-	  id = $(e.target).attr('id');
-	  logger("grid event:: click "+id,1);
+	//$("#gui_content").on("click", ".widget", function(e){
+	//  id = $(e.target).attr('id');
+	//  logger("grid event:: click "+id,1);
 	// So now grow the widget when necessary ready to perform actions
 	
 
 	// Clicking it again should bring it back to original size
-	});
+	//});
 	
 	// --------------------------------------------------------------------------
 	// WIDGET Double Click HANDLING
 	// $(this) is the widget selected
 	$("#gui_content").on("dblclick", ".widget", function(e){
+	  e.preventDefault();
+	  e.stopPropagation();						// Make sure that the parent (=widget) is not selected
 	  id = $(e.target).attr('id');
 	  console.log("grid event:: dblclick "+id+", this",$(this));
 	  // console.log( $(".gridster ul").data("gridster").serialize() );
@@ -214,7 +249,7 @@ function start_Grids()
 		gridster.enable(); 
 		gridster.enable_resize();
 	  }
-	// Clicking it again should bring it back to original size
+	  // Clicking it again should bring it back to original size
 	});
 
 	// =============================
@@ -261,13 +296,10 @@ function gToggle (o, e) {
 // See function above, we will call from load_database !!!
 //
 function init() {
-	console.log("init started");
+	console.log("init:: started");
 	debug = settings[0]['val'];
 	//cntrl = settings[1]['val'];
 
-	mysql = settings[2]['val'];
-	//persist = settings[3]['val'];
-	
 	logger("setting skin",1);
 	if (jqmobile != 1) { 
 		skin = '/'+settings[4]['val'];
@@ -276,7 +308,6 @@ function init() {
 	}
 
 	// Initial startup config
-
 	init_menu();
 	init_header();
 	init_grid(gScreen,gSort);
@@ -323,12 +354,11 @@ function init_menu(cmd)
 		html_msg = '<table border="0">';
 		$("#gui_menu").append( html_msg );
 		var table = $( "#gui_menu" ).children();		// to add to the table tree in DOM
-		var but =  ''	
-		+ '<tr><td><input type="submit" id="M1" value= "Devices" class="hm_button hover"></td>' 
-		+ '<tr><td><input type="submit" id="M2" value= "Scenes" class="hm_button"></td>'
-		+ '<tr><td><input type="submit" id="M3" value= "Timers" class="hm_button"></td>'
-		+ '<tr><td><input type="submit" id="M4" value= "Handsets" class="hm_button"></td>'
-		;
+		var but =  '';
+		but +=  '<tr><td><input type="submit" id="M1" value= "Rooms" class="hm_button hover"></td>';
+		but +=  '<tr><td><input type="submit" id="M2" value= "Scenes" class="hm_button"></td>';
+		but +=  '<tr><td><input type="submit" id="M3" value= "Timers" class="hm_button"></td>';
+		but +=  '<tr><td><input type="submit" id="M4" value= "Handsets" class="hm_button"></td>';
 		// Do we have sensors definitions in database.cfg file?
 		if (sensors.length > 0) {
 			but += '<tr><td><input type="submit" id="M6" value= "Sensors" class="hm_button"></td>'
@@ -349,21 +379,38 @@ function init_menu(cmd)
 	// EVENT HANDLER
 }
 
-
 // ----------------------------------------------------------------------------------------
 // INIT HEADER
 function init_header() {
 	$("#gui_header").empty();
-	html_msg = '<div id="gui_header_content"></div><div id="gui_header_controls"></div>';
+	html_msg = '<div id="gui_header_row1"></div><div id="gui_header_row2"></div>';
 	$("#gui_header").append(html_msg);
 	
-	logger("init_header:: started ",1);
 	var html_msg = "";
+	logger("init_header:: started ",1);
+	//html_msg += "Widget: ";
+	html_msg += '<input type="submit" id="s_reset" value= "Reset" class="hs_button">' ;
+	html_msg += '<input type="submit" id="s_devices" value= "Devices" class="hs_button hover">' ;
+	html_msg += '<input type="submit" id="s_scenes" value= "Scenes" class="hs_button">';
+	//html_msg += '<input type="submit" id="s_timers" value= "Timers" class="hs_button">';
+	//html_msg += '<input type="submit" id="s_handsets" value= "Handsets" class="hs_button">';
+	// Do we have sensors definitions in database.cfg file?
+	if (sensors.length > 0) {
+		html_msg += '<input type="submit" id="s_sensors" value= "Sensors" class="hs_button">';
+	}
+	// Do we have energy definitions in database.cfg file?
+	if (use_energy) {
+		html_msg += '<input type="submit" id="s_energy" value= "Energy" class="hs_button">';
+	}
+	$("#gui_header_row1").append(html_msg);
+	
+	html_msg = "";
+	//html_msg += "Sort  &nbsp;&nbsp;&nbsp;: ";
 	html_msg += '<input type="submit" id="g_none" value= "no sort" class="hr_button ">';
 	html_msg += '<input type="submit" id="g_room" value= "rooms" class="hr_button ">';
 	html_msg += '<input type="submit" id="g_type" value= "type" class="hr_button ">';
-	html_msg += '<input type="submit" id="g_user" value= "user" class="hr_button ">';
-	$("#gui_header_content").append(html_msg);
+	html_msg += '<input type="submit" id="g_alpha" value= "alpha" class="hr_button ">';
+	$("#gui_header_row2").append(html_msg);
 	logger("init_header:: ended ",1);
 }
 
@@ -384,20 +431,30 @@ function findDevice(id) {
 //
 function sort_grid(widgets, gSort) {
   var owidgets = [];
-  for (var i=0; i< widgets.length; i++) { owidgets[i]=widgets[i]; }
+  function sortByKey(array, key) {
+    return array.sort(function(a, b) {
+        var x = a[key]; var y = b[key];
+        if (typeof x == "string") {
+            x = x.toLowerCase(); y = y.toLowerCase();
+        }
+        return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    });
+  }
   for (var si=0; si<gSort.length; si++) {
 	switch(gSort[si]) {	
 		case "g_none":
 			logger("sort_grid:: recognized: "+gSort[si],1);
+			for (var i=0; i< widgets.length; i++) { owidgets[i]=widgets[i]; }
 		break;
 		case "g_rooms":
 			logger("sort_grid:: recognized: "+gSort[si],1);
 		break;
-		case "g_alpha":
-			logger("sort_grid:: recognized: "+gSort[si],1);
-		break;
 		case "g_type":
 			logger("sort_grid:: recognized: "+gSort[si],1);
+		break;
+		case "g_alpha":
+			logger("sort_grid:: recognized: "+gSort[si],1);
+			owidgets = sortByKey(widgets,'name');
 		break;
 		default:
 			logger("sort_grid:: Unknow sort key: "+gSort[si],1);
@@ -459,21 +516,21 @@ function filter_grid(widgets, gScreen) {
 //
 
 function make_grid(widgets) {
-
+  logger("make_grid:: Counting "+widgets.length+" widgets",1);
   // Based on the parameter received we fill the grid
   for (var si=0; si<widgets.length; si++) {
 	  
-	logger("make_grid:: widget: "+si+", name: "+widgets[si].name+", type:"+widgets[si]['type'],1);
+	logger("make_grid:: widget: "+si+", name: "+widgets[si].name+", type:"+widgets[si]['type'],2);
 	var widget = "";
 	widget += '<li class="widget" id='+si+'><table>';
 	
 	switch(widgets[si]['type']) {
-
 		case 'switch':
 			var gridId = widgets[si]['room']+widgets[si]['id'];	// Devices start their id with a 'D' so all id are like xxDyy
 			var device_name = widgets[si]['name'];
 			var device_val = widgets[si]['val'];
-			widget += '<tr class="devrow switch">' ;
+			//widget += '<tr class="devrow switch">' ;
+			widget += '<tr class="switch">';
 			widget += '<th colspan="2">'+device_name+'</th>';
 			widget += '</tr><tr>'
 			widget += '<td><image width="25" height="25" src="/styles/images/switch.png"> </image></td>';
@@ -487,18 +544,25 @@ function make_grid(widgets) {
 			// Fill each widget with the sa,e standard content based on devices (or tbd sensors).
 			var device_name = widgets[si]['name'];
 			var device_val = widgets[si]['val'];
-			widget += '<tr class="devrow dimrow">' ;
+			widget += '<tr class="devrow dimrow">';
 			widget += '<th colspan="2">'+device_name+'</th>';
 			widget += '</tr><tr>';
-			widget += '<td width="20%"><image width="25" height="25" src="/styles/images/lamp.png"> </image></td>';
-			widget += '<td><div id="' +gridId + 'D" class="slider slider-widget dimmer"></div></td>';
+			widget += '<td width="16%"><image width="25" height="25" src="/styles/images/lamp.png"> </image></td>';
+			if (jqmobile) {
+				
+				widget += '<td><input type="number" data-type="range" style="min-width:32px;" id="'+gridId+'D" name="'+gridId+'Fl" value="'+device_val+'" min=0 max=31 data-highlight="true" data-mini="true" class="ddimmer"/></td>';
+				
+			} else {
+				widget += '<td><div id="' +gridId + 'D" class="slider slider-widget dimmer"></div></td>';
+
+			}
 			widget += '</tr>';
 		break;
 		case 'thermostat':
 		    var gridId = widgets[si]['room']+widgets[si]['id'];	// Devices start their id with a 'D' so all id are like xxDyy
 			var device_val = widgets[si]['val'];
 			var device_name = widgets[si]['name'];
-			widget += '<tr class="devrow dimrow">';
+			widget += '<tr class="switch">';
 			widget += '<th colspan="3">'+device_name+'</th>';
 			widget += '</tr><tr>';
 			widget += '<td><image width="25" height="25" src="/styles/images/thermometer.png"> </image></td>';
@@ -506,34 +570,32 @@ function make_grid(widgets) {
 			widget += '</tr>';
 			message("thermostat");
 		break;
+		case 'scene':
+			var widget_val = widgets[si]['val'];
+			var widget_name = widgets[si]['name'];
+			widget += '<tr class="switch">';
+			widget += '<th colspan="3">'+widget_name+'</th>';
+			widget += '</tr><tr>';
+			widget += '<td><image width="25" height="25" src="/styles/images/scene.png"> </image></td>';
+			widget += '<td><input type="submit" id="X'+widgets[si]['id']+'" value= "'+widget_val+"\u00B0"+'" class="dbuttons thermostat '+but_hov+'">,</td>';
+			widget += '</tr>';
+		break;
 		case 'sensor':
 			logger("make_grid:: sensors ",1);
 			var sKey = Object.keys(widgets[si]['sensor'])[0]; 
 			var sUnit = "";
 			var sLbl = "";
 			switch (sKey) {
-				case "temperature":
-					sUnit = "\u00B0";
-					sLbl = "Temp: "
-				break;
-				case "airpressure":
-					sUnit = "hPa";
-					sLbl = "Baro: "
-				break;
-				case "humidity":
-					sUnit = "%";
-					sLbl = "Humi: "
-				break;
-				case "luminescense":
-					sUnit = "Lum";
-					sLbl = "Lumi: "
-				break;
+				case "temperature": sUnit = "\u00B0"; sLbl = "Temp: "; break;
+				case "airpressure": sUnit = "hPa"; sLbl = "Baro: "; break;
+				case "humidity": sUnit = "%"; sLbl = "Humi: "; break;
+				case "luminescense": sUnit = "Lum"; sLbl = "Lumi: "; break;
 				default:
 			};
 			var device_val = widgets[si]['sensor'][sKey]['val'];
 			console.log("make_grid:: sensor key: ",sKey+", device_val: "+device_val);
 			var device_name = widgets[si]['name'];
-			widget += '<tr class="devrow switch">';
+			widget += '<tr class="switch">';
 			widget += '<th colspan="2">'+device_name+'</th>';
 			widget += '</tr><tr>';
 			widget += '<td><image width="25" height="25" src="/styles/images/sensor.png"> </image></td>';
@@ -549,10 +611,30 @@ function make_grid(widgets) {
 	  //widgets.push(gridster.add_widget(widget, 1, 1));	// Tis is the actual code to make a widget
 	  gridster.add_widget(widget, 1, 1);
 	  	
-		  // This function initialization must be AFTER putting the slider on the screen (otherwise will not work).
-		  // function can be executed LONG after initialization. Therefore ALL variabls need to be
-		  // dynamic and generated from the parameters passed from the .slider() function.
-		  $(function() {
+	  // This function initialization must be AFTER putting the slider on the screen (otherwise will not work).
+	  // function can be executed LONG after initialization. Therefore ALL variabls need to be
+	  // dynamic and generated from the parameters passed from the .slider() function.
+	  if (jqmobile==1) {
+		var slidid="#"+gridId+"D";
+		$(slidid).slider ({
+			stop: function( event, ui ) {
+				var id = $(event.target).attr('id');
+				var val = $(event.target).val();
+				var ind = findDevice(id);
+				if (ind <0) return;
+				var brand_id = lroot['devices'][ind]['brand'];	// brand contains name of script
+				var cmd = brands[brand_id]['fname'];
+				var ics = "!R"+lroot['devices'][ind]['room']+"D"+lroot['devices'][ind]['uaddr']+"FdP"+val;
+				send2daemon("gui",cmd,ics);
+				lroot['devices'][ind]['val'] = val;
+			}
+		});
+		//$(slidid).next().find('.ui-slider-handle').hide();
+		$(slidid).slider("refresh");
+	  }
+	  else {
+		 
+	  	$(function() {
 			var gridId = widgets[si]['room']+widgets[si]['id'];	// Devices start their id with a 'D' so all id are like xxDyy
 			var label ="#"+gridId; 
 			var slidid="#"+gridId+"D";				// # is for DIV, D to recognize dimmer
@@ -580,8 +662,8 @@ function make_grid(widgets) {
 				lroot['devices'][ind]['val'] = val;
 			  }
 			});// slider (every slider its own definition)
-	      }); // function
-	
+	    }); // function
+	  }//if jqmobile
   }//for
   return (widgets);
 }
@@ -628,7 +710,6 @@ function init_grid(gScreen,gSort) {
 
   widgets = filter_grid(widgets, gScreen);			// Select all relevant items from system and put in array widgets
   widgets = sort_grid(widgets, gSort)				// Sort the widgets array based on criteria in gSort
-  logger("make_grid:: Counting "+widgets.length+" widgets",1);
   widgets = make_grid(widgets);
     
   if (debug>2) console.log( $(".gridster ul").data("gridster").serialize() );
@@ -675,6 +756,10 @@ function update_grid(ind) {
 			$(gridId).addClass ( 'hover' );
 		}
 		$(gridId).val(but_val);
+	  break;
+	  case "scenes":
+	  case "sensors":
+	  	logger("update_grid:: ERROR type "+type+" not recognized",1);
 	  break;
 	  default:
 	  	logger("update_grid:: Unknow device type: "+type,1);

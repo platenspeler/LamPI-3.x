@@ -67,8 +67,6 @@ var healthcount = 5;									// Needs to be above 0 to show activity
 //
 var skin = "";
 var debug = "1";										// debug level. Higher values >0 means more debug
-var persist = "1";										// Set default to relaxed
-var mysql = "1";										// Default is using mySQL
 var cntrl = "1";										// ICS-1000== 0 and Raspberry == 1
 
 // ----------------------------------------------------------------------------
@@ -268,11 +266,7 @@ function start_TEMPI()
 	// Start the logic of this page	
 	if ( jqmobile == 1 ) 
 	{
-		var ret = load_database("init");
-		if (ret<0) {
-			alert("Error:: loading database failed");
-		}
-		init_websockets();			// For regular web based operations we start websockets here
+
 	}
 	//
 	// The solution is to start init_lamps, init_rooms and init_menu 
@@ -297,12 +291,12 @@ function start_TEMPI()
 			//users   = localStorage.getObject('users');
 			settings= localStorage.getObject('settings');	// Needs to be defined to call init()
 		}
-		init_websockets();									// For regular web based operations we start websockets here
-		var ret = load_database("init");
-		if (ret<0) {
-			alert("Error:: loading database failed");
-		}
-	}	
+	}
+	init_websockets();									// For regular web based operations we start websockets here
+	var ret = load_database("init");
+	if (ret<0) {
+		alert("Error:: loading database failed");
+	}
 	
   });
   console.log("Start TEMPI done");
@@ -321,8 +315,6 @@ function init() {
 	console.log("init started");
 	debug = settings[0]['val'];
 	cntrl = settings[1]['val'];
-	mysql = settings[2]['val'];
-	//persist = settings[3]['val'];
 	
 	if (jqmobile != 1) { 
 		skin = '/'+settings[4]['val'];

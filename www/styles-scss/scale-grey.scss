@@ -11,7 +11,7 @@
 $wrapper_bg_color: #BBB;			/* Background color of the wrapper */
 $wrapper_bg_picture: "";
 
-$main_bg_color: #CCC;				/* The main background color used for this Look and Feel */
+$main_bg_color: #CCC;				/* The main background color for this Look and Feel */
 $main_nth_color: #AAA;
 $main_msg_color: #111;
 
@@ -25,17 +25,24 @@ $row_nth_color: #888;
 
 $button_fg_color: #111;				/* Almost Black */
 $button_bg_color: #EEE;				/* Background color for the buttons */
-$button_hover_bg_color: #FF6;		/* How does the color of a button change if it is hovered */
+
+$button_hover_bg_color: #FF6;		/* How does the color of a button change when hovered */
 $button_hover_fg_color: #111;		/* Foreground color for button when hovered */
+
 $button_active_fg_color: yellow;	/* When a button is active it has this color */
 $button_active_bg_color: #111;
 
 $dlabel_fg_color: black;
 $dlabel_bg_color: #eee;
+
 $dbutton_fg_color: black;
 $dbutton_bg_color: #eee;
 
-$dimmer_background: #F3F178;		/* Color of the dimmer slider */
+$widget_fg_color: #fff;	
+$widget_bg_color: #444;				/* Make a little darker than a button */
+$widget_hover_bg_color: #ffa;		/* Somewhat less Yellow than the main hover color */
+
+$dimmer_background: #F3F178;		/* background of the dimmer slider */
 $dimmer_handle: #ef2929;			/* Color of the dimmer handler */
 
 $thermo_background: #F66;			/* Color of the thermo slider */

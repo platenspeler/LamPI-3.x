@@ -4,15 +4,6 @@
 // Author: M. Westenberg (mw12554 @ hotmail.com)
 // (c) M. Westenberg, all rights reserved
 //
-// LamPI Releases:
-//
-// Version 1.6, Nov 10, 2013. Implemented connections, started with websockets option next (!) to .ajax calls.
-// Version 1.7, Dec 10, 2013. Work on the mobile version of the program
-// Version 1.8, Jan 18, 2014. Start support for (weather) sensors
-// Version 1.9, Mar 10, 2014, Support for wired sensors and logging, and internet access ...
-// Version 2.0, Jun 15, 2014, Initial support for Z-Wave devices through Razberry slave device.
-// Version 2.1, Jul 31, 2014, Use of rrdtool to make graphs for Sensors.First release of TemPI
-//
 // This is the code to animate the front-end of the application. The main screen is divided in 3 regions:
 //
 // Copyright, Use terms, Distribution etc.
@@ -74,8 +65,6 @@ var murl='/';											// For Phonegap and Ajax usage, build a url. DO NOT CHAN
 //
 var skin = "";
 var debug = "1";										// debug level. Higher values >0 means more debug
-var persist = "1";										// Set default to relaxed
-var mysql = "1";										// Default is using mySQL
 var cntrl = "1";										// ICS-1000== 0 and Raspberry == 1
 var tcnt= 0;
 
@@ -367,8 +356,6 @@ function init() {
 
 	debug = settings[0]['val'];
 	cntrl = settings[1]['val'];
-	mysql = settings[2]['val'];
-	//persist = settings[3]['val'];
 	
 	if (jqmobile != 1) { 
 		skin = '/'+settings[4]['val'];

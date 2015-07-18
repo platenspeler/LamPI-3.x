@@ -9,11 +9,14 @@
 /* can be set by overriding the default skin _templates									*/
 /* ------------------------------------------------------------------------------------ */
 /* Background color of the wrapper */
-/* The main background color used for this Look and Feel */
+/* The main background color for this Look and Feel */
+/* in classic device view, row background color */
 /* Background color for the buttons */
-/* How does the color of a button change if it is hovered */
+/* How does the color of a button change when hovered */
 /* Foreground color for button when hovered */
 /* When a button is active it has this color */
+/* Make a little darker than a button */
+/* Somewhat less Yellow than the main hover color */
 /* Color of the dimmer slider */
 /* Color of the dimmer handler */
 /* Color of the thermo slider */
@@ -248,7 +251,7 @@ input#lbl {
   background-color: #FF9;
   color: #111; }
 
-/* Header Weather definitions */
+/* Header Sensor/Weather definitions */
 .hw_button {
   width: 100px;
   height: 35px;
@@ -336,10 +339,11 @@ input#lbl {
 
 /* Grid and Widget defnitions */
 .widget {
-  background-color: #eee; }
+  color: #fff;
+  background-color: #333; }
 
 .widget:hover {
-  background-color: #FF9; }
+  background-color: #ee3; }
 
 /* Devices definitions */
 /* This dlabels descripts the text label left of a switch/dimmer device */
@@ -354,7 +358,7 @@ input#lbl {
   color: black;
   background-color: #eee; }
 
-/* buttons used in a dimmer/slider element . dbuttons are shared with scenes too*/
+/* buttons used in a dimmer/slider element .dbuttons are shared with scenes too */
 .dbuttons {
   padding-right: 5px;
   min-height: 30px;
@@ -374,7 +378,7 @@ input#lbl {
 
 .dbuttons:active {
   color: yellow;
-  background-color: #000; }
+  background-color: #111; }
 
 .devrow {
   /* device row */
@@ -569,31 +573,27 @@ input#lbl {
   margin-top: 10px;
   background: #3E4;
   /* XXX left side of the bar */
-  width: 90%;
-  	          									/* was 100px;
-  	height:4px;
-  	margin-left:2px;
-  	padding-top:2px;
-  	margin-right:1px;
-  	border-radius:3px;
-  }
-  .slider-widget .ui-slider {
-  
-  }
-  .slider-widget .ui-slider-range {
-  	background:#dimmer_background;							/* This is the right part from handle to max */ }
+  height: 4px;
+  width: 83%;
+  /* was 100px; */
+  margin-left: 2px;
+  padding-top: 2px;
+  margin-right: 1px;
+  border-radius: 3px; }
+
+.slider-widget .ui-slider-range {
+  background: #ff9;
+  /* This is the right part from handle to max */ }
 
 .slider-widget .ui-slider-handle {
   background: url(./slider-mini2.png) no-repeat;
   		                                             	/* this is the slider marker symbol. 
-  /*    	background:none;					*/
-  overflow: hidden;
-  position: absolute;
-  border-style: none;
-  /* border-color: $dimmer_background;  */ }
-
-.slider-widget .ui-widget-content {
-  /*      */ }
+  		overflow:hidden; 
+      	position:absolute;
+      	border-style:none;
+  	}
+  	.slider-widget .ui-widget-content { 
+  		/*      */ }
 
 /* Settings, various sich as files definitions etc. */
 .select-file {
@@ -621,30 +621,22 @@ input#lbl {
 
 /* ButtonSets */
 .buttonset .ui-btn-active {
-  background-color: #000;
+  background-color: #111;
   color: yellow; }
 
 .buttonset .ui-radio .ui-radio-on {
-  background-color: #000;
+  background-color: #111;
   color: yellow; }
 
 .buttonset:active {
-  background-color: #000;
+  background-color: #111;
   color: yellow; }
 
 .buttonset:checked {
-  background-color: #000;
+  background-color: #111;
   color: yellow; }
 
 /* ------------------------------------------------------------------------------------	*/
 /* OVERRIDE AREA 																		*/
 /* If you want to change template settings for this specific skin you can do this here	*/
 /* ------------------------------------------------------------------------------------	*/
-.slider-health {
-  height: 8px;
-  background: #AFA;
-  /* left side of the bar */ }
-
-.slider-health .ui-slider-range {
-  background: #FAA;
-  /* This is the right part from handle to max */ }

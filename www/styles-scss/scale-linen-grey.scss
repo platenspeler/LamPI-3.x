@@ -35,6 +35,10 @@ $dlabel_bg_color: #eee;
 $dbutton_fg_color: black;
 $dbutton_bg_color: #eee;
 
+$widget_fg_color: #fff;	
+$widget_bg_color: #444;				/* Make a little darker than a button */
+$widget_hover_bg_color: #ffa;		/* Somewhat less Yellow than the main hover color */
+
 $dimmer_background: #F3F178;		/* Color of the dimmer slider */
 $dimmer_handle: #ef2929;			/* Color of the dimmer handler */
 

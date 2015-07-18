@@ -32,6 +32,7 @@ $button_active_bg_color: #111;
 
 $dlabel_fg_color: #F7E3AB;
 $dlabel_bg_color: #957a0f;
+
 $dbutton_fg_color: #F7E3AB;
 $dbutton_bg_color: #957a0f;
 
@@ -40,6 +41,10 @@ $row_nth_color: #bab712;
 
 $dialog_fg_color: #111111;			/* Also used in normal body text */
 $dialog_bg_color: #997309;
+
+$widget_fg_color: #fff;	
+$widget_bg_color: #444;				/* Make a little darker than a button */
+$widget_hover_bg_color: #ffa;		/* Somewhat less Yellow than the main hover color */
 
 $dimmer_background: #d2abfc;		/* Color of the dimmer slider */
 $dimmer_handle: #ef2929;			/* Color of the dimmer handler */

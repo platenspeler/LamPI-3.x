@@ -5404,7 +5404,7 @@ function setting_button(id, val, hover)
 //
 // Store the value of the device_id in the GUI back in the devices object 
 // Local on the client. The daemon will as of release 1.4 take care of syncing the value
-// to the database (should that be necessary based on persist)
+// to the database 
 //
 // Inputs:
 //	room: The room id of the object in the devices array (is a number)
@@ -5512,7 +5512,7 @@ function get_handset(hs_id) {
 
 // ---------------------------------------------------------------------------------
 //
-// Get Handset Record
+// Get Handset object
 //
 function get_handset_record(hs_id,hs_unit,hs_val) {
 	for (var j = 0; j<handsets.length; j++ ) {
@@ -5624,29 +5624,15 @@ function decode_scene_string (str)
 				pos1++;
 				cmd = str.substr(pos1,1);
 				switch (cmd) {
-					case 'a':
-						res += ', ALL OFF';
-					break;
-					case 'o':
-						res += ', set dimmer';
-					break;
-					case '0':
-						res += ', OFF';
-					break;
-					case '1':
-						res += ', ON';
-					break;
-					case 'k':
-						res += ', Man. Lock';
-					break;
-					case 'l':
-						res += ', Full Lock';
-					break;
-					case 'd':
-						pos1++;
-						if (str.substr(pos1,1) == 'P') {
-							pos1++;
-							res += ', dim value: ' + str.substr(pos1);
+					case 'a': 	res += ', ALL OFF'; break;
+					case 'o':	res += ', set dimmer'; break;
+					case '0':	res += ', OFF'; break;
+					case '1':	res += ', ON'; break;
+					case 'k': 	res += ', Man. Lock'; break;
+					case 'l':	res += ', Full Lock'; break;
+					case 'd':	
+						pos1++; if (str.substr(pos1,1) == 'P') {
+						pos1++;	res += ', dim value: ' + str.substr(pos1);
 						}
 					break;
 				}
@@ -5681,11 +5667,7 @@ function decode_scene_string (str)
 //
 function handle_device(id,val) 
 {
-	// We know the current room s_room_id
-	// and the current device_id is passed by the handler to this function
-	// NOTE: This function now ONLY works correct for the ICS-1000 device. If we like
-	// to work with other technologies such as Zwave we need a translation between buttons and device codes
-	// specific for such a device.
+	// We know the current room s_room_id and the current device_id is passed by the handler to this function
 	//
 	var str = "";
 	var action = "";

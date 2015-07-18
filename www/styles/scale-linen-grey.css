@@ -10,6 +10,8 @@
 /* How does the color of a button change if it is hovered */
 /* Foreground color for button when hovered */
 /* When a button is active it has this color */
+/* Make a little darker than a button */
+/* Somewhat less Yellow than the main hover color */
 /* Color of the dimmer slider */
 /* Color of the dimmer handler */
 /* Color of the thermo slider */
@@ -245,7 +247,7 @@ input#lbl {
   background-color: #FF6;
   color: #111; }
 
-/* Header Weather definitions */
+/* Header Sensor/Weather definitions */
 .hw_button {
   width: 100px;
   height: 35px;
@@ -333,10 +335,11 @@ input#lbl {
 
 /* Grid and Widget defnitions */
 .widget {
-  background-color: #eee; }
+  color: #fff;
+  background-color: #444; }
 
 .widget:hover {
-  background-color: #FF6; }
+  background-color: #ffa; }
 
 /* Devices definitions */
 /* This dlabels descripts the text label left of a switch/dimmer device */
@@ -351,7 +354,7 @@ input#lbl {
   color: black;
   background-color: #eee; }
 
-/* buttons used in a dimmer/slider element . dbuttons are shared with scenes too*/
+/* buttons used in a dimmer/slider element .dbuttons are shared with scenes too */
 .dbuttons {
   padding-right: 5px;
   min-height: 30px;
@@ -566,28 +569,27 @@ input#lbl {
   margin-top: 10px;
   background: #3E4;
   /* XXX left side of the bar */
-  width: 110px;
   height: 4px;
+  width: 83%;
+  /* was 100px; */
   margin-left: 2px;
   padding-top: 2px;
   margin-right: 1px;
   border-radius: 3px; }
 
 .slider-widget .ui-slider-range {
-  background: #dimmer_background;
+  background: #F3F178;
   /* This is the right part from handle to max */ }
 
 .slider-widget .ui-slider-handle {
   background: url(./slider-mini2.png) no-repeat;
   		                                             	/* this is the slider marker symbol. 
-  /*    	background:none;					*/
-  overflow: hidden;
-  position: absolute;
-  border-style: none;
-  /* border-color: $dimmer_background;  */ }
-
-.slider-widget .ui-widget-content {
-  /*      */ }
+  		overflow:hidden; 
+      	position:absolute;
+      	border-style:none;
+  	}
+  	.slider-widget .ui-widget-content { 
+  		/*      */ }
 
 /* Settings, various sich as files definitions etc. */
 .select-file {
