@@ -97,24 +97,23 @@ function start_Grids()
 	// NOTE: We use gui_header as its chidren are NOT known yet at this moment
 	//
 	$("#gui_header").on("click", ".hr_button", function(e){
-			e.preventDefault();
-			e.stopPropagation();
-			logger("event row2",1);
-			selected = $(this);
-			value=$(this).val();								// Value of the button
-			id = $(e.target).attr('id');						// should be id of the button (array index substract 1)
-			$( '.hr_button' ).removeClass( 'hover' );
-			$( this ).addClass ( 'hover' );
-			switch(id)
-			{
+		e.preventDefault();
+		e.stopPropagation();
+		logger("event row2",1);
+		selected = $(this);
+		value=$(this).val();								// Value of the button
+		id = $(e.target).attr('id');						// should be id of the button (array index substract 1)
+		$( '.hr_button' ).removeClass( 'hover' );
+		$( this ).addClass ( 'hover' );
+		switch(id)	{
 			case "g_none":  gSort = [ "g_none" ]; break;
 			case "g_room":	if (! gSort.contains("g_room")) gSort.push("g_room"); break;
 			case "g_type":  if (! gSort.contains("g_type")) gSort.push("g_type"); break;
-			case "g_alpha":  if (! gSort.contains("g_alpha")) gSort.push("g_alpha"); break;
+			case "g_alpha": if (! gSort.contains("g_alpha")) gSort.push("g_alpha"); break;
 			default:
 				message('click header:: id: ' + id + ' not a valid menu option');
-			}
-			init_grid(gScreen, gSort);
+		}
+		init_grid(gScreen, gSort);
 	});					  
 	
 	// --------------------------------------------------------------------------
@@ -211,20 +210,12 @@ function start_Grids()
 		 	logger("button event:: Unknow type device: "+type,1);
 	  }
 	});
-
-
-	// --------------------------------------------------------------------------
-	// WIDGET Single Click HANDLING
-	// NOTE: Not necessary as gridster will itself make these event handlers
-	//
-	//$("#gui_content").on("click", ".widget", function(e){
-	//  id = $(e.target).attr('id');
-	//  logger("grid event:: click "+id,1);
-	// So now grow the widget when necessary ready to perform actions
 	
 
-	// Clicking it again should bring it back to original size
-	//});
+	// When mouseup, enable gridster again (always).
+	$(document).mouseup(function(){
+    	gridster.enable();
+	}); 
 	
 	// --------------------------------------------------------------------------
 	// WIDGET Double Click HANDLING
@@ -278,14 +269,14 @@ function start_Grids()
 // gToggle values in the gScreen
 //
 function gToggle (o, e) {
-		if (o.contains(e)) {
-			var i;
-			for (i=0; i<o.length; i++) { if (e == o[i]) break; }
-			o.splice(i,1);
-		}
-		else {
-			o.push(e);
-		}
+	if (o.contains(e)) {
+		var i;
+		for (i=0; i<o.length; i++) { if (e == o[i]) break; }
+		o.splice(i,1);
+	}
+	else {
+		o.push(e);
+	}
 }
 	
 // -------------------------------------------------------------------------------------
@@ -514,7 +505,6 @@ function filter_grid(widgets, gScreen) {
 // MAKE GRID
 // Make the grid based on criteria in gScreen array and make widget.
 //
-
 function make_grid(widgets) {
   logger("make_grid:: Counting "+widgets.length+" widgets",1);
   // Based on the parameter received we fill the grid
@@ -541,7 +531,7 @@ function make_grid(widgets) {
 		break;
 		case 'dimmer':
 		    var gridId = widgets[si]['room']+widgets[si]['id'];	// Devices start their id with a 'D' so all id are like xxDyy
-			// Fill each widget with the sa,e standard content based on devices (or tbd sensors).
+			// Fill each widget with the same standard content based on devices (or tbd sensors).
 			var device_name = widgets[si]['name'];
 			var device_val = widgets[si]['val'];
 			widget += '<tr class="devrow dimrow">';
@@ -550,7 +540,7 @@ function make_grid(widgets) {
 			widget += '<td width="16%"><image width="25" height="25" src="/styles/images/lamp.png"> </image></td>';
 			if (jqmobile) {
 				
-				widget += '<td><input type="number" data-type="range" style="min-width:32px;" id="'+gridId+'D" name="'+gridId+'Fl" value="'+device_val+'" min=0 max=31 data-highlight="true" data-mini="true" class="ddimmer"/></td>';
+				widget += '<td><input type="number" data-type="range" style="min-width:32px;" id="'+gridId+'D" name="'+gridId+'Fl" value="'+device_val+'" min=0 max=31 data-highlight="true" data-mini="true" class="slider-widget dimmer"/></td>';
 				
 			} else {
 				widget += '<td><div id="' +gridId + 'D" class="slider slider-widget dimmer"></div></td>';
@@ -608,7 +598,7 @@ function make_grid(widgets) {
 	  }//switch
 	  
 	  widget += '</table></li>'
-	  //widgets.push(gridster.add_widget(widget, 1, 1));	// Tis is the actual code to make a widget
+
 	  gridster.add_widget(widget, 1, 1);
 	  	
 	  // This function initialization must be AFTER putting the slider on the screen (otherwise will not work).
@@ -645,13 +635,14 @@ function make_grid(widgets) {
 			  max: 31,
 			  value: widgets[si]['val'],
     		  slide: function( event, ui ) {
+				event.stopPropagation();			// When moving slider, stop moving widget too.
       			$( slidid ).val( ui.value );
 			  },
 			  stop: function( event, ui ) {
 				var val = ui.value;
 				var id = $(event.target).attr('id');
 				logger("slider stop:: id: "+id+", val: "+val,1);
-				
+				//gridster.enable();
 				var ind = findDevice(id);
 				if (ind <0) return;
 				
@@ -662,9 +653,15 @@ function make_grid(widgets) {
 				lroot['devices'][ind]['val'] = val;
 			  }
 			});// slider (every slider its own definition)
+
 	    }); // function
 	  }//if jqmobile
   }//for
+  // For all sliders defined, disable moving the widget when slider is busy
+  $('.slider-widget').mousedown(function() {
+	logger("Mouse:: Disable widget move",3);
+    gridster.disable();
+  });
   return (widgets);
 }
 
@@ -759,6 +756,7 @@ function update_grid(ind) {
 	  break;
 	  case "scenes":
 	  case "sensors":
+	  
 	  	logger("update_grid:: ERROR type "+type+" not recognized",1);
 	  break;
 	  default:

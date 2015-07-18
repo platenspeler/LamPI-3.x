@@ -583,13 +583,13 @@ input#lbl {
 
 .slider-widget .ui-slider-handle {
   background: url(./slider-mini2.png) no-repeat;
-  		                                             	/* this is the slider marker symbol. 
-  		overflow:hidden; 
-      	position:absolute;
-      	border-style:none;
-  	}
-  	.slider-widget .ui-widget-content { 
-  		/*      */ }
+  /* this is the slider marker symbol. */
+  border-style: none;
+  overflow: hidden;
+  position: absolute; }
+
+.slider-widget .ui-widget-content {
+  /*      */ }
 
 /* Settings, various sich as files definitions etc. */
 .select-file {

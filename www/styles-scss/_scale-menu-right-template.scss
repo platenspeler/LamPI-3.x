@@ -624,13 +624,13 @@
 
 	}
 	.slider-widget .ui-slider-range {
-		background:$dimmer_background;									/* This is the right part from handle to max */
+		background:$dimmer_background;				/* This is the right part from handle to max */
 	}
 	.slider-widget .ui-slider-handle {
-		background:url(./slider-mini2.png) no-repeat;	/* this is the slider marker symbol. 
+		background:url(./slider-mini2.png) no-repeat;	/* this is the slider marker symbol. */
+		border-style:none;
 		overflow:hidden; 
     	position:absolute;
-    	border-style:none;
 	}
 	.slider-widget .ui-widget-content { 
 		/*      */

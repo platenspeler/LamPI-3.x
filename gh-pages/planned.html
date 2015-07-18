@@ -10,8 +10,8 @@
 <p>Of course I'm always thinking about new functions, as long as I do not have to put the current system up-side-down too much. After all, I do have other day-time work to do and it has to make sense for me to spend additional time. Therefore, you are welcome to ask for new functions, but if it will cost me days to implement them and I will not benefit from them in any way I will probably give priority to other changes.</p>
 <ul>
   <li><strong>(done)</strong> As LamPI-xx.yy.js , sensor.js , energy.js and rules.js all work on the same sort of client definitions, we need to make a library of those common (socket-based) functions so we do not need to worry about inconsistencies</li>
-  <li><strong>(beta)</strong> All parameters that need configuring, including stuff like server IP adresses, MySQL server, Z-Wave, etc etc must be in a configuration file which is JSON encoded or so and be loaded quickly by the daemon.</li>
-  <li><strong>(alpha)</strong> Implementation of an alternative GUI style comparable with&nbsp;the metro interface of Windows 8.x</li>
+  <li><strong>(done)</strong> All parameters that need configuring, including stuff like server IP adresses, MySQL server, Z-Wave, etc etc must be in a configuration file which is JSON encoded or so and be loaded quickly by the daemon.</li>
+  <li><strong>(beta)</strong> Implementation of an alternative GUI style comparable with&nbsp;the metro interface of Windows 8.x</li>
   <li>(1) Split the css skin selection between phone and windows/tablet</li>
   <li>(1) We need a check function to check every device, scene and rule for data which is out of date etc.</li>
   <li>User should be able to store their own preferences like skin and/or type of device etc. Also, other preferences like what devices are favorite should be stored.</li>
@@ -24,10 +24,12 @@
   <li>I like (at some time) be integrating my front-end with the new standards for Home Automation as soon as stacks become available for the Raspberry.</li>
   <li>Internationalization; Probably not worth spending too much time on this, as most people that will use this projects do not mind English versions anyway. So probably just making an alternative startup file for ''database.cfg&quot; would be enough for international customers to get a good feel for the software.</li>
   <li>Now that the PHP code has disappeared in favour of node.js, I like to see if Mongodb/Mongoose would be a better db solution than MySQL</li>
+  <li>Statistics of devices seen, etc etc</li>
 </ul>
 <h1><a name="KnownIssues"></a>Known Issues, Bugs etc.</h1>
 <p>Both architectual and GUI related</p>
 <ul>
+  <li>The technology used for grid (gridster) does not dynamically follow screen resizing etc.</li>
   <li>Need to (re)implement the backup restore function of the configuration in &quot;config&quot;</li>
   <li>Need to separate activate_xxxxx functions from the handlers in LamPI-xx.yy.js &nbsp;that are now embedded in those functions. </li>
   <li>The LamPI-node.js process assumes that we have a zwave host (and devices). This leads to  calling of the ZWAVE host in zwave_init. If ZWAVE gateway&nbsp;is not used, we must make this code user selectable. </li>

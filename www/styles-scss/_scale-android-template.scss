@@ -21,6 +21,10 @@
  		font-size:16px;
  	}
 	
+	ul, ol {
+		list-style: none;
+	}
+	
 	input#lbl {
 		width: 20px;
 	}
@@ -82,7 +86,7 @@
 
 	#gui_content {
 		position: absolute;
-		top: 112px;
+		top: 105px;
 		width: 98%;
 /*		margin-left: 1px; */
 		left: 1px;
@@ -255,26 +259,36 @@
 		color:$button_hover_fg_color;
 	}
 	
-		/* Command Room button */
-		.cr_button {
-			height:30px;
-			width: 35px;
-		}
-		/* Command Scene button */
-		.cs_button {
-			height:30px;
-			width: 35px;
-		}
-		/* Command Timers button */
-		.ct_button {
-			height:30px;
-			width: 35px;
-		}
-		/* Command Config button */
-		.cc_button {
-			height:30px;
-			width: 35px;
-		}
+	/* Command Room button */
+	.cr_button {
+		height:30px;
+		width: 35px;
+	}
+	/* Command Scene button */
+	.cs_button {
+		height:30px;
+		width: 35px;
+	}
+	/* Command Timers button */
+	.ct_button {
+		height:30px;
+		width: 35px;
+	}
+	/* Command Config button */
+	.cc_button {
+		height:30px;
+		width: 35px;
+	}
+		
+/* Grid and Widget defnitions */
+
+	.widget {
+		color:$widget_fg_color;
+		background-color:$widget_bg_color;
+	}
+	.widget:hover {
+		background-color:$widget_hover_bg_color;
+	}		
 		
 /* Devices definitions */
 	
@@ -513,7 +527,37 @@
 	.container-health .ui-slider-input {
     	display : none !important;
 	}
+	
+	/* Slider Widget specific definitions */
+	
+	.slider-widget .ui-slider {
+    	width:50px; 
+    	height:50px; 
+    	background:url(./slider3.png) no-repeat; 
+		overflow:hidden; 
+    	position:absolute;
+    	top: -10px;
+    	border-style:none; 
+	}
+	.slider-widget .ui-slider-range {
+		background: $dimmer_background;
+	}
+	.slider-widget .ui-slider-handle {
+		width:50px; 
+    	height:50px; 
+    	/* background:url(./slider3.png) no-repeat; */
+		background-color:#444;
+		overflow:hidden; 
+    	position:absolute;
+    	top: -10px;
+    	border-style:none; 
+		border-color: $dimmer_handle; 
+	}
 
+	input.ui-slider-input {
+	  display: none !important;
+	  width: 10px;
+    }
 
 /* Settings, various sich as files definitions etc. */
 	

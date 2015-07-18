@@ -4,22 +4,22 @@
 /* Author: M. Westenberg (mw12554@hotmail.com) */
 
 /* ----------------------- SCCS variable definitions -----------------------------------*/
-$wrapper_bg_color: #555;
+$wrapper_bg_color: #444;
 $wrapper_bg_picture: "";
 
-$main_bg_color: #888;
-$main_nth_color: #bbb;
+$main_bg_color: #333;
+$main_nth_color: #222;
 $main_msg_color: #eee;
 
-$content_background: #BBB;
-$message_background: #AAA;
-$header_background: #AAA;
-$menu_background: #AAA;
+$content_background: #333;
+$message_background: #333;
+$header_background: #333;
+$menu_background: #333;
 
 $row_bg_color: #AAA;
 $row_nth_color: #888;
 
-$button_bg_color: #666;
+$button_bg_color: #555;
 $button_fg_color: #eee;
 $button_hover_bg_color: #ff0;		/* yellow */
 $button_hover_fg_color: #38f;		/* Dark Blue */
@@ -28,18 +28,19 @@ $button_active_bg_color: #38f;
 
 $dlabel_fg_color: black;
 $dlabel_bg_color: #eee;
-$dbutton_fg_color: eee;				/* white */
+
+$dbutton_fg_color: #eee;				/* white */
 $dbutton_bg_color: #666;			/* grey */
 
 $widget_fg_color: #fff;	
-$widget_bg_color: #444;				/* Make a little darker than a button */
+$widget_bg_color: #222;				/* Make a little darker than a button */
 $widget_hover_bg_color: #ffa;		/* Somewhat less Yellow than the main hover color */
 
 $dimmer_background: #F3F178;		/* Color of the dimmer slider */
-$dimmer_handle: #ef2929;			/* Color of the dimmer handler */
+$dimmer_handle: #e33;				/* Color of the dimmer handler */
 
 $thermo_background: #F66;			/* Color of the thermo slider */
-$thermo_handle: #ef2929;			/* Color of the thermo handler */
+$thermo_handle: #e33;				/* Color of the thermo handler */
 
 $dialog_fg_color: #ff0;
 $dialog_bg_color: #030;

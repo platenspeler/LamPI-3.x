@@ -24,7 +24,7 @@ body {
   font-family: comic sans ms;
   color: #ff0;
   /* all text not belonging to special element */
-  background: #888; }
+  background: #333; }
 
 table {
   width: 100%;
@@ -55,7 +55,7 @@ input#lbl {
   padding: 2px;
   height: 30px;
   border: 1px solid black;
-  background-color: #AAA; }
+  background-color: #333; }
 
 /* Not so much header as well controls for menu actions */
 #gui_header {
@@ -68,7 +68,7 @@ input#lbl {
   margin-top: 0px;
   border: 1px solid black;
   text-align: center;
-  background-color: #AAA; }
+  background-color: #333; }
 
 #gui_header_content {
   position: inherit;
@@ -97,7 +97,7 @@ input#lbl {
   bottom: 40px;
   border: 1px solid black;
   text-align: center;
-  background-color: #BBB;
+  background-color: #333;
   overflow: auto; }
 
 /* This is the area on the form where the user/program messages are displayed */
@@ -111,10 +111,10 @@ input#lbl {
   margin-top: 1px;
   border: 1px solid black;
   text-align: center;
-  background-color: #AAA; }
+  background-color: #333; }
 
 #addRoomForm {
-  background-color: #888;
+  background-color: #333;
   color: #ff0;
   /* ddeff1 */
   font-weight: bold;
@@ -142,7 +142,7 @@ input#lbl {
   height: 30px;
   align: center;
   border-radius: 6px;
-  background-color: #666;
+  background-color: #555;
   color: #eee;
   vertical-align: top; }
 
@@ -158,7 +158,7 @@ input#lbl {
   border-radius: 6px;
   margin-bottom: 2px;
   color: #eee;
-  background-color: #666; }
+  background-color: #555; }
 
 /* Indicating a mouse over for a room button */
 .hr_button:hover {
@@ -178,7 +178,7 @@ input#lbl {
   border-radius: 5px;
   margin-top: 1px;
   margin-bottom: 2px;
-  background-color: #666;
+  background-color: #555;
   color: #eee; }
 
 .hs_button:hover {
@@ -193,7 +193,7 @@ input#lbl {
   width: 80px;
   height: 30px;
   border-radius: 5px;
-  background-color: #666;
+  background-color: #555;
   color: #eee; }
 
 .ht_button:hover {
@@ -207,7 +207,7 @@ input#lbl {
   width: 80px;
   height: 35px;
   border-radius: 5px;
-  background-color: #666;
+  background-color: #555;
   color: #eee;
   align: center; }
 
@@ -222,7 +222,7 @@ input#lbl {
   border-radius: 5px;
   margin-top: 3px;
   margin-bottom: 2px;
-  background-color: #666;
+  background-color: #555;
   color: #eee; }
 
 .hh_button:hover {
@@ -237,7 +237,7 @@ input#lbl {
   border-radius: 5px;
   margin-top: 3px;
   margin-bottom: 2px;
-  background-color: #666;
+  background-color: #555;
   color: #eee; }
 
 .hw_button:hover {
@@ -268,7 +268,7 @@ input#lbl {
 /* Grid and Widget defnitions */
 .widget {
   color: #fff;
-  background-color: #444; }
+  background-color: #222; }
 
 .widget:hover {
   background-color: #ffa; }
@@ -295,8 +295,8 @@ input#lbl {
   margin-right: 2px;
   margin-top: 2px;
   margin-bottom: 2px;
-  color: eee;
-  background-color: #666; }
+  color: #eee;
+  background-color: #555; }
 
 .dbuttons:hover {
   font-weight: bold;
@@ -335,7 +335,7 @@ input#lbl {
 
 /* A row of scene */
 .scene {
-  background-color: #666; }
+  background-color: #555; }
 
 .scene:nth-child(odd) {
   background-color: #888; }
@@ -431,7 +431,7 @@ input#lbl {
   position: absolute;
   top: -10px;
   border-style: none;
-  border-color: #ef2929; }
+  border-color: #e33; }
 
 /* Slider Thermo: Specific thermo definitions */
 .slider-thermo {
@@ -459,7 +459,7 @@ input#lbl {
   position: absolute;
   top: -10px;
   border-style: none;
-  border-color: #ef2929; }
+  border-color: #e33; }
 
 /* Slider Health: The Health counter indicator */
 .slider-health {
@@ -515,7 +515,7 @@ input#lbl {
   position: absolute;
   top: -10px;
   border-style: none;
-  border-color: #ef2929; }
+  border-color: #e33; }
 
 input.ui-slider-input {
   display: none !important;
@@ -535,10 +535,10 @@ input.ui-slider-input {
 
 /* Forms */
 .askform .ui-dialog-titlebar {
-  background: #555; }
+  background: #444; }
 
 .askform .ui-widget-content {
-  background: #888;
+  background: #333;
   color: #ff0; }
 
 .askform .ui_dialog {
