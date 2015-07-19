@@ -72,10 +72,12 @@ PATH=&quot;$HOME/scripts:$PATH&quot;<br>
 fi</code></p>
 <p><code>DBUSER=&quot;&lt;your Login&gt;&quot;; export DBUSER<br>
   DBPASSWD=&quot;&lt;you Password&gt;&quot;; export DBPASSWD<br>
-  DBHOST=&quot;&lt;your IP&gt;&quot;; export DBHOST</code><br>
+DBHOST=&quot;&lt;your IP&gt;&quot;; export DBHOST<br>
+</code><code>DBNAME=&quot;&lt;yourDbaseName&gt;&quot;; export DBNAME</code><br>
 </p>
-<p>Thi will make DBUSER and the others available as environment variables to the system, and read them in the ~/config/params.js file.</p>
-<p>&nbsp;</p>
+<p>This will make DBUSER and the others available as environment variables to the system, and read them in the ~/config/params.js file.</p>
+<p>Dor not forget to run </p>
+<p><code>. .profile</code></p>
 <h2>2. Configure the database.cfg file</h2>
 <p>Most of the configuration of LamPI can be done from the user interface application. This includes making/deleting of rooms, scenes and timers. Also, assigning devices to rooms, with the correct type and address is cometihing that can be done from the user interface. Should for whatever reason the LamPI configuration not work as expected or desired than it's good to know that there is a main configuration file for the LamPI operation that is read upon startup and that would contain the correct information.</p>
 <p>As shipped, your LamPI system contains the standard database.cfg file, which is mine and probably not useful for others (=you). Therefore edit the ~/config/database.cfg file</p>

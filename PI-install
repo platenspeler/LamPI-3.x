@@ -156,18 +156,87 @@ install_lampi()
 	cd $HOMEDIR/transmitters/lights; make; sudo make install
 	cd $HOMEDIR/transmitters/kopou; make; sudo make install    
 
-	# Database setup
-    # mysql -u root -p
-    # <password>
-    # CREATE DATABASE LamPI ;
-    # USE LamPI ;
-    # CREATE USER 'coco'@'localhost' IDENTIFIED BY 'coco';
-    # GRANT ALL PRIVILEGES ON LamPI.* TO 'coco'@'localhost' ;
-    # FLUSH PRIVILEGES ;
-    # quit
 }
 
+# -----------------------------------------------------------------------------------------------------
+# After downloading MySQL, try to configure 
+#
+install_mysql()
+{
+isdone=""
 
+    echo ""
+    echo "Trying to finish the MySQL installation and configuring"
+    echo "Remember this is a simple configuration only"
+    echo "---- type <Control C> anytime if you want to quit"
+    echo ""
+    echo -n "What is the MySQL password of the root user: " ; read ROOTPASSWORD
+    echo -n "What is name of the new MySQL database: " ; read DBASENAME
+    echo -n "What new User do you like to make: " ; read USERNAME
+    echo -n "What password should $USERNAME have: " ; read USERPASSWORD
+
+a=""
+while [ "$isdone" != "Y"  ]
+do
+   echo ""
+   echo -n "continue? (Y/N) "
+   read a
+   if [ "$a" == "Y" ]; then
+        isdone="Y"
+   elif [ "$a" == "N" ]; then
+        exit 1
+   fi
+done
+
+mysql -u root --password=$ROOTPASSWORD <<EOF
+SELECT 'Starting MySQL' AS ' ';
+  CREATE DATABASE $DBASENAME;
+  USE $DBASENAME;
+  SELECT 'Creating database $DBASENAME' AS ' ';
+  CREATE USER '$USERNAME'@'localhost' IDENTIFIED BY '$USERPASSWORD';
+  GRANT ALL PRIVILEGES ON $DBASENAME.* TO '$USERNAME'@'localhost';
+  FLUSH PRIVILEGES;
+  SELECT 'Ending MySQL' AS ' ';
+  quit
+EOF
+
+mysql -u root --password=$ROOTPASSWORD <<EOF
+  SELECT 'Databases defined: ' AS ' ';
+  SHOW DATABASES;
+  SELECT 'Users defined: ' AS ' ';
+  SELECT host, user, password FROM mysql.user;
+EOF
+
+echo ""
+echo "Do not forget to either include the database and user credential in the file ~/config/params.js"
+echo "or put them in the ~/.profile file of the pi user"
+echo "Do you want me to include the uer data in the ~/.profile file (if not already there)?"
+
+a=""
+isdone=""
+while [ "$isdone" != "Y"  ]
+do
+   echo ""
+   echo -n "continue? (Y/N) "
+   read a
+   if [ "$a" == "Y" ]; then
+        isdone="Y"
+   elif [ "$a" == "N" ]; then
+        exit 1
+   fi
+done
+
+grep "DBHOST" ~/.profile > /dev/null
+if [ $? = 0 ]; then
+	echo "File ~/.profile already contains database ENV settings"
+    echo "No actions taken ..."
+else
+	echo DBHOST="localhost"; export DBHOST " >> ~/.profile 
+	echo DBUSER="$USERNAME"; export DBUSER " >> ~/.profile
+	echo DBPASSWD="$USERPASSWORD"; export DBPASSWD " >> ~/.profile
+	echo DBNAME="$DBASENAME"; export DBNAME " >> ~/.profile
+fi
+}
 
 # -----------------------------------------------------------------------------------------------------
 # Download, Install and build the wiringPI library of Gordon
@@ -400,6 +469,7 @@ do
     printf "N: Install Node.js support\n"
     printf "V: Voice support, speech\n"
     printf "E: Energy Smart Metering Support\n\n"
+    printf "D: Database (MySQL) configuration\n\n"
     printf "Q: Quit the installer\n\n"
     printf "Please enter your answer + <ENTER> to continue: "
 	read a
@@ -437,8 +507,10 @@ do
     elif [ "$a" == "B" ]; then
 		echo "Installing a Raspbee Gateway Node"
 		install_raspbee
+    elif [ "$a" == "D" ]; then
+    	install_mysql
     elif [ "$a" == "Q" ]; then
-		echo "Thnank you for installing LamPI"
+		echo "Thank you for installing LamPI"
 		isdone="Y"
 	else
 		echo "Incorrect Input, <$a> Please try again.."

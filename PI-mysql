@@ -1,0 +1,45 @@
+#!/bin/bash
+isdone=""
+
+    echo ""
+    echo "Trying to finish the MySQL installation and configuring"
+    echo "Remember this is a simple configuration only"
+    echo "---- type <Control C> anytime if you want to quit"
+    echo ""
+    echo -n "What is the MySQL password of the root user: " ; read ROOTPASSWORD
+    echo -n "What is name of the new MySQL database: " ; read DBASENAME
+    echo -n "What new User do you like to make: " ; read USERNAME
+    echo -n "What password should $USERNAME have: " ; read USERPASSWORD
+
+a=""
+while [ "$isdone" != "Y"  ]
+do
+   echo ""
+   echo -n "continue? (Y/N) "
+   read a
+   if [ "$a" == "Y" ]; then 
+	isdone="Y" 
+   elif [ "$a" == "N" ]; then 
+	exit 1 
+   fi
+done
+
+mysql -u root --password=$ROOTPASSWORD <<EOF
+SELECT 'Starting MySQL' AS ' ';
+CREATE DATABASE $DBASENAME;
+USE $DBASENAME;
+SELECT 'Creating database $DBASENAME' AS ' ';
+CREATE USER '$USERNAME'@'localhost' IDENTIFIED BY '$USERPASSWORD';
+GRANT ALL PRIVILEGES ON $DBASENAME.* TO '$USERNAME'@'localhost';
+FLUSH PRIVILEGES;
+SELECT 'Ending MySQL' AS ' ';
+quit
+EOF
+
+
+mysql -u root --password=$ROOTPASSWORD <<EOF
+SELECT 'Databases defined: ' AS ' ';
+SHOW DATABASES;
+SELECT 'Users defined: ' AS ' ';
+SELECT host, user, password FROM mysql.user;
+EOF

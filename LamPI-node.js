@@ -594,7 +594,7 @@ var connection = mysql.createConnection({
   host     : par.dbHost ,
   user     : par.dbUser ,
   password : par.dbPassword ,
-  database : 'LamPI'
+  database : par.dbName
 });
 
 function connectDbase(cbk) {
