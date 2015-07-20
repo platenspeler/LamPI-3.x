@@ -12,7 +12,7 @@ echo "starting program: $0, $BASENAME"
 LOGFILE="$LOGDIR/$BASENAME.log"; export LOGFILE
 PID=""; export PID
 
-HOSTNAME="localhost"; export HOSTNAME
+HOSTNAME="255.255.255.255"; export HOSTNAME
 PORTNUMBER="5001"; export PORTNUMBER
 #
 
@@ -37,4 +37,4 @@ temperature=`echo $value | awk '{printf("%.2f\n", (a=( (("0x"substr($1,5,2)subst
 
 echo "buffer: $temperature"
 
-$EXEDIR/cmd-sensor -d -h "255.255.255.255" -p $PORTNUMBER -b "{\"tcnt\":\"4a\",\"action\":\"weather\",\"brand\":\"lm75\",\"type\":\"json\",\"address\":\"4a\",\"channel\":\"0\",\"temperature\":\"$temperature\"}"
+$EXEDIR/cmd-sensor -d -h $HOSTNAME -p $PORTNUMBER -b "{\"tcnt\":\"4a\",\"action\":\"sensor\",\"brand\":\"lm75\",\"type\":\"json\",\"address\":\"4a\",\"channel\":\"0\",\"temperature\":\"$temperature\"}"

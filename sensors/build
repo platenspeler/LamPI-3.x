@@ -38,3 +38,5 @@ cd $HOMEDIR/cmd-sensor
 make
 sudo make install
 
+echo "Build Done"
+
