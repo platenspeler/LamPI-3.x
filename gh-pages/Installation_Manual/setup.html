@@ -81,15 +81,15 @@ DBHOST=&quot;&lt;your IP&gt;&quot;; export DBHOST<br>
 <h2>2. Configure the database.cfg file</h2>
 <p>Most of the configuration of LamPI can be done from the user interface application. This includes making/deleting of rooms, scenes and timers. Also, assigning devices to rooms, with the correct type and address is cometihing that can be done from the user interface. Should for whatever reason the LamPI configuration not work as expected or desired than it's good to know that there is a main configuration file for the LamPI operation that is read upon startup and that would contain the correct information.</p>
 <p>As shipped, your LamPI system contains the standard database.cfg file, which is mine and probably not useful for others (=you). Therefore edit the ~/config/database.cfg file</p>
-<p><code><em><strong>vi ~/config/database.cfg</strong></em></code></p>
+<p><code>vi ~/config/database.cfg</code></p>
 <p>The database.cfg file contains a readable jSon description of the LamPI configuration. It is possible to change database.cfg with a simple text editor (and unfortunately for some complex settings you must) and its content is used to initialize the MySQL database which is queried upon program setup. In the &quot;Config&quot; menu of the application you can set several parameters and you can make backups and do restores from xxxxxx.cfg files in the ~/config directory.</p>
 <p>This way, you can make a backup of YOUR database.cfg file and do restores as well if you messed up for whatever reason.</p>
 <p>&nbsp;</p>
 <h2>3. Startup Parameters</h2>
 <p>The &quot;LamPI-node.js&quot; file reads its program parameters from a special file in &quot;~/config/params.js&quot;. Since parameters are specific to the running program you need to change the standard values to those that match your setup of the program.</p>
-<p><code><em><strong>vi ~/config/params.js</strong></em></code></p>
+<p><code>nano ~/config/params.js</code></p>
 <p> It is possible to specify the parameters directly in the file OR (and that is preferred) use the environment variables of your system to specify these parameters. The latter is easy: Just edit your &quot;~/.profile&quot;&nbsp;file and sepcify the value of the parameter. This is safer also, in case you distribute the files from one machine to the other.</p>
-<p><code><em><strong>nano </strong></em></code> <code><em><strong>~/.profile</strong></em></code></p>
+<p><code>nano </code> <code>~/.profile</code></p>
 <p>and edit for example the parameters of the alarm system, Z-Wave IP gateway and MySQL credentials by adding these lines to the .profile file.</p>
 <p><code># set PATH so it includes user's private scripts if it exists<br>
   if [ -d &quot;$HOME/scripts&quot; ] ; then<br>
@@ -114,11 +114,12 @@ DBHOST=&quot;192.168.2.80&quot;; export DBHOST</code><br>
 <p>&nbsp;</p>
 <h2>3. Start the daemon</h2>
 <p>Wthout the daemon running, LamPI will not have a database and will not run correctly. Start the ~/daemon/LamPI-node.js with the following command:</p>
-<p><code><em><strong>cd  ~/scripts; ./PI-node -i</strong></em></code></p>
+<p><code>cd  ~/scripts; <br>
+./PI-node -i</code></p>
 <p>Check whether LamPI will start correctly now and read the database. At anytime you can see the output of the LamPI-node.js  process by inspecting the log-file. A good way to do this is with the following command:</p>
-<p><code><em><strong>tail -f ~/log/PI-node.log</strong></em></code></p>
+<p><code>tail -f ~/log/PI-node.log</code></p>
 <p>Each time you need to restart the LamPI daemon, use the following command:</p>
-<p><code><em><strong>./PI-node -r</strong></em></code></p>
+<p><code>./PI-node -r</code></p>
 <p>&nbsp;</p>
 <h2>4. Loading a new configuration file</h2>
 <p>If you mess up or add new devices to your system, then it is of-course possible to add devices to the system with the GUI. But if you made a regular backup of your &quot;~/config/database.cfg&quot; file, it is easier to just restore the system should for whatever reason your database fail.</p>
@@ -126,7 +127,11 @@ DBHOST=&quot;192.168.2.80&quot;; export DBHOST</code><br>
 <ol>
   <li>Use the GUI, go to the &quot;Config&quot; menu and select the &quot;Backup&quot; button. In the backup/restore screen do a restore of the &quot;database.cfg&quot; file or another file where you saved your active configuration</li>
   <li>Initialize the database from the commandline. This is the ultimate survivors kit, if everything fails this will probably work. Make sure that a working version of your database.cfg file is in the ~/config directory, and type in firefox or IE:<br>
-  http://192.168.xx.yy/init which will load the database.cfg through the frontend. This method will work excellent even when the GUI does not work (if you messed up).</li>
+    <br>
+    <code>http://192.168.xx.yy:8080/init </code><br>
+    <br>
+    This command 
+  which will load the database.cfg through the frontend. This method will work excellent even when the GUI does not work (if you messed up).</li>
 </ol>
 <p><br>
 </p>

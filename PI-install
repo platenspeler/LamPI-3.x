@@ -164,7 +164,6 @@ install_lampi()
 install_mysql()
 {
 isdone=""
-
     echo ""
     echo "Trying to finish the MySQL installation and configuring"
     echo "Remember this is a simple configuration only"
@@ -368,24 +367,50 @@ setup_wlan()
 	sudo grep "network" /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null
 	if [ $? = 0 ]; then
 		echo "-- wpa_supplicant.conf already contains network clause"
+        echo "-- Exiting .."
+        sleep 2
+        return
 	else
-		printf "\nnetwork={\n" | sudo tail --append /etc/wpa_supplicant/wpa_supplicant.conf
-		printf "\tssid=\"platenspeler\"\n" | sudo tail --append  /etc/wpa_supplicant/wpa_supplicant.conf
-		printf "\tscan_ssid=0\n" | sudo tail --append  /etc/wpa_supplicant/wpa_supplicant.conf
-		printf "\tpsk=\"password\"\n" | sudo tail --append  /etc/wpa_supplicant/wpa_supplicant.conf
-		printf "\tproto=RSN\n" | sudo tail --append  /etc/wpa_supplicant/wpa_supplicant.conf
-		printf "\tkey_mgmt=WPA-PSK\n" | sudo tail --append  /etc/wpa_supplicant/wpa_supplicant.conf
-		printf "\tpairwise=CCMP\n" | sudo tail --append  /etc/wpa_supplicant/wpa_supplicant.conf
-		printf "\tauth_alg=OPEN\n" | sudo tail --append  /etc/wpa_supplicant/wpa_supplicant.conf
-		printf "}\n" | sudo tail --append  /etc/wpa_supplicant/wpa_supplicant.conf
+    	echo ""
+    	echo "Trying to finish the Wifi installation and configuring"
+    	echo "Remember this is a simple configuration only."
+        echo "We only support PSA-PSK keys at the moment."
+    	echo "---- type <Control C> anytime if you want to quit"
+		echo ""
+		echo -n "What is the SSID of your network: " ; read SSID
+		echo -n "What is the network PASS key: " ; read PASSKEY
+
+		a=""
+        isdone=""
+		while [ "$isdone" != "Y"  ]
+			do
+				echo ""
+				echo -n "continue? (Y/N) "
+				read a
+				if [ "$a" == "Y" ]; then
+					isdone="Y"
+				elif [ "$a" == "N" ]; then
+				exit 1
+			fi
+		done
+		printf "\nnetwork={\n" | sudo tee --append /etc/wpa_supplicant/wpa_supplicant.conf
+		printf "\tssid=\"$SSID\"\n" | sudo tee --append  /etc/wpa_supplicant/wpa_supplicant.conf
+		printf "\tscan_ssid=0\n" | sudo tee --append  /etc/wpa_supplicant/wpa_supplicant.conf
+		printf "\tpsk=\"$PASSKEY\"\n" | sudo tee --append  /etc/wpa_supplicant/wpa_supplicant.conf
+		printf "\tproto=RSN\n" | sudo tee --append  /etc/wpa_supplicant/wpa_supplicant.conf
+		printf "\tkey_mgmt=WPA-PSK\n" | sudo tee --append  /etc/wpa_supplicant/wpa_supplicant.conf
+		printf "\tpairwise=CCMP\n" | sudo tee --append  /etc/wpa_supplicant/wpa_supplicant.conf
+		printf "\tauth_alg=OPEN\n" | sudo tee --append  /etc/wpa_supplicant/wpa_supplicant.conf
+		printf "}\n" | sudo tee --append  /etc/wpa_supplicant/wpa_supplicant.conf
 	fi
     
 	clear
-	echo "Do not forget to setup Wifi controllers if you have these"
-	echo "You HAVE to edit the wpa_supplicant.conf file and supply your Wifi credentials (SSID and Password)"
-	echo "sudo vi /etc/wpa_supplicant/wpa_supplicant.conf, press <ENTER> to continue"
+
+	echo "You may have to edit the wpa_supplicant.conf file and check your Wifi credentials (SSID and Password)"
+    echo "Please edit the configuration file and use <CTRL-X> when finished"
+	echo "sudo nano /etc/wpa_supplicant/wpa_supplicant.conf, press <ENTER> to continue"
 	read a
-	sudo vi /etc/wpa_supplicant/wpa_supplicant.conf
+	sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
 }
 
 # -----------------------------------------------------------------------------------------------------
@@ -447,14 +472,14 @@ install_node()
 #
 cd $HOMEDIR
 
-echo "This script will upgrade your Raspberry to its latest revision of software."
-echo "It will instal MYSQL, PHP and Apache webserver packages which will take"
-echo "some time to install. "
-echo "The installer will continue to ask for installation choices until"
-echo "the user enters Q (for quit)\n\n"
-echo "Please press enter to continue or CTRL-C to abort."
-echo "\n"
-echo -n "<Press ENTER to start>  "; read a
+printf "This script will upgrade your Raspberry to its latest revision of software.\n"
+printf "It will instal MYSQL, PHP and Apache webserver packages which will take\n"
+printf "some time to install. \n"
+printf "The installer will continue to ask for installation choices until\n"
+printf "the user enters Q (for quit)\n\n"
+printf "Please press enter to continue or CTRL-C to abort.\n"
+printf "\n"
+printf "<Press ENTER to start>  "; read a
 
 a=""
 isdone="N"
@@ -466,10 +491,11 @@ do
     printf "M: LamPI master node\n"
     printf "S: LamPI Slave node\n"
     printf "Z: Z-Wave gateway\n"
-    printf "N: Install Node.js support\n"
-    printf "V: Voice support, speech\n"
+    printf "N: Install Node.js support (done my Master install)\n"
     printf "E: Energy Smart Metering Support\n\n"
-    printf "D: Database (MySQL) configuration\n\n"
+    printf "D: Database (MySQL) configuration\n"
+    printf "V: Voice support, speech (Development)\n"
+    printf "W: Wlan configuration\n\n"
     printf "Q: Quit the installer\n\n"
     printf "Please enter your answer + <ENTER> to continue: "
 	read a
@@ -481,9 +507,7 @@ do
         install_node
 		install_lampi
 		setup_modules
-		setup_cron -m
-        setup_wlan
-		isdone="Y"    
+		setup_cron -m   
  	elif [ "$a" == "E" ]; then
 		echo "Installing Smart Meter (Energy) support"    
 	elif [ "$a" == "N" ]; then
@@ -496,8 +520,6 @@ do
 		install_lampi
 		setup_modules
 		setup_cron
-        setup_wlan
-		isdone="Y"
 	elif [ "$a" == "V" ]; then
 		echo "Configuring LamPI Voice Support"
 		install_speech
@@ -509,6 +531,8 @@ do
 		install_raspbee
     elif [ "$a" == "D" ]; then
     	install_mysql
+    elif [ "$a" == "W" ]; then
+    	setup_wlan
     elif [ "$a" == "Q" ]; then
 		echo "Thank you for installing LamPI"
 		isdone="Y"
