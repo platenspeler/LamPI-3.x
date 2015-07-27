@@ -8,7 +8,11 @@
 
 <h1>Change History</h1>
 <p>This document describes the main changes made for a certain release</p>
-<p>Reease 3.4 (Juli 2015)</p>
+<p>Release 3.5 (August 2015)</p>
+<ul>
+  <li>Make all I2C messages from sensors to the LamPI-nod.js daemon the same. The address contains the specific address for the sensor on the bus and the channel will contain the last byte of the IP&nbsp;address of the machine the sensor is on. Together they will make that sensors messages will always be unique.</li>
+</ul>
+<p>Release 3.4 (Juli 2015)</p>
 <ul>
   <li>All parameters that need configuring, including stuff like server IP adresses, MySQL server, Z-Wave, etc are in a configuration file (~/config/params.js) which is JSON encoded or so and be loaded quickly by the daemon. Parameters can be set as Enrironment variables as well in tfis file</li>
   <li>Made the tiles/metro interface (in beta)</li>
@@ -42,7 +46,7 @@
   <li>Check compatibility of Raspberry 2.0 (OK)</li>
   <li>Implement new I2C sensors LM-75 and BMP180</li>
 </ul>
-<p>Release 3.0</p>
+<p>Release 3.0 (May 2015)</p>
 <ul>
 <li>Change all PHP daemons and change to node.js</li>
 <li>Integration with Z-Wave so that manual operations on switches will be visible in the GUI and Z-Wave 100% managed same as Kaku devices</li>
@@ -71,6 +75,7 @@
   <li>Display the current skin in the &quot;skin settings&quot; dialog, and make the current skin the default option in the drop-down menu</li>
 </ul>
 <p>&nbsp;</p>
-<p>June 25, 2015</p>
+<p>&nbsp;</p>
+<p>last updated: June 25, 2015</p>
 </body>
 </html>

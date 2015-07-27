@@ -132,12 +132,12 @@
     rcv.action; </code></p>
 </blockquote>
 <p><code>}</code></p>
-<h2>7. weather</h2>
+<h2>7. sensor</h2>
 <p>Messages received from the LamPI_receiver or any other sensor control program might contain the weather action, which will be interpreted by the LamPI_daemon and its values forwarded to the connected GUI clients.</p>
 <p>var rcv = {</p>
 <p><code>	tcnt: , 				// message transaction counter<br>
 type,				// type of content part, eg raw or json<br>
-action: 'weather',
+action: 'sensor',
 </code><code><br>
   address : ,<br>
   channel : ,<br>

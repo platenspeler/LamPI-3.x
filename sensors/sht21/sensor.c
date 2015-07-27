@@ -49,15 +49,21 @@
 
 #include "std_c.h"
 #include <stdio.h>
-#include <linux/i2c-dev.h>
+#include <stdint.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <fcntl.h>
+#include <string.h>
+#include <linux/i2c-dev.h>
+#include <linux/i2c.h>
+#include <sys/ioctl.h>
 #include <netdb.h>
+#include <ifaddrs.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <string.h>
+#include <sys/types.h>
+
 
 #include "i2c.h"
 #include "sht21.h"
@@ -75,6 +81,7 @@
 //=== Local constants  =============================================================================
 
 //=== Local variables ==============================================================================
+char host[NI_MAXHOST];
 
 //=== Local function prototypes ====================================================================
 
@@ -90,7 +97,7 @@
 
 int main(int argc, char **argv)
 { 
-	int verbose;						// -v is the only commandline parameter allowed
+//	int verbose;						// -v is the only commandline parameter allowed
 	
 	uint32 Counter;
 	int16 Temperature;
@@ -102,7 +109,9 @@ int main(int argc, char **argv)
 	char *hostname = "255.255.255.255";		// Default setting for our host == broadcast
 	char *port = UDPPORT;					// default port, 5001
 	int sockfd;
+	int fake;
 	char buf[256];
+	int channel;
 	
 	Counter = 0;
 	
@@ -125,11 +134,20 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	
-	printf("%lu\t%.1f\t%u\n",Counter++,((float)Temperature)/10,Humidity);			
+	printf("%lu\t%.1f\t%u\n",Counter++,((float)Temperature)/10,Humidity);
+	if (getLocalAddress(host) < 0) {
+		fprintf(stderr,"Cannot determine local address\n");
+	}
+	sscanf(host,"%d.%d.%d.%d",&fake,&fake,&fake,&channel);		
 	sockfd = socket_open(hostname, port, mode);
 	
 	// Make a jSon message to send to the server
-		sprintf(buf,"{\"tcnt\":\"21\",\"action\":\"sensor\",\"brand\":\"sht21\",\"type\":\"json\",\"address\":\"40\",\"channel\":\"1\",\"temperature\":\"%2.1f\",\"humidity\":\"%d\"}", (float)(Temperature)/10, Humidity );
+	sprintf(buf,
+"{\"tcnt\":\"21\",\"action\":\"sensor\",\"brand\":\"sht21\",\"type\":\"json\",\"address\":\"40\",\"channel\":\"%d\",\"temperature\":\"%2.1f\",\"humidity\":\"%d\"}", 
+		channel,
+		(float)(Temperature)/10, 
+		Humidity 
+	);
 	
 	buf_2_server(sockfd, 
 				hostname,			// HostIP, eg 255.255.255.255

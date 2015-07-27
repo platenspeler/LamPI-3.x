@@ -1,6 +1,7 @@
 /*
 Raspberry Pi Bosch BMP085 communication code.
-By:      John Burns (www.john.geek.nz)
+Original By: John Burns (www.john.geek.nz)
+Adapted for LamPI by: M. Westenberg 
 Date:    13 February 2013
 License: CC BY-SA v3.0 - http://creativecommons.org/licenses/by-sa/3.0/
 
@@ -46,6 +47,7 @@ Circuit detail:
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
+
 #include "smbus.h" 
 #include "cJSON.h"
 #include "sensor.h"

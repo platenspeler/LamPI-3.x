@@ -21,7 +21,7 @@ PORTNUMBER="5001"; export PORTNUMBER
 # The 3 least significant bits are made 0 by the application but can address 8 separate LM75 devices
 export value; 
 
-value=`sudo i2cget -y 1 0x4a 0x00 w` 
+value=`sudo i2cget -y 1 0x49 0x00 w` 
 if [ "$?" != "0" ]; then
 	echo "ERROR"
 	exit -1
@@ -37,4 +37,4 @@ temperature=`echo $value | awk '{printf("%.2f\n", (a=( (("0x"substr($1,5,2)subst
 
 echo "buffer: $temperature"
 
-$EXEDIR/cmd-sensor -d -h $HOSTNAME -p $PORTNUMBER -b "{\"tcnt\":\"4a\",\"action\":\"sensor\",\"brand\":\"lm75\",\"type\":\"json\",\"address\":\"4a\",\"channel\":\"0\",\"temperature\":\"$temperature\"}"
+$EXEDIR/cmd-sensor -d -h $HOSTNAME -p $PORTNUMBER -b "{\"tcnt\":\"49\",\"action\":\"sensor\",\"brand\":\"lm75\",\"type\":\"json\",\"address\":\"49\",\"channel\":\"0\",\"temperature\":\"$temperature\"}"

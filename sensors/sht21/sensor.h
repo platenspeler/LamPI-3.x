@@ -60,6 +60,48 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+/*
+ *********************************************************************************
+ * Get local address
+ *********************************************************************************
+ */
+int getLocalAddress(char *host) {
+
+    struct ifaddrs *ifaddr, *ifa;
+    int family, s;
+    //char host[NI_MAXHOST];
+
+    if (getifaddrs(&ifaddr) == -1)
+    {
+        perror("getifaddrs");
+		return(-1);
+        //exit(EXIT_FAILURE);
+    }
+	fprintf(stderr,"Starting loop\n");
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+    {
+        if (ifa->ifa_addr == NULL)
+            continue;
+
+        s=getnameinfo(ifa->ifa_addr,sizeof(struct sockaddr_in),host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+
+        if((strcmp(ifa->ifa_name,"wlan0")==0)&&(ifa->ifa_addr->sa_family==AF_INET))
+        {
+            if (s != 0)
+            {
+                fprintf(stderr,"getnameinfo() failed: %s\n", gai_strerror(s));
+				return(-1);
+                //exit(EXIT_FAILURE);
+            }
+//            fprintf(stderr,"\tInterface : <%s>\n",ifa->ifa_name );
+//            fprintf(stderr,"\t  Address : <%s>\n", host);
+        }
+    }
+
+    freeifaddrs(ifaddr);
+    return(0);
+}
+
 
 /*
  *********************************************************************************

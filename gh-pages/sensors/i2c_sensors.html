@@ -30,8 +30,8 @@
 <p>The following (not so expensive) sensors are available for connection to the
   LamPI system.</p>
 <ul>
-  <li>LM75,
-  Temperature Sensor (made by NXP and others)</li>
+  <li>LM75a,
+    Temperature Sensor (made by NXP and others)</li>
   <li>BMP085 (or GY-65),
     Digital Barometric Pressure Sensor board Barometer sensor module. </li>
   <li>BMP180, This module replaces the BMP085 (according to Bosch it is pi compatible).</li>
@@ -39,7 +39,7 @@
   <li>HMC5883 (or GY-273),
     3-axis digital compass</li>
   <li>AM2321,
-  Humidity and Temperature Sensor (with awfully small pin-out)</li>
+    Humidity and Temperature Sensor (with awfully small pin-out)</li>
 </ul>
 <ul>
   <li>HTU21, Temperature and Hunidity Sensor</li>
@@ -47,9 +47,17 @@
     Digital accelerator sensor</li>
   <li>MPL3115A2,
     Altimeter, Temperature and Pressure sensor</li>
+  <li>Luminescence sensor</li>
 </ul>
 <p>&nbsp;</p>
-<h2>3.2  Temperature Sensor LM75</h2>
+<h2>3.2 Sensor Messaging</h2>
+<p>The LamPI-node.js process will accep sensor messages from local or remote I2C sensors. The message format is detailed further in a separate section of the documentation. However, in general the &quot;address&quot; of the sensor is determined by the location of the sensor in the I2C bus, and the &quot;channel&quot; parameter will contain the last byte of the IP address in normal decimal form. The latter is important because if will make every sensor unique in the system (Lampi an dthe local network) as far as the sensor allows. For example, there can be only ONE sht21 sensor on every ssystem by there can be 8 LM75a sensrs of every system. In orer to make every system unique accross several Slave units, the cannel parameter which is normally &quot;0&quot; is made equal to the last part of the IP address.</p>
+<p>So, if you plan to send yout own messages to the LamPI-node process take into account the following:</p>
+<ul>
+  <li>Make sure that the ~/config/database.cfg file contains the right records for every I2C sensor. Inclusive the address parameter which is sensor dependent and the channel parameter which will must be the last byte of the IP address of the sensor on the local network</li>
+  <li>Make sure that the system reporting the sensor value will report the correct type, address and channel when sensing an UDP message to the LamPI-nod.js daemon program.</li>
+</ul>
+<h2>3.3  Temperature Sensor LM75</h2>
 <p>The LM75 is a cheap example of an I2C capable sensor. Several people have
   connected this sensor to the Raspberry and achieved promising results. I looked at these small packages and decided that soldering for me is not a real option as the pin out is really (REALLY) close and we risk to make a mess of our soldering job. </p>
 <p>Therefore I ordered a set of 1.27mm converter boards to that I can solder these IC's to a very small pronter circuit board which in turn can easily be used in the Raspberry environment as it has 2.54mm spacing between the soldering pads.</p>
@@ -64,11 +72,11 @@ src="I2C/LM75/lm75.jpg" alt="" width=500 height=400 border=0 id="Picture 6"></td
   </tr>
 </table>
 <p>After some time I decided to solder these tiny &quot;ticks&quot; to the converter boards and include the devices in the setup. The LM75a device shows up on the I2c bus at address 0x48 to 0x4f. With the pins A2, A1, A2 there can be 8 devices defined on the bus by connecting these pins to GND or VCC (making them 0 or 1).</p>
-<p><a href="I2C/LM75/lm75a-finger.jpg"><img src="I2C/LM75/lm75a-finger.jpg" width="400" height="300"></a> At my age, I need glasses, go outside and look under a certain angle in order read the text on the chip.Fortunately my small digital camera is a MUCH better device to read such small texts and so I took the picture above (you can click on it to magnify).</p>
-<p><a href="I2C/LM75/lm75a-reel.jpg"><img src="I2C/LM75/lm75a-reel.jpg" width="400" height="300"></a></p>
-<p><a href="I2C/LM75/lm75a-board_2.jpg"><img src="I2C/LM75/lm75a-board_2.jpg" width="400" height="300"></a></p>
+<p><a href="I2C/LM75/lm75a-finger.jpg"><img src="I2C/LM75/lm75a-finger.jpg" alt="" width="400" height="300"></a> At my age, I need glasses, go outside and look under a certain angle in order read the text on the chip.Fortunately my small digital camera is a MUCH better device to read such small texts and so I took the picture above (you can click on it to magnify).</p>
+<p><a href="I2C/LM75/lm75a-reel.jpg"><img src="I2C/LM75/lm75a-reel.jpg" alt="" width="400" height="300"></a></p>
+<p><a href="I2C/LM75/lm75a-board_2.jpg"><img src="I2C/LM75/lm75a-board_2.jpg" alt="" width="400" height="300"></a></p>
 <p>&nbsp;</p>
-<p><a href="I2C/LM75/lm75a-board_1.jpg"><img src="I2C/LM75/lm75a-board_1.jpg" width="400" height="300"></a></p>
+<p><a href="I2C/LM75/lm75a-board_1.jpg"><img src="I2C/LM75/lm75a-board_1.jpg" alt="" width="400" height="300"></a></p>
 <p>The pin-out of the LM75a is as follows:</p>
 <ul>
   <li>pin 1: SDA</li>
@@ -81,7 +89,7 @@ src="I2C/LM75/lm75.jpg" alt="" width=500 height=400 border=0 id="Picture 6"></td
   <li>pin 8: Vcc</li>
 </ul>
 <p>&nbsp;</p>
-<h2>3.3 Barometric Pressure Sensor BMP085</h2>
+<h2>3.4 Barometric Pressure Sensor BMP085</h2>
 <p>Another interesting sensors available on the I2C bus is the barometric
   pressure sensor BPM085 which also goes by the name of GY-65. It can be bought on eBay with free shipping for as low as $6.00. Next to the barometric pressure it can also measure the temperature. Below you see a picture of my type of sensor. However that are a numbe of different boards on the market so yours might be looking somewhat different. </p>
 <p><img
@@ -91,17 +99,17 @@ src="I2C/BMP085/BMP085_LRG.jpg" alt="" width=600 height=461 border=1 id="Picture
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
-<h2>3.4 SHT21 (or GY-21), Humidity and Temperature Sensor</h2>
+<h2>3.5 SHT21 (or GY-21), Humidity and Temperature Sensor</h2>
 <p>These 4-pin sensors are inexpensive and available on eBay.</p>
-<p><a href="I2C/SHT21/GY-21.jpg"><img src="I2C/SHT21/GY-21.jpg" width="405" height="328" hspace="5" vspace="5"></a><a href="I2C/SHT21/GY-21_2.jpg"><img src="I2C/SHT21/GY-21_2.jpg" width="400" height="308" hspace="5" vspace="5"></a></p>
+<p><a href="I2C/SHT21/GY-21.jpg"><img src="I2C/SHT21/GY-21.jpg" alt="" width="405" height="328" hspace="5" vspace="5"></a><a href="I2C/SHT21/GY-21_2.jpg"><img src="I2C/SHT21/GY-21_2.jpg" alt="" width="400" height="308" hspace="5" vspace="5"></a></p>
 <p>Hardware installation of this sensor is as easy as can be on the i2c bus. Just connect the clearly marked soldering terminals to the corresponding pins on the Raspberry connector. After booting give the command: &quot;i2cdetect -y 1&quot; and you will probably see the following output:</p>
-<p><img src="I2C/GY-21/i2cdetect_1.JPG" width="473" height="180"></p>
+<p><img src="I2C/GY-21/i2cdetect_1.JPG" alt="" width="473" height="180"></p>
 <p>My sensor shows up on address 40 Hex.</p>
 <p>&nbsp;</p>
-<h2>3.5 HMC5883 3-Axis Compass modules</h2>
+<h2>3.6 HMC5883 3-Axis Compass modules</h2>
 <p>I ordered one of these cheap compass modules on eBay for around 2$ a piece (including shipping).</p>
 <p>&nbsp;</p>
-<h2>3.6 AM2321 Sensor</h2>
+<h2>3.7 AM2321 Sensor</h2>
 <p>This little IC again has a pin spacing of around 1.27mm which makes it difficult to work with. I have this sensor for a while now but because of the pin spacing did not yet include it in my setup (it looks like a micro DHT22)</p>
 <p>I ended up soldering the small module to the same type of conversion board I also used for the LM75a temperature sensor, making use of pin 1 to 4 of the small board only.</p>
 <p>The pin-out of the AM2321 is as follows:</p>
@@ -112,11 +120,11 @@ src="I2C/BMP085/BMP085_LRG.jpg" alt="" width=600 height=461 border=1 id="Picture
   <li>Pin 4: SCL</li>
 </ul>
 <p>Unfortunately I did connect them the other way to the small conversion board, but that's no major issue provided that I keep that in mind when soldering the board to one of the Raspberries' breakout boards.</p>
-<h2>3.7 HTU21D Temperature and Humidity Sensor</h2>
+<h2>3.8 HTU21D Temperature and Humidity Sensor</h2>
 <p><img src="I2C/HTU21D/HTU21D.jpg" alt="" width="400" height="338"></p>
 <p>I ordered two of these HTU21D modules on eBay for round 5$ a piece (including shipping). </p>
 <p>&nbsp;</p>
-<h2>3.8 Programming I2C</h2>
+<h2>3.9 Programming I2C</h2>
 <p>By default, the I2C bus module is blacklisted on the RPI. Edit the /etc/modprobe.d/raspi-blacklist.conf file and uncomment the module (put a # character as first character of the line i2c-bcm2708). After this, probably rebooting the system is the best way to get everything initialised correctly.</p>
 <p>Now load the module with the command 'modprobe -i2c-dev', or more permanently put 'i2c-dev' on a separate line in /etc/modules. </p>
 <p>Load the package i2c-tools with the command 'sudo apt-get install i2c-tools'. Then use 'i2cdetect -l' to list the addresses where we can find the devices/sensors attached. With i2cdetect -y 1 (or 0 if you have the Raspberry model A) it is possible to get more information whether there are modules activated. Look for numbers (UU means cannot read)..</p>
@@ -129,13 +137,12 @@ src="I2C/BMP085/BMP085_LRG.jpg" alt="" width=600 height=461 border=1 id="Picture
 <p>In the LamPI system, wired sensors will normally be read by a small C program that either functions as a deamon, or is activated by the crontab (see crontab -l). After reading the sensor value, the program will activate an UDP socket on address 5001 (default value) and report the value read to the LamPI-node process.</p>
 <p>Some modules are written in C/C++ and they will use the socket send modules that I developed for all sensors. Others can be read from the shell in which case they make use of the cmd-sensor modules which allows shell programs to broadcast sensor readings to the LamPI-node.js process (and other interested network parties).</p>
 <p>For rrdtool there might be other options, it would be possible for example to store all sensor values on the local Raspberry (where the sensors are physically attached to) and move over rrd database values during certain time intervals. As rrdtool processing seems to be a cpu-intensive process, it makes senso to limit server processing of large amounts of data and do numbercrunching of historical data in the background (at night).</p>
-<h2>3.9 Links</h2>
+<h2>3.10 Links</h2>
 <ul>
   <li><a
 href="http://www.keesmoerman.nl/rasp_hw.html#mozTocId335084">http://www.keesmoerman.nl/rasp_hw.html#mozTocId335084</a></li>
   <li>HTU21D: <a href="https://learn.sparkfun.com/tutorials/htu21d-humidity-sensor-hookup-guide">https://learn.sparkfun.com/tutorials/htu21d-humidity-sensor-hookup-guide</a></li>
 </ul>
-
 <h2>&nbsp;</h2>
 </body>
 </html>
