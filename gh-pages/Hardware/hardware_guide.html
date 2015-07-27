@@ -9,7 +9,7 @@
 <h1>Hardware Guide</h1>
 <p>This page deals with the hardware that we need to connect to the Raspberry PI in order to communicatie with 433MHz receivers or Handsets and turn your RPI into a full functioning control center. LamPI can support receiver devices (making transmitter modules for various brands is often easy). Also, several brand share almost the same protocol or work or can be made to work with minor modifications, Therefore, the list below is probably just a snapshot of a much larger list...</p>
 <h2>Supported Devices</h2>
-<h3>Receivers, Switches, Dimmers (433MHz)</h3>
+<h3>433MHz Receivers, Switches, Dimmers</h3>
 <ul>
   <li>Klikaanklikuit switches, the new type</li>
   <li>Action or Impuls switches</li>
@@ -17,27 +17,103 @@
   <li>Kopou switches</li>
   <li>Elro, Blokker, Old Kliaanklikuit (not tested, software is installed)</li>
 </ul>
-<h3>Handsets and Remote Controls (433 MHz)</h3>
+<h3>433MHz Handsets and Remote Controls</h3>
 <ul>
   <li>Klikaanklikuit remotes</li>
   <li>Livolo 4-button keychain</li>
   <li>Kopou 4-button keychain</li>
-  <li>Pulse (=Action) Remotes</li>
+  <li>Pulse (= Action) Remotes</li>
 </ul>
 <h3>433MHz Temperature Sensors</h3>
 <ul>
-  <li><a href="wt440h/wt440h.html">WT-440H</a>, made by UPM/Esic (The weather menu button will only show if a weather sensor is defined in the database.cfg file)</li>
+  <li><a href="wt440h/wt440h.html">WT-440H</a>, made by UPM/Esic (The weather menu button will only show if a weather sensor is defined in the ~/config/database.cfg file)</li>
+</ul>
+<h3>868 MHz Zwave devices (Razberry)</h3>
+<ul>
+  <li>Fibaro FGD-211 Dimmer</li>
+  <li>Fibaro double switch</li>
+  <li>AEON Multi Sensor</li>
+  <li>Fibaro Multi Sensor</li>
+</ul>
+<h3>2.4GB Zigbee devices</h3>
+<ul>
+  <li>TBD (None supported yet)</li>
 </ul>
 <h3>Wired Sensors</h3>
 <ul>
   <li>Wired sensors: DHT11, DHT22 Temperature/Humidity Sensor</li>
   <li>1-Wire bus sensors: DS18B20 Temperature Sensor</li>
-  <li>2-wire I2C bus sensors: such as BMP085 Temperature and Airpressure sensor</li>
+  <li>2-wire I2C bus sensors: such as BMP085, BMP180, LM75a, SHT21 sensors</li>
 </ul>
-<h3>Zwave 868MHz devices</h3>
-<ul>
-  <li>Fibaro FGD-211 Dimmer</li>
-</ul>
+<p>&nbsp;</p>
+<h1>Interfacing 433MHz devices</h1>
+<p>There are several ways to interface LamPI with 433MHz devices. First of all, one can connect a transmitter and/or reeiver directly to the RaspberryPI. This is the cheapest solution. Secondly, you can buy&nbsp; dedicated interface such as the Rfxcomm that connets to the Raspberry over a&nbsp;USB interface. This devices will do most if not all low-level processing for the Raspberry. And thirdly, you can make your own solution with for example an Adruino and build your own device for transmitting and receiving 433MHz messages. so what are the pro's nd conn's?</p>
+<h2>Direct connect to Raspberry</h2>
+<p>A direct connection to the RaspberryPI is the cheapest solution to connect (over the air) your Raspberry homeautomation solution to devices in the field. The disadvantage of using the Raspberry this way is that the Raspbarry will spend a lot of Cpu cycles on handling interrupts of the 433MHz receiver, even if there are no useful signals received. Also, some messages are long, or have very critical timing, and the Raspberry will not receive these signls well if it has other important thing to do.</p>
+<table width="789" height="113" border="1">
+  <tr>
+    <th width="374" scope="col">Plus</th>
+    <th width="399" scope="col">Minus</th>
+  </tr>
+  <tr>
+    <td>Low Price</td>
+    <td>For devices with critical timing Raspberry is not the best I/O&nbsp;system</td>
+  </tr>
+  <tr>
+    <td>Support by community</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p>Transmitting commands is less of an issue: Especially for transmissions&nbsp;to Kaku devices, the Raspberry seems to be quite capable. If one or two interrupts (with high priority) do occurr, they will not influence the transmitter timing too much. The&nbsp;Kaku protocol is not that difficult in timing. However, for Livolo and Kopou devices that do use far shorting timing cycles, the Raspberry is not the best solution. Especially when there is lots of other work to be done by the Raspberry such as Gui handling, Daemon handling with MySQL and 433MHz receiver handling. </p>
+<h2>Using an Rfxcomm interface</h2>
+<p itemprop="name">The rfxcomm RFXtrx433E USB 433.92MHz transceiver is the standard communication device for several commercial and non-commercial home automation solutions.&nbsp;It is a separate device which is connected to teh Raspberry over a USB cable&nbsp;(which will also power it). The advantage of the Rfxcomm solution is its support of a wide range of sensors and switches that is available in the market. Also, it's manufacturer will actively integrate new devices when they become available on the market. The disadvantage of this solution: It's price is steep, 105 Euro's is more than the Raspberry and&nbsp;a few sensors...</p>
+<table width="789" height="118" border="1">
+  <tr>
+    <th width="374" scope="col">Plus</th>
+    <th width="399" scope="col">Minus</th>
+  </tr>
+  <tr>
+    <td>Manufacturer support</td>
+    <td>High price</td>
+  </tr>
+  <tr>
+    <td>Many devices supported</td>
+    <td>What if your device is not supported?</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p itemprop="name">&nbsp;</p>
+<h2>Building your own USB Device</h2>
+<p>The third option would be to combine most of the advantages of&nbsp;1 and 2 and build your own 433MHz gateway.</p>
+<table width="789" height="115" border="1">
+  <tr>
+    <th width="374" scope="col">Plus</th>
+    <th width="399" scope="col">Minus</th>
+  </tr>
+  <tr>
+    <td>Low price (potential)</td>
+    <td>DIY, need to build your own supported device list</td>
+  </tr>
+  <tr>
+    <td>Better message recognition</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>Offload the Raspberry with dedicated I/O gateway</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h2>LamPI Choice</h2>
+<p>For the moment, LamPI supports the first approach only. The rfxcom solution would probably work (after some work) but is not tested because of the potential cost.</p>
+<p>In the future, I will do some work on option 3 and try whether an USB solution based on a dedicated Arduino 433MHz gateway over USB can be used as well.</p>
 <h1>Hardware needed on Raspberry</h1>
 <p>So the list of equipment that we can interface to is long, but what hardware do we need to install in order to control all these devices?  And how to connect your Weather and Energy Sensors? </p>
 <ul>
@@ -50,7 +126,7 @@
 </ul>
 <p>&nbsp;</p>
 <h1><a name="connector"></a>Raspberry P1 Connector (Raspberry B)</h1>
-<p><img src="GPIOs.png" width="254" height="581" hspace="20" vspace="5" align="left">The Raspberry-PI has a 26-pins connector (called P1) to which all devices are connected, whether these are 434MHz transmitters/receivers, 1-wire sensors, I2C-bus sensors or the P1-connector of the Smart Meter in your house.</p>
+<p><img src="images/GPIOs.png" width="254" height="581" hspace="20" vspace="5" align="left">The Raspberry-PI has a 26-pins connector (called P1) to which all devices are connected, whether these are 434MHz transmitters/receivers, 1-wire sensors, I2C-bus sensors or the P1-connector of the Smart Meter in your house.</p>
 <p>The figure on the left shows the lay-out of the RaspberryPI GPIO connector. For the 512MB version Raspberry (which is the most common version sold and in use today) use the rev 2.</p>
 <p>If you look at the table more closely you'll notice that some sensors, transmitters or receivers use the same pins. This is for historical reasons, when I first started the LamPI project. At the moent I would make choices that ensure that we can use as many transmitters, receivers and sensors next to each other. </p>
 <p>Note: Therefore I expect to make some changes to the default pin for the transnmitter (header pin 8) as I cannot change the pin layout of the Razberry. So in a next release of LamPI it could very well be that the default pin for the LamPI transmitter will be GPIO17 or so.</p>
@@ -112,12 +188,12 @@ As I use the wiringPI library of Gordon, I also copied his pin-definitions which
   <br>
   Note: Please forget the &quot;Name&quot; columns in the figure below! Use the description as found above.<br>
   <br>
-<img src="gpio1.png" width="600" height="295"></p>
+<img src="images/gpio1.png" width="600" height="295"></p>
 <p>&nbsp;</p>
 <h2>Raspberry B 1+ and B2 pinout</h2>
 <p>The pin-out for the new Raspberry devices is different from the older ones. The new connector is 40-pi instead of 26-pin. Fortunately the first 26-pins are equal between all the B versions of the RaspberryPI.</p>
 <p><br>
-  <a href="GPIO_Pi2.png"><img src="GPIO_Pi2.png" width="478" height="512"></a><br>
+  <a href="images/GPIO_Pi2.png"><img src="images/GPIO_Pi2.png" width="478" height="512"></a><br>
   <br>
 </p>
 <h1><a name="433transceivers"></a>433MHz Transmitters and Receivers</h1>
@@ -126,15 +202,15 @@ As I use the wiringPI library of Gordon, I also copied his pin-definitions which
 <p>I found that most ASK/OOK based transmitters and receivers work with the 433MHz devices that are used for home automation. The protocol used by klikaanklikuit (Kaku) is OOK.</p>
 <h2>Cheap eBay Transmitters and Receivers</h2>
 <p>In the picture you see a receiver (L) and transmitter (R) pair that can be bought for around 3$ a pair wih free shipping. It is Chinese made, and although specifications might differ from unit to unit, they work quite OK.</p>
-<p> <img src="pi transmitter receiver.jpg" width="400" height="300"></p>
+<p><img src="images/pi transmitter receiver.jpg" width="400" height="300"></p>
 <p>Frankly, I love these sets as for just 10$ I can make at least 5 prototype boards and see which one fits my PI better. </p>
-<p><img src="vmstat_cheapebay_noload.JPG" width="893" height="529"></p>
+<p><img src="images/vmstat_cheapebay_noload.JPG" width="893" height="529"></p>
 <h2>Superheterodyne kit (eBay)</h2>
 <p>Ok, these look better than the cheap kit, and the good news is that they are better. </p>
-<p><img src="super-heterodyne-pair.JPG" width="674" height="555"></p>
-<p>And the load of these superheterodyne kits so low enough that futher work with low pass filters etc may not be necessary anymore.</p>
-<p><img src="vmstat_superheterodyne_noload.JPG" width="893" height="549"></p>
-<p>As you can see from the screendump of a terminal to one of my PIs, the load of the transmitter/receiver combo on the system (no GUI actions, only LamPI-daemon running, syste receiving weather station messages only) is very low. If you compare the load of this set with the cheap one above you see that it uses less than half of the cpu power that the cheap kit uses.</p>
+<p><img src="images/super-heterodyne-pair.JPG" width="674" height="555"></p>
+<p>And the load of these superheterodyne kits so low enough that futher work with low pass filters etc may not be necessary anymore. As you can see, with my setup (somewhere in 2014) the idle time is around 85% which means that the Raspberry (model 1) has plenty of time left. Obeviously for this test I did not run any other functions of LamPI in order to be able to compare these results.</p>
+<p><img src="images/vmstat_superheterodyne_noload.JPG" width="893" height="549"></p>
+<p>As you can see from the screendump of a terminal to one of my PIs, the load of the transmitter/receiver combo on the system (no GUI actions, only LamPI-daemon running, system receiving weather station (WT-440u) messages only) is very low. If you compare the load of this set with the cheap one above you see that it uses less than half of the cpu power that the cheap kit uses.</p>
 <p>For your final version, where you need to rely on in your house, this may be a safe choice of transmitter/receiver.</p>
 <h2>iPrototype</h2>
 <p>The Dutch internetshop iPrototype also sells transmitters and receivers  and their quality is very good, and comparable to the Superheterodyne set described above..</p>
@@ -147,22 +223,27 @@ Link: <a href="http://www.hoperf.com/rf/data_link_module/HM-T.htm">http://www.ho
 <p>&nbsp;</p>
 <h2>Filter</h2>
 <p>Especially the receivers can pick up quite some noise, expecially in an urban area. I have been experimenting with external filters that would keep the higher-frequency crap from my receiver, and some people like those in pilight for example make an art of building a filter around those components. Thing is that with all those sensors in and around the house there is a lot of pollution which will impact the receiver. Not only will it make our received not recognize incoming messages if two transmitters send their data at the same time, it will also impact the amount of compute power needed to clearly recognize messages coming in if there is lots of noise in the air.</p>
-<p>During my experiments I found out that with good software design the system time that these receivers use for interrupt handling can be kept close to 10-30% max, which leaves about 75% idle time that can be used for LamPI-daemon processing and GUI handling. I use a round buffer where pulses received by the received are stored and processed as soon as enough pulses came in to recognize a message.</p>
+<p>During my experiments I found out that with good software design the system time that these receivers use for interrupt handling can be kept close to 10-30% max, which leaves about 75% idle time that can be used for LamPI-node processing and GUI handling. I use a round buffer where pulses received by the received are stored and processed as soon as enough pulses came in to recognize a message.</p>
 <p>Fortunately, the more expensive units work slightly better and consume less computer resources too, so I advice all of you to spend a little more money and buy the more expensive stuff</p>
 <ul>
   <li>More expensive receivers contain better filters, pick up less noise, and leave you with more compute power</li>
   <li>More expensive transmitters have a better range and will make the devices in your house recognize commands easier.</li>
 </ul>
 <p>&nbsp;</p>
-<h1><a name="zwave"></a>Z-Wave hardware</h1>
-<p>The Razberry is a small stck-up device that connect to the P1 connector of the Raspberry. It contains the firmware needed to interface with the 868MHz Z-Wave software (which the company calls ZWay)</p>
-<p><a href="Razberry/razberry1.jpg"><img src="Razberry/razberry1.jpg" alt="Razberry/razberry2.jpg" width="400" height="267"></a></p>
+<h1><a name="zwave"></a>Interfacing Z-Wave hardware</h1>
+<p>The Razberry is a small stick-on device that connect to the P1 connector of the Raspberry. It contains the firmware needed to interface with the 868MHz Z-Wave software (which the company calls ZWay).</p>
+<p><a href="Razberry/razberry3.jpg"><img src="Razberry/razberry1.jpg" alt="Razberry/razberry2.jpg" width="400" height="267"></a></p>
 <p>If you like to read more on the software for the Razberry and how LamPI interfaces with the hardware, please read further &lt;<a href="../Zwave/RazBerry/zwave_gateway.html">HERE</a>&gt;</p>
-<h1><a name="wsensors"></a>Connecting Weather Sensors</h1>
+<p>&nbsp;</p>
+<h1>Interfacing Zigbee devices</h1>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<h1><a name="wsensors"></a>Connecting Wired Sensors</h1>
 <p>Connecting weather sensors (hardware installation) is not difficult as long as their interface sticks to the more well-known I2C bus or to the Dallas (1w) bus.</p>
-<p>There is a separate chapter on connecting sensors which you find <a href="../sensors/wired_sensors.html">&lt;HERE&gt;</a>. The special message format used by devices to send messages to LamPI-nod.js can be found <a href="../sensors/weather_sensors_msg_format.html">&lt;HERE&gt;</a></p>
+<p>There is a separate chapter on connecting sensors which you find <a href="../sensors/wired_sensors.html">&lt;HERE&gt;</a>. The special message format used by devices to send messages to LamPI-nod.js can be found <a href="../sensors/weather_sensors_msg_format.html">&lt;HERE&gt;</a>.</p>
+<p>&nbsp;</p>
 <h1><a name="esensors" id="esensors"></a>Connecting Energy Sensors</h1>
-<p>There is a separate chapter on connecting Energy Sensors to your Raspberry. Please read <a href="../sensors/energy_sensors.html">&lt;HERE&gt;</a><br>
+<p>There is a separate chapter on connecting Energy Sensors to your Raspberry. Please read <a href="../sensors/energy_sensors.html">&lt;HERE&gt;</a>. <br>
 </p>
 </body>
 </html>

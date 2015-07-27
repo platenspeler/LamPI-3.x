@@ -325,6 +325,8 @@ setup_cron()
 			echo "*/3 * * * * cd $HOMEDIR/scripts && sh ./PI-i2c > /dev/null 2>&1"	>> /tmp/effe
             # Uncomment the net line for the node managing P1 sensor
 			#echo "*   * * * * cd $HOMEDIR/scripts && sh ./PI-energy > /dev/null 2>&1"	>> /tmp/effe
+            # Next line is to set transmitter in a stable state (at startup or error)
+            echo "*/2 * * * * cd /home/pi/exe && sh ./kaku -g 99 -n 1 1 > /dev/null 2>&1 " >> /tmp/effe
         
         // ZWAVE 
         elif [ "$1" == "-z" ]; then

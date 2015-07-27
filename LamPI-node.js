@@ -622,7 +622,7 @@ function queryDbase(qry,cbk) {
 		cbk(null, rows);
 	}
 	else {
-		console.log('queryDbase:: err: '+err+', query: <'+query.sql+">");
+		console.log('queryDbase:: err: '+err+', query: <'+qry+">");
 		cbk("queryDbase err: "+err,null);
 	}
   });
@@ -2048,11 +2048,15 @@ function sensorHandler(buf, socket) {
 		config['sensors'][index]['sensor']['humidity']['val'] = buf['humidity'];
 	if ( (buf['airpressure'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('airpressure')) )
 		config['sensors'][index]['sensor']['airpressure']['val'] = buf['airpressure'];
-	if (buf['altitude'] !== undefined)		config['sensors'][index]['sensor']['altitude']['val'] = buf['altitude'];
-	if (buf['windspeed'] !== undefined)		config['sensors'][index]['sensor']['windspeed']['val'] = buf['windspeed'];
-	if (buf['winddirection'] !== undefined) config['sensors'][index]['sensor']['winddirection']['val'] = buf['winddirection'];
-	if (buf['rainfall'] !== undefined)		config['sensors'][index]['sensor']['rainfall']['val'] = buf['rainfall'];
-	if ( (buf['luminescense'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('liminescense')) )
+	if ( (buf['altitude'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('altitude')) )	
+		config['sensors'][index]['sensor']['altitude']['val'] = buf['altitude'];
+	if ( (buf['windspeed'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('windspeed')) )	
+		config['sensors'][index]['sensor']['windspeed']['val'] = buf['windspeed'];
+	if ( (buf['winddirection'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('winddirection')) )
+		config['sensors'][index]['sensor']['winddirection']['val'] = buf['winddirection'];
+	if ( (buf['rainfall'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('rainfall')) )	
+		config['sensors'][index]['sensor']['rainfall']['val'] = buf['rainfall'];
+	if ( (buf['luminescense'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('luminescense')) )
 		config['sensors'][index]['sensor']['luminescense']['val'] = buf['luminescense'];
 
 	// XXX Other and new sensors come here!

@@ -10,7 +10,7 @@ par.dbUser = process.env.DBUSER || 'coco';
 par.dbPassword = process.env.DBPASSWD || 'coco';
 par.dbName = process.env.DBNAME || 'LamPI';
 
-par.zHost = process.env.ZHOST || '192.168.1.52';
+par.zHost = process.env.ZHOST || '192.168.2.52';
 
 par.wHost = process.env.WHOST || 'myaddress';
 par.wLogin= process.env.WLOGIN || 'login';

@@ -75,6 +75,12 @@ void Livolo::sendButton(unsigned int remoteID, unsigned char keycode) {
 
   for (pulse= 0; pulse <= repeats; pulse++) 		// how many times to transmit a command
   {
+    int res;
+    res = piHiPri (90);
+	if (res<0) {
+		perror("SendButton:: piHiPri set error: ");
+		return;
+	}
   	high = !inverted;								// if inverted, start invert all pulses
 	if (high) 
 		sendPulse(1);
@@ -103,6 +109,11 @@ void Livolo::sendButton(unsigned int remoteID, unsigned char keycode) {
 		}
     } 
     if (fflg==1) printf("\n");
+	res = piHiPri((int)0);
+	if (res<0) {
+//		perror("SendButton::  piHiPri reset error: ");
+//		return;
+	}
   }
   
   if (high)

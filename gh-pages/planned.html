@@ -7,25 +7,31 @@
 <body>
 
 <h1>Planned Functions</h1>
-<p>Of course I'm always thinking about new functions, as long as I do not have to put the current system up-side-down too much. After all, I do have other day-time work to do and it has to make sense for me to spend additional time. Therefore, you are welcome to ask for new functions, but if it will cost me days to implement them and I will not benefit from them in any way I will probably give priority to other changes.</p>
+<p>Of course I'm always thinking about new functions, as long as I do not have to put the current system up-side-down too much. After all, I do have other day-time work to do and it has to make sense for me to spend additional time. Therefore, you are welcome to ask for new functions, but if it will cost me days to implement them and I will not benefit from them in any way I will probably give priority to other changes. Anyway, don not be surprise if I'm working on at least three different items at a time (after all this is hobby remember ..)</p>
+<p>The (x) in front of a line idicates it's piority on my list</p>
+<h3>Gui</h3>
 <ul>
-  <li><strong>(done)</strong> As LamPI-xx.yy.js , sensor.js , energy.js and rules.js all work on the same sort of client definitions, we need to make a library of those common (socket-based) functions so we do not need to worry about inconsistencies</li>
-  <li><strong>(done)</strong> All parameters that need configuring, including stuff like server IP adresses, MySQL server, Z-Wave, etc etc must be in a configuration file which is JSON encoded or so and be loaded quickly by the daemon.</li>
   <li><strong>(beta)</strong> Implementation of an alternative GUI style comparable with&nbsp;the metro interface of Windows 8.x</li>
   <li>(1) Split the css skin selection between phone and windows/tablet</li>
   <li>Allow each user to have his/her own interface and configuration selection. At this moment a&nbsp;lot of information is shared between users. In future &quot;anonymous&quot; use should still be possible, but when a user does logon we will save all relevant selections wogether with his/her profile.</li>
+  <li>Add support for Android phones. This is in beta at the moment and I use PhoneGap technology of Adobe to make such version. All Javascript/jQueryMobile code is already in the LamPI-x.y.js file, the index.html file will determine what libraries to load. I will probably publish a separate branch for Android with the same version number as its web equivalent.</li>
+</ul>
+<h3>Daemon</h3>
+<ul>
   <li>(1) We need a check function to check every device, scene and rule for data which is out of date etc.</li>
-  <li>User should be able to store their own preferences like skin and/or type of device etc. Also, other preferences like what devices are favorite should be stored.</li>
   <li>Receive alarms from the LamPI-gate Z-Wave gateway and deal with them. At the moment the gateway reports back changed device values to LamPI but we need to handle alarms and temperature sensors as well.</li>
   <li>Integrate an alarm system with rules and/or scenes</li>
   <li>(2) See whether LamPI&nbsp;sensors can be made to work from a remote location over the internet. This omes in handy if you want to check another location from your home address</li>
-  <li>Add support for Android phones. This is in beta at the moment and I use PhoneGap technology of Adobe to make such version. All Javascript/jQueryMobile code is already in the LamPI-x.y.js file, the index.html file will determine what libraries to load. I will probably publish a separate branch for Android with the same version number as its web equivalent.</li>
   <li>(3) LamPI speech recognition. Some home automation systems have speech recognition to switch on/off devices. I'm not yet convinced of speach recognition to work well in a living room environment, but like to study the function.</li>
   <li>Add full support for Z-Wave (or Zigbee). As the LamPI-daemon is quite universal in its setup adding transmitter/receivers for these technologies is relatively easy. At the moment ZWave support is implemented through a Z-Way gateway running on a dedicated RaspberryPI</li>
-  <li>I like (at some time) be integrating my front-end with upcoming new standards for Home Automation as soon as these stacks become available for the Raspberry.</li>
-  <li>Internationalization; Probably not worth spending too much time on this, as most people that will use this projects do not mind English versions anyway. So probably just making an alternative startup file for ''database.cfg&quot; would be enough for international customers to get a good feel for the software.</li>
   <li>Now that the PHP code has disappeared in favour of node.js, I like to see if Mongodb/Mongoose would be a better db solution than MySQL</li>
-  <li>Statistics of devices seen, etc etc</li>
+  <li>Statistics of devices last seen, etc etc</li>
+  <li>Internationalization; Probably not worth spending too much time on this, as most people that will use this projects do not mind English versions anyway. So probably just making an alternative startup file for ''database.cfg&quot; would be enough for international customers to get a good feel for the software.</li>
+</ul>
+<h3>Sensor/Transmitter/Reeiver Hardware</h3>
+<ul>
+  <li>Work on LamPI receiver efficiency. For example by working with a high-power tranceiver.</li>
+  <li>As the Raspberry is a Unix device and not quite capable of dealing with High speed interrupts, see whether using a separate Arduino connected over USB with its own transmitter and receiver offer better performance (it has better real-time possibilities)</li>
 </ul>
 <h1><a name="KnownIssues"></a>Known Issues, Bugs etc.</h1>
 <p>Both architectual and GUI related</p>

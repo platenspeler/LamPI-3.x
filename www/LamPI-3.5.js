@@ -173,8 +173,6 @@ function start_LAMP(){
 					// Create
 					function (ret) {
 						// OK Func, need to get the value of the parameters
-						// Add the device to the array
-						// SO what are the variables returned by the function???
 						if (debug > 2) alert(" Dialog returned Name,Type: " + ret);	
 						var newroom = {
 							id: ind,
@@ -184,17 +182,15 @@ function start_LAMP(){
 						s_room_id = ind;				// Make the new room the current room
 						
 						send2daemon("dbase","add_room", newroom);
-						// And add the line to the #gui_devices section
-						// Go to the new room
+						// And add the line to the #gui_devices section, go to the new room
 						// activate_room(new_room_id);
 						// XXX Better would be just to add one more button and activate it in #gui_header !!
 						init_rooms("init");
-						return(1);	//return(1);
-						
+						return(1);
 					// Cancel	
   					}, function () {
-							activate_room(s_room_id);
-						return(1); // Avoid further actions for these radio buttons 
+						activate_room(s_room_id);
+						return(1);
   					},
   					'Confirm Create'
 			); // askForm
@@ -276,7 +272,6 @@ function start_LAMP(){
 				+ "The red X allows you to delete a device from the room. Press the X and you'll see "
 				+ "small selection buttons on the left of every device line. Press one and you'll "
 				+ "be able to delete the device.\n"
-				
 			);
 			$( '.cr_button' ).removeClass( 'hover' );
 		break;
@@ -313,16 +308,12 @@ function start_LAMP(){
 		id = $(e.target).attr('id');						// should be id of the button (array index substract 1)
 		switch (id)
 		{	// Add a new scene. So we have to record a sequence
-			// We start with making a new row in the scene array,
-			// give it a name etc. and transfer control to the user
 			case "Add":
 				// Search for a scene id that is unused between 2 existing scenes
-				// Look for matchins indexes. This is a time-exhausting operation, but only when adding a scene
 				var ind = 1;
 				while (ind <= max_scenes) { 
 					for (var i=0; i< scenes.length; i++) {
 						if ( ( scenes[i]['id'] == ind )) {
-						// alert("found this ind: "+ind+" on pos "+i+", );
 						// We found this index is used!
 							break; // for
 						} // if
@@ -347,36 +338,27 @@ function start_LAMP(){
 					+ '<label for="val_1">Name: </label>'
 					+ '<input type="text" name="val_1" id="val_1" value="" class="text ui-widget-content ui-corner-all" />'
 					+ '<br />'
-					// XXX so leave this in just for the moment 
-					//+ '<label for="type">Type: </label>'
-					//+ '<input type="text" name="type" id="type" value="" class="text ui-widget-content ui-corner-all" />'
 					+ '</fieldset></form>';
 				askForm(
 					frm,
 					// Create
 					function (ret) {
 						// OK Func, need to get the value of the parameters
-						// Add the device to the array
-						// So what are the variables returned by the function???
 						if (debug > 2) alert(" Dialog returned val_1,val_2: " + ret);		
 						var newscene = { id: ind, name: ret[0], type: "scene", val: "0", seq: "" };
 						scenes.push(newscene);			// Add record newdev to devices array
 						send2daemon("dbase","add_scene", newscene);
 						// And add the line to the #gui_devices section, Go to the new scene
 						s_scene_id = ind;
-						// activate_scene(new_scene_id);
-						// XXX Better would be just to add one more button and activate it in #gui_header !!
 						init_scenes("init");
 						return(1);	//return(1);
-						
 					// Cancel	
   					}, function () {
-							activate_scene (s_scene_id);
+						activate_scene (s_scene_id);
 						return(1); // Avoid further actions for these radio buttons 
   					},
   					'Confirm Create'
-				); // askForm
-				
+				); // askForm	
 			break;
 				
 			// Remove the current scene. Means: Remove from the scenes array, and reshuffle the array. 
@@ -399,7 +381,6 @@ function start_LAMP(){
 					+ 'Please start with selecting a scene from the list.<br /><br />'
 					+ str
 					+ '<br></fieldset></form>';
-					
 				askForm(
 					frm,
 					// Create
@@ -419,11 +400,9 @@ function start_LAMP(){
 						send2daemon("dbase","delete_scene", removed[0]);
 						if (debug>1)
 								alert("Removed from dbase:: id: " + removed[0]['id'] + " , name: " + removed[0]['name']);
-						// 
 						s_scene_id = scenes[0]['id'];				// If there are no scenes, we are in trouble I guess
 						init_scenes("init");						// As we do not know which room will be first now
-						return(1);	//return(1);
-						
+						return(1);
 					// Cancel	
   					}, function () {
 							activate_scene (s_scene_id);
@@ -523,7 +502,6 @@ function start_LAMP(){
 			case "Add":
 				// We start with making a new row in the timer array, give it a name etc.
 				var ind = 1;
-			
 				// Search for a timerid that is unused between 2 existing timer records
 				// Look for matchins indexes. This is a time-exhausting operation, but only when adding a timer
 				while (ind <= max_timers) { 
@@ -541,18 +519,12 @@ function start_LAMP(){
 				}
 					
 				// Now ask for a name for the new timer
-				// The for asks for 2 arguments, so maybe we need to make a change later
-				// and make the function askForm more generic
 				var frm='<form><fieldset>'
 					+ '<p>You have created timer nr' + ind + '. Please specify name for your new timer</p>' 
 					+ '<label for="val_1">Name: </label>'
 					+ '<input type="text" name="val_1" id="val_1" value="" class="text ui-widget-content ui-corner-all" />'
 					+ '<br />'
-					// XXX so leave this in just for the moment 
-					//+ '<label for="val_2">Type: </label>'
-					//+ '<input type="text" name="val_2" id="val_2" value="" class="text ui-widget-content ui-corner-all" />'
 					+ '</fieldset></form>';
-					
 				askForm(
 					frm,
 					// Create
@@ -629,11 +601,8 @@ function start_LAMP(){
 						}
 						// Is the room empty? Maybe we do not care, everything for scene is IN the record itself
 						var timer_id = timers[i]['id'];
-					
-						// Remove the timer from the array
-						var removed = timers.splice(i ,1);		// Removed is an array too, one element only
-					
-						logger(removed[0]);
+						var removed = timers.splice(i ,1);		// Removed is an array(!), one element only
+						logger(removed[0],2);
 						// Remove the timer from MySQL
 						send2daemon("dbase","delete_timer", removed[0]);
 						if (debug>1)
@@ -650,7 +619,6 @@ function start_LAMP(){
   					},
   					'Confirm Delete Timer'
 				); // askForm
-					
 				// Popup: Are you sure
 			break;
 				
@@ -956,7 +924,7 @@ function start_LAMP(){
 // Sensors (formerly Weather)
 // Handle the Weather (=remote) selection in the Content area
 // This function deals with the Command Weather (cw) buttons diaplayed in the content section.
-// If the user selects one of these buttons, the corresponding sensors action is activated.
+// If the user selects one of these buttons, the sensors GRAPH action is activated.
 //
 	$("#gui_content").on("click", ".cw_button", function(e){
 			e.preventDefault();
@@ -993,7 +961,6 @@ function start_LAMP(){
 			case "Add":
 				// We start with making a new row in the sensors array, give it a name etc.
 				// Search for a sensors id that is unused in array of existing sensors
-				// Look for matching indexes. This is a time-exhausting operation, but only when adding a sensors
 				var ind = 1;
 				while (ind <= max_sensors) { 
 					for (var i=0; i< sensors.length; i++) {
@@ -1003,7 +970,7 @@ function start_LAMP(){
 					} // for
 					// So the ind is unused, its free for us to use it
 					if (i == sensors.length){
-						break; // while
+						break;
 					}
 					ind++;
 				}//while
@@ -1031,9 +998,7 @@ function start_LAMP(){
 					frm,
 					// Create
 					function (ret) {
-						// OK Func, need to get the value of the parameters
-						// Add the device to the array
-						// So what are the variables returned by the function???
+						// OK Func, add device to array
 						if (debug > 2) alert(" Dialog returned val_1,val_2: " + ret);
 						var sensors_name = ret[0];
 						var sensors_addr = ret[1];
@@ -1271,10 +1236,10 @@ function start_LAMP(){
 				// Find a free setting id:
 				var ind = 1;
 			break;
-			// Remove the current setting. Means: Remove from the settings
-			// array, and reshuffle the array. 
+			// Remove from the settings array, and reshuffle the array. 
 			// What it means for SQL need to sort out later .....
 			case "Del":
+			
 			break;
 			case "Help":
 					alert("This is the Help screen for Setting Configuration\n\n"
@@ -3365,14 +3330,7 @@ function activate_timer(tim)
 					case "Fx":
 						$( '.timbut' ).removeClass( 'hover' );
 						$('#Fx').addClass( 'hover' );
-					// Do we want confirmation?
-					//	var timer_cmd = '!FxP"' + timer['name'] + '"';
-					//	alert("Delete current Sequence: " + timer['name']
-					//		+ "\ntimer cmd: " + timer_cmd
-					//		  );
-					//	message_device("timer", "cancel", timer_cmd);
-					//	XXX Still need to delete something....
-					//	send2daemon("dbase", "delete_timer", timer);
+
 						myConfirm('You are about to cancel this timer. If you continue, the system ' 
 							+ 'will for one time skip this timer action', 
 							// Confirm
@@ -3402,9 +3360,7 @@ function activate_timer(tim)
 						+ 'to this timer screen again. Please confirm if you want to add a device.', 
 						// Confirm
 						function () {
-							// DO nothing....
-							// Maybe make the background red during device selection or blink or so
-							// with recording in the message area ...
+							// DO nothing but blink....
 							message('<p style="textdecoration:blink; background-color:red; color:white;">RECORDING</p>');	
   						}, function () {
 						// Cancel
@@ -3561,17 +3517,15 @@ function activate_timer(tim)
 							 
 							// write back new value to array object timers
 							if (set_timer(s_timer_id,timer) < 0)
-								alert("Cannot set timer values in object");
-							//return(0);	
+								alert("Cannot set timer values in object");	
   						}, 	
 						// Cancel
 						function () {
-							//return(1); // Avoid further actions for these radio buttons 
+							
   						},
   						"Set Sunset Timer"
 						);
 					break;
-					
 					// If we press the timevalue field (must be of class dbuttons to work)
 					// Then start with either time of dusk value based upon which one is highlighted!
 					case "Tv":
@@ -4816,6 +4770,7 @@ function activate_setting(sid)
 		case "2":
 			logger("activate_setting:: users selected",2);
 			send2daemon("dbase","list_user", settings[2] );
+		// XXX AAhhh a trick
 		case "2b":
 			$( "#gui_content" ).empty();
 			html_msg = '<div id="gui_uset"></div>';			// sensors set
@@ -5054,7 +5009,8 @@ function activate_setting(sid)
 			})
 			// XXX make sure we write this to the mysql backend too!
 	
-		break; //4	
+		break; //4 skin
+		
 		// Backup and Restore
 		//
 		case "5": 
