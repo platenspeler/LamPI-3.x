@@ -58,7 +58,7 @@ sensor:	$(OBJ)
 	@$(CC) -c $(CFLAGS) $< -o $@
 
 install:
-	@cp lm75a.sh $(INSTALL)/lm75a.sh
+	cp lm75a.sh $(INSTALL)/lm75a.sh
 	chown root $(INSTALL)/lm75a.sh
 	chmod u+s $(INSTALL)/lm75a.sh
 

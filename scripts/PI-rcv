@@ -48,6 +48,8 @@ then
 		echo "Portnumber of server not found in config file" >> $LOGFILE 2>&1
 	fi
 	cd $EXEDIR
+    # Do this to put the transmitter in the right state otherwise it will oscillate
+    ./kaku -g 99 -n 1 1 > /dev/null 2>&1
     
 	echo "`date`:: Starting $SNIFFER" >> $LOGFILE 2>&1
     # Use -v (=verbose) flag only when necessary

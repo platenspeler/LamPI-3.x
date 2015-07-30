@@ -6,6 +6,7 @@ LamPI Version:
 	3.0.1; Mar 22, 2015; Rewriting PI-gate for node
 	3.0.2; May 10, 2015; Rewriting LamPI-daemon for node
 	3.0.3; May 26, 2015; Adding support for Woonveilig Alarm system
+	3.5; Jul 29, 2015
 
 ***********************************************************************************	*/
 // Configuration
@@ -66,7 +67,7 @@ Array.prototype.contains = function(element){
 // --------------------------------------------------------------------------------
 process.argv.forEach(function (val, index, array) {
   
-  if (index < 2) logger("process.argv["+index+"] skipping: "+val);				// Skip node command and the LamPI-node.js script
+  if (index < 2) logger("process.argv["+index+"] skipping: "+val);		// Skip node command and the LamPI-node.js script
   else switch (val) {
 	case "-i":
 		logger("Calling init",1);
@@ -86,13 +87,7 @@ process.argv.forEach(function (val, index, array) {
 			loadDbase( function (err, result) { 
 				if (err == null) logger("init:: loadDbase returned successful "+result,1);
 				var str = "";
-				Object.keys(config).forEach(function(key) {
-					logger("loadDbase: "+key+", length: "+config[key].length);
-					for (j=0; j<config[key].length; j++) {
-						str += ''+key+','+j+': '+ config[key][j]['name']+"<br>";
-					}
-					str += "<br>";
-				});
+				str += printConfig();
 				str += '<br>init:: done, restarting loops';
 				logger(str,2);						// Can only send results to web client once
 				start_loops();
@@ -100,20 +95,14 @@ process.argv.forEach(function (val, index, array) {
 		});
 	break;
 	case "-r":
-		// Only re-read the database
+		// Only re-read the database into the config structure
 		var str = "";
-		for (var i=0; i<loops.length; i++) clearInterval(loops[i]);
-		config = readConfig();
-		logger("reload:: read config #: "+config.length,1);
+		for (var i=0; i<loops.length; i++) clearInterval(loops[i]); // Stop the loops
+		
+		logger("reload:: read the configuration",1);
 		loadDbase( function (err, result) { 
 				if (err == null) logger("init:: loadDbase returned successful "+result,1);
-				Object.keys(config).forEach(function(key) {
-					logger("loadDbase: "+key+", length: "+config[key].length);
-					for (j=0; j<config[key].length; j++) {
-						str += ''+key+','+j+': '+ config[key][j]['name']+"<br>";
-					}
-					str += "<br>";
-				});
+				str += printConfig();
 				str += '<br>init:: done, restarting loops';
 				logger(str,2);						// Can only send results to web client once
 				start_loops();
@@ -164,7 +153,7 @@ app.all('/init', function (req, res, next) {
 	str += 'init started<br>';
 	str += 'Suspending '+loops.length+' timers<br>';
 	for (var i=0; i<loops.length; i++) clearInterval(loops[i]);
-	config = readConfig();							// Read the config file
+	config = readConfig();							// Read the config file first
 	createDbase(function (err, result) {
 		if (err) { logger("init:: ERROR: "+err ); return; }
 		logger("init:: createDbase returned "+result,1);
@@ -190,16 +179,9 @@ app.all('/load', function (req, res, next) {
 	str += 'Suspending '+loops.length+' timers<br>';
   
 	for (var i=0; i<loops.length; i++) clearInterval(loops[i]);
-	config = readConfig();
   	loadDbase( function (err, result) { 
 			if (err == null) logger("load:: loadDbase returned successful "+result,1);
-			Object.keys(config).forEach(function(key) {
-				logger("load::: "+key+", length: "+config[key].length);
-				for (j=0; j<config[key].length; j++) {
-					str += ''+key+','+j+': '+ config[key][j]['name']+"<br>";
-				}
-				str += "<br>";
-			});
+			str += printConfig();
 			str += '<br>load:: done, restarting loops';
 			logger(str,2);
 			res.send(str);							// Can only send results to web client once
@@ -245,82 +227,104 @@ function writeConfig(cfile) {
 }
 
 function printConfig() {
-	var str="";
-	Object.keys(config).forEach(function(key) {
-		logger("loadDbase: "+key+", length: "+config[key].length);
-		str+="<table>";
+	var str="<!DOCTYPE html>";
+	Object.keys(config).forEach(function(key) {	
+		str += '<h1>'+key+'</h1>';
+		logger("printConfig: "+key+", length: "+config[key].length);
+		str += '<table style="max_width: 100%; border: 1px solid black; border-collapse: collapse;" class="config_table">';
+		str += '<tr class="config_line">';
+		switch(key) {
+			case "settings":
+			case "brands":
+			case "rooms":
+			case "timers":
+			case "scenes":
+			case "handsets":
+			case "devices":
+			case "sensors":
+			case "controllers":
+			case "rules":
+				Object.keys(config[key][0]).forEach(function(item) {
+					str	+= '<th style="background-color: green; color: white;">'+item+'</th>'
+				});
+			break;
+		}
+		str += '</tr>'
 		for (j=0; j<config[key].length; j++) {
-			str += "<tr>"
-			str += "<td>"+key+"["+j+"]</td>";
-			str += "<td>: "+ config[key][j]['name']+"</td>";
-			str += "<td>, id: "+config[key][j]['id']+"</td>";
+			str += '<tr>';
 			switch (key) {
-				case "rooms":
-				break;
-				case "devices":
-					str += "<td>, room: "+config[key][j]['room']+"</td>";
-					str += "<td>, gaddr: "+config[key][j]['gaddr']+"</td>";
-					str += "<td>, uaddr: "+config[key][j]['uaddr']+"</td>";
-					str += "<td>, type: "+config[key][j]['type']+"</td>";
-					str += "<td>, val: "+config[key][j]['val']+"</td>";
-				break;
-				case "scenes":
-				// MGW
-					str += "<tr><td>";
-					var strips = config[key][j]['seq'].split(",");
-					for (var k=0; k<strips.length; k+=2) {
-						str += "<tr><td>";
-						str += "<td>, ics: "+strips[k]+"</td>";
-						str += "<td>, time: "+strips[k+1]+"</td>";
-						var r = /\d+/;
-						var room = strips[k].match(r);
-						if (strips[k].indexOf('Fa') != -1) {					// XXX Room must exist
-							if (idRoom(room) >= 0)
-								str += "<td>, Room "+config['rooms'][idRoom(room)]['name']+" All Off"+"</td>";
-							continue;
-						}
-						var s = strips[k].indexOf('D');
-						var uaddr = strips[k].substr(s+1,2).match(r);
-						var ind = findDevice(room, uaddr);
-						if (ind >= 0) str += "<td>, "+config['devices'][ind]['name']+"</td>";
-						else str += "<td>, CHECK THE DEVICE, MAY NOT EXTIST"+"</td>";
-					}
-					logger(" ");
-				break;
-				case "timers":
-					str += "<td>, scene: "+config[key][j]['scene']+"</td>";
-					str += "<td>, tstart: "+config[key][j]['tstart']+"</td>";
-					str += "<td>, startd: "+config[key][j]['startd']+"</td>";
-					str += "<td>, endd: "+config[key][j]['endd']+"</td>";
-				break;
+				case "settings":
+				case "brands":
 				case "sensors":
-					str += "<td>, addr: "+config[key][j]['address']+"</td>"
-					str += "<td>, chan: "+config[key][j]['channel']+"</td>";
-					str += "<td>, loc: "+config[key][j]['location']+"</td>";
-					str += "<td>, brand: "+config[key][j]['brand']+"</td>";
-					if (config[key][j]['sensor'].hasOwnProperty('temperature') )
-						str += "<td>, temp: "+config[key][j]['sensor']['temperature']['val']+"</td>";
-					if (config[key][j]['sensor'].hasOwnProperty('humidity') )
-						str += "<td>, humi: "+config[key][j]['sensor']['humidity']['val']+"</td>";
-					if (config[key][j]['sensor'].hasOwnProperty('airpressure') )
-						str += "<td>, press: "+config[key][j]['sensor']['airpressure']['val']+"</td>";
-				break;
+				case "rooms":
+				case "scenes":
+				case "devices":
+				case "timers":
+				case "handsets":
+				case "controllers":
 				case "rules":
-					str += "<td>, active: "+config[key][j]['active']+"</td>";
-					str += "<tr><td>";
-					str += "<td colspan='3'>, jrule: "+JSON.stringify(config[key][j]['jrule'])+"</td>";
-					str += "<tr><td>";
-					str += "<td colspan='3'>, brule: <pre><code>"+JSON.stringify(config[key][j]['brule'])+"</code></pre></td>";
-					// As the XML will not show correctlyin a webpage we do on the console
-					console.log("rule stringify "+j+": ",JSON.stringify(config[key][j]));
+					var lupdate;
+					var sns="";
+					Object.keys(config[key][j]).forEach(function(item) {
+						switch(item) {
+						case 'lastUpdate':
+							str += '<td style="border: 1px solid black;">&nbsp'+printTime(config[key][j][item])+'</td>';
+						break;
+						case 'sensor': 
+							Object.keys(config[key][j]['sensor']).forEach(function(sens) {
+								sns += '<td style="border: 1px solid black;">';
+								lupdate = printTime(config[key][j]['sensor'][sens]['lastUpdate']);
+								sns += sens+": "+config[key][j]['sensor'][sens]['val']+"";
+								sns+= '</td>';
+							});
+							sns = '<td style="border: 1px solid black;">'+lupdate+'</td>'+sns;
+						break;
+						case "seq":
+							//str += '<td style="border: 1px solid black;">&nbsp'+config[key][j][item]+'</td>';
+							str += '<tr><td style="min-width=100px;">';
+							var strips = config[key][j]['seq'].split(",");
+							for (var k=0; k<strips.length; k+=2) {
+								str += "<tr><td>";
+								str += "<td>, ics: "+strips[k]+"</td>";
+								str += "<td>, time: "+strips[k+1]+"</td>";
+								var r = /\d+/;
+								var room = strips[k].match(r);
+								if (strips[k].indexOf('Fa') != -1) {					// XXX Room must exist
+									if (idRoom(room) >= 0)
+										str += "<td>, Room "+config['rooms'][idRoom(room)]['name']+" All Off"+"</td>";
+									continue;
+								}
+								var s = strips[k].indexOf('D');
+								var uaddr = strips[k].substr(s+1,2).match(r);
+								var ind = findDevice(room, uaddr);
+								if (ind >= 0) 
+									str += '<td style="border: 1px solid black;">, '+config['devices'][ind]['name']+'</td>';
+								else str += '<td style="border: 1px solid black;">, CHECK THE DEVICE, MAY NOT EXTIST</td>';
+							}
+						break;
+						case "jrule":
+							str += '<tr><td>';
+							str += '<td style="border: 1px solid black;" colspan="4">, jrule: '+JSON.stringify(config[key][j]['jrule'])+'</td>';
+						break;
+						case "brule":
+							str += '<tr><td>';
+							str += '<td style="border: 1px solid black;" colspan="4">, brule: '+JSON.stringify(config[key][j]['brule'])+'</td>';
+						break;
+						default: 
+							str += '<td style="border: 1px solid black;">&nbsp'+config[key][j][item]+'</td>';
+						}
+					})
+					str += sns;
 				break;
 			}
-			str += "</tr>"			
+			str += '</tr>'			
 		}//for
-		str += "<br></table>";				// Between sub objects
+		str += '<br></table>';				// Between sub objects
 	});
+	
 	// Now print the program parameters as well
-	str +="<table>";
+	str += '<H1>Parameters</H1>';
+	str +='<table>';
 	Object.keys(par).forEach(function(key) {	
 		str += "<tr>"
 		str += "<td>"+ key +"</td>";
@@ -697,7 +701,7 @@ function delDevDb(table, obj, cbk) {
 // update Device(!) in DB
 // ----------------------------------------------------------------------------
 function updDevDb(table, obj, cbk) {
-	var query = connection.query('UPDATE '+table+' SET ? WHERE id=? AND room=?', [ obj, obj.id, obj.room], function(err, result) {
+	var query = connection.query('UPDATE '+table+' SET ? WHERE id=? AND room=?', [ obj, obj.id, obj.room ], function(err, result) {
   		if (!err) {
   			if (debug >= 3) { console.log('updDevDb success:: result: \n', result); }
 			cbk(null,result);
@@ -750,7 +754,7 @@ function createDbase(cb) {
 	},
 	function (callback) {
 		queryDbase('DROP TABLE IF EXISTS devices',function(err, ret) { 
-			queryDbase('CREATE TABLE devices(id CHAR(3), descr CHAR(128), uaddr CHAR(3), gaddr CHAR(12), room CHAR(12), name CHAR(20), type CHAR(32), val INT, lastval INT, brand CHAR(20) )',function(err, ret) {																																	
+			queryDbase('CREATE TABLE devices(id CHAR(3), descr CHAR(128), uaddr CHAR(3), gaddr CHAR(12), room CHAR(12), name CHAR(20), type CHAR(32), val INT, lastval INT, lastUpdate INT, brand CHAR(20) )',function(err, ret) {																																	
 				callback(err,'devices made');
 			});
 		});
@@ -799,7 +803,7 @@ function createDbase(cb) {
   },
   function (callback) {
 	queryDbase('DROP TABLE IF EXISTS sensors',function(err, ret) { 
-		queryDbase('CREATE TABLE sensors(id INT, descr CHAR(128), name CHAR(20), room CHAR(12), location CHAR(20), brand CHAR(20), address CHAR(20), channel CHAR(8), type CHAR(32), caps CHAR(64), sensor CHAR(255) )',function(err,ret) {
+		queryDbase('CREATE TABLE sensors(id INT, descr CHAR(128), name CHAR(20), room CHAR(12), location CHAR(20), brand CHAR(20), address CHAR(20), channel CHAR(8), type CHAR(32), sensor CHAR(255) )',function(err,ret) {
 			callback(null,'sensors made');
 		});
 	});
@@ -818,6 +822,14 @@ function createDbase(cb) {
 	for (var i=0; i< config['devices'].length; i++) { 
 		insertDb("devices", config['devices'][i], function(err,result) { r.push("d"); }); }
 	callback(null, 'devices: '+r);
+  },
+  function (callback) { var r = [];
+	for (var i=0; i< config['sensors'].length; i++) { 
+		var obj = config['sensors'][i];
+		obj.sensor = JSON.stringify(config['sensors'][i]['sensor']);
+		insertDb("sensors", obj, function(cb) { r.push("w"); }); 	
+	}
+	callback(null, 'sensors: '+r);
   },
   function (callback) { var r = [];
 	logger("createDb starting for rooms, #rooms: "+config['rooms'].length);
@@ -863,14 +875,6 @@ function createDbase(cb) {
  		insertDb("rules", obj, function(cb) { r.push("s"); }); 	
 	}
 	callback(null, 'rules: '+r);
-  },
-  function (callback) { var r = [];
-	for (var i=0; i< config['sensors'].length; i++) { 
-		var obj = config['sensors'][i];
-		obj.sensor = JSON.stringify(config['sensors'][i]['sensor']);
-		insertDb("sensors", obj, function(cb) { r.push("w"); }); 	
-	}
-	callback(null, 'sensors: '+r);
   }
   ], // end of async part
   function (err, result) { 
@@ -981,8 +985,7 @@ function loadDbase(db_callback) {
 		queryDbase('SELECT * from controllers',function cbk(err, arg) { 
 			config['controllers']=arg; callback(null,'controllers '+arg.length); });
 	}
-], function(err, result) { 
-		// logger("database read: ",1); console.log(config['devices']);
+  ], function(err, result) {
 		db_callback(null, result) 
   });	
 }
@@ -1210,6 +1213,7 @@ function getTime() {
 	var date = new Date();
 	return S(date.getHours()).padLeft(2,'0').s+ ':' +S(date.getMinutes()).padLeft(2,'0').s+ ':' +S(date.getSeconds()).padLeft(2,'0').s ;
 }
+
 // We use the time but devide the time by 1000 to work in milliseconds to our timers
 function getTicks() {
 	//var date = new Date();
@@ -1227,8 +1231,8 @@ function getSunSet() {
 }
 
 function printTime(t) {
-	var date = new Date(t);
-	return S(date.getHours()).padLeft(2,'0').s+ ':' +S(date.getMinutes()).padLeft(2,'0').s+ ':' +S(date.getSeconds()).padLeft(2,'0').s ;
+	var date = new Date(t*1000);
+	return ("00"+(date.getMonth()+1)).slice(-2) +"/"+ ("00"+date.getDate()).slice(-2) +"/"+ date.getFullYear()+ " " + S(date.getHours()).padLeft(2,'0').s+ ':' +S(date.getMinutes()).padLeft(2,'0').s+ ':' +S(date.getSeconds()).padLeft(2,'0').s ;
 }
 
 // --------------------------------------------------------------------------------
@@ -1712,7 +1716,7 @@ function energyHandler(buf, socket) {
 	var db = rrdDir + "/db/" +"e350.rrd";
 	
 	var str=[];
-	logger("energyHandler:: action: "+ buf.action+", brand: "+buf.brand,1);
+	logger("energyHandler:: action: "+ buf.action+", brand: "+buf.brand,0);
 
 	if (!fs.existsSync(db)) {
 		logger("energyHandler:: rrdtool db "+db+" does not exist ... creating",1);
@@ -1905,7 +1909,7 @@ function icsHandler(buf, socket) {
 				logger("icsHandler:: ERROR for index: "+index+", #devices: "+config['devices'].length+" room: "+room+", uaddr: "+uaddr+", ics: "+ics,1);
 				return;
 			}
-			var gaddr = config['devices'][index]['gaddr'];	// which gaddr is ok (send to correct 433 or 868 device handler)
+			var gaddr = config['devices'][index]['gaddr'];	// which gaddr is ok (send to 433 or 868 device handler)
 			var brand = config['brands'][ config['devices'][index]['brand'] ]['fname']; 
 			var data = {
 				tcnt: ""+tcnt++,
@@ -1918,6 +1922,8 @@ function icsHandler(buf, socket) {
 				message: ics	
 			};
 			config['devices'][index]['val']=value;			// Set the value in the config object
+			config['devices'][index]['lastUpdate']=getTicks();
+			logger("icsHandler:: Room: "+room+", Dev: "+uaddr+", Val: "+value,0);
 			if (gaddr == "868" ) deviceSet(index, value);	// zwave only
 			updDevDb("devices", config['devices'][index], function(result) { 	// Mysql
 				logger("icsHandler:: updDevDb ics "+ics+" finished OK",1); });	// only for PI-node restart	
@@ -1937,21 +1943,24 @@ function icsHandler(buf, socket) {
 			queue.qinsert({ticks: getTicks(), scene: "gui", seq: "!R1D1F0"});
 		break
 		case '!A':
-			logger("icsHandler:: Handset message "+buf.message,1);
 			var addr = ics.match(r);
 			var s = ics.indexOf('D');
 			var unit = ics.substr(s+1,2).match(r);
 			
 			var s = ics.indexOf('F');
 			var val = ics.substr(s+1,2).match(r);
-			logger("icsHandler:: handset addr: "+addr+",unit: "+unit+", val: "+val,1);
+			logger("icsHandler:: handset addr: "+addr+",unit: "+unit+", val: "+val,0);
 			var i = findHandset(addr, unit, val);
 			if (i>=0) {
 				var h = config['handsets'][i];
 				switch (h.type ) {
 					case "handset":
 					case "scene":
-						var scene = h.scene;
+						var scene = {
+							id: null, val: 0, name: null,
+							type: 'scene',
+							seq: h.scene
+						}
 						queueScene(scene);
 					break;
 					default:
@@ -2037,33 +2046,32 @@ function sensorHandler(buf, socket) {
 	} else {
 		logger("sensorHandler index: "+index+" name: "+config['sensors'][index]['name'],2);
 	}
-
 	var name = config['sensors'][index]['name'];
 	
-	// Make sure that sensor updates are stored in config array and ready for gui clients
-	// For the moment, the order of the sensor types is significant.
-	if (( buf['temperature'] !== undefined)	&& (config['sensors'][index]['sensor'].hasOwnProperty('temperature')) )
-		config['sensors'][index]['sensor']['temperature']['val'] = buf['temperature'];
-	if ( (buf['humidity'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('humidity')) )
-		config['sensors'][index]['sensor']['humidity']['val'] = buf['humidity'];
-	if ( (buf['airpressure'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('airpressure')) )
-		config['sensors'][index]['sensor']['airpressure']['val'] = buf['airpressure'];
-	if ( (buf['altitude'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('altitude')) )	
-		config['sensors'][index]['sensor']['altitude']['val'] = buf['altitude'];
-	if ( (buf['windspeed'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('windspeed')) )	
-		config['sensors'][index]['sensor']['windspeed']['val'] = buf['windspeed'];
-	if ( (buf['winddirection'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('winddirection')) )
-		config['sensors'][index]['sensor']['winddirection']['val'] = buf['winddirection'];
-	if ( (buf['rainfall'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('rainfall')) )	
-		config['sensors'][index]['sensor']['rainfall']['val'] = buf['rainfall'];
-	if ( (buf['luminescense'] !== undefined) && (config['sensors'][index]['sensor'].hasOwnProperty('luminescense')) )
-		config['sensors'][index]['sensor']['luminescense']['val'] = buf['luminescense'];
-
+	// Save all values coming in the config array and update lastUpdated
+	// We can also forEach in [ 'temperature', 'humidity' ] etc
+	// which is less univesal but faster...
+	//Object.keys(buf).forEach(function(sensor) {
+	//if ( config['sensors'][index]['sensor'].hasOwnProperty(sensor)) {
+		
+	Object.keys(config['sensors'][index]['sensor']).forEach(function(sensor) {								  
+		if ( buf.hasOwnProperty(sensor)) {
+			logger("sensorHandler:: found: "+sensor+" in config",2);
+			config['sensors'][index]['sensor'][sensor]['val'] = buf[sensor];
+			config['sensors'][index]['sensor'][sensor]['lastUpdate'] = getTicks();
+		}
+		else {
+			// skip tcnt and other message details, only look for existing sensor keywords
+			logger("sensorHandler:: ERROR: "+sensor+" not found in config",1);
+		}
+	});
+	
 	// XXX Other and new sensors come here!
 	var db = rrdDir + "/db/"+name+".rrd";
 	var str=[]; var sname;
 	if ((socket !== undefined) && (socket !== null)) sname = socket.name; else sname = "datagram";
-	logger("sensorHandler:: index: "+index+", from: "+sname+", name: "+ name+", addr: "+buf.address+", chan: "+buf.channel+", temp: "+buf.temperature,1);
+	
+	logger("sensorHandler:: index: "+index+", from: "+sname+", name: "+ name+", addr: "+buf.address+", chan: "+buf.channel+", temp: "+buf.temperature,0);
 	
 	if (!fs.existsSync(db)) {
 		logger("sensorHandler:: rrdtool db "+db+" does not exist ... creating",1);
@@ -2137,9 +2145,9 @@ function createSensorDb(db,buf,socket) {
 function sceneHandler(buf, socket) {
 	switch (buf.cmd) {
 		case 'run_scene':
-			logger("sceneHandler:: run scene selected",1);
-			// MGW
 			var scene = buf.message;
+			logger("sceneHandler:: run scene selected, scene: "+scene.name,0);
+			// MGW
 			queueScene(scene);
 		break;
 		case 'cancel_scene':
@@ -2276,7 +2284,7 @@ function socketHandler(data,socket) {
 			logger("socketHandler:: user command received",1);
 		break;
 		case 'weather':
-			logger("socketHandler:: weather received, type: "+buf.type+", addr:chan: "+buf.address+":"+buf.channel,1);
+			logger("socketHandler:: WARNING weather received, type: "+buf.type+", addr:chan: "+buf.address+":"+buf.channel,0);
 			buf.action = 'sensor';
 		case 'sensor':
 			sensorHandler(buf, socket);
@@ -2299,10 +2307,9 @@ function queueScene(scene) {
 	var cmds = scene.seq;
 	var splits = cmds.split(",");
 	for (var k=0; k< splits.length; k+=2) {
-		logger("queueScene item: "+(k/2)+", val: "+splits[k]+", time: "+splits[k+1],1);
 		var tmp = splits[k+1].split(":");
 		var sticks = +(tmp[0]*3600)+(tmp[1]*60)+tmp[2];
-		logger("qinsert:: ticks: "+sticks+", name: "+splits[k]+", seq: "+splits[k],1);
+		logger("queueScene item: "+(k/2)+", sticks: "+sticks+", scene: "+splits[k]+", time: "+splits[k+1],1);
 		// Use gui as name as we have a gui ICS seq here. 
 		// The queue can handle scene names as well but then leave the seq field empty
 		queue.qinsert({ ticks: Number(sticks) + getTicks(), name: "gui", seq: splits[k] });
@@ -2683,13 +2690,13 @@ function zwave_loop() {
 						var val        = classes[cl].data.level.value + 0;
 						var lupdate    = classes[cl].data.level.updateTime;
 						var invalidate = classes[cl].data.level.invalidateTime;
-						logger("\tCl: "+cl+" Switch           , val "+val+", upd: "+printTime(lupdate*1000)+", inval: "+printTime(invalidate*1000),1);
+						logger("\tCl: "+cl+" Switch           , val "+val+", upd: "+printTime(lupdate)+", inval: "+printTime(invalidate),1);
 					break;
 					case '38':									// DIMMER
 						var val = classes[cl].data.level.value + 0;
 						var lupdate = classes[cl].data.level.updateTime;
 						var invalidate = classes[cl].data.level.invalidateTime;
-						logger("\tCl: "+cl+" Dimmer           , val "+val+", upd: "+printTime(lupdate*1000)+", inval: "+printTime(invalidate*1000),1);
+						logger("\tCl: "+cl+" Dimmer           , val "+val+", upd: "+printTime(lupdate)+", inval: "+printTime(invalidate),1);
 					break;
 					case '39':
 						//var val = classes[cl].data.level.value + 0;
@@ -2702,7 +2709,7 @@ function zwave_loop() {
 						}
 						var val = classes[cl].data[1].level.value + 0;
 						var lupdate = classes[cl].data[1].level.updateTime;
-						logger("\tCl: "+cl+" PIR              , val "+val+", upd: "+printTime(lupdate*1000),1);
+						logger("\tCl: "+cl+" PIR              , val "+val+", upd: "+printTime(lupdate),1);
 					break;
 					case '49':									// Sensor Multilevel -> Luminescense
 						if (classes[cl].data.interviewDone.value == false) {
@@ -2754,7 +2761,7 @@ function zwave_loop() {
 					case '128':
 						var val = classes[cl].data.last.value;
 						var lupdate = classes[cl].data.last.updateTime;
-						logger("\tCl: "+cl+" Battery         , "+val+"%, upd: "+printTime(lupdate*1000),1);
+						logger("\tCl: "+cl+" Battery         , "+val+"%, upd: "+printTime(lupdate),1);
 					break;
 					case '132':
 						logger("\tCl: "+cl+" Wakeup",2);

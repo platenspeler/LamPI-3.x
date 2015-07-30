@@ -2,15 +2,6 @@
 // Author: M. Westenberg (mw12554 @ hotmail.com)
 // (c) M. Westenberg 2014-2015, all rights reserved
 //
-// Contributions:
-//
-// Version 1.6, Nov 10, 2013. Implemented connections, started with websockets option next (!) to .ajax calls.
-// Version 1.7, Dec 10, 2013. Work on the mobile version of the program
-// ...
-// Version 2.7, Jan 31, 2015 scalable skins, localStorage for skin storage
-// Version 3.0, Mar 01, 2015 Switch to JS and Websockets (remove PHP in ajax frontend), use REST API where possible
-// Version 3.1, May 26, 2015 Connect alarm panel to settings/config screen
-//
 // This is the code to animate the front-end of the application. 
 //
 // Copyright, Use terms, Distribution etc.
@@ -62,10 +53,7 @@ var alarmStatus = "2";									// Set default to relaxed
 //	This function waits until the document DOM is ready and then 
 //	it listens for an event where the user presses a button.
 //	Buttons are defined in separate functions based on their location in the document.
-//	The code recognizes database and room initializations/bindings
-//		and lamp commands
-//  Make sure that buttons have an id(!!) and a name.
-//	This function references by id, so that we can change the label code keeps working
+//	This function references by id, so that when we change the label code keeps working
 //
 function start_LAMP(){
 //	
@@ -96,9 +84,8 @@ function start_LAMP(){
 		//document.addEventListener("online", onLine, false);
 	}
 	
-	// Below are the declarations/definitions of the callback functions init
 	// These functions need to be defined only once, and will from that moment on be 
-	// available once the conditions (mostly on click) are met
+	// available once their conditions (mostly on click) are met
 	// Some callback functions are still present in the activate_xxxxx functions,
 	// such as sorting etc. but these can be moved over to this $(window).load() function later
 
@@ -139,7 +126,7 @@ function start_LAMP(){
 			var ind = 1;
 				
 			// Search for a roomid that is unused between 2 existing rooms
-			// Look for matchins indexes. This is a time-exhausting operation, but only when adding a device
+			// Look for matching indexes. This is a time-exhausting operation, but only when adding a device
 			while (ind <= max_rooms) { 
 				for (var i=0; i< rooms.length; i++) {
 					if ( ( rooms[i]['id'] == ind )) {		// We found this index is used!
@@ -263,11 +250,11 @@ function start_LAMP(){
 				// Are we sure that all devices in the room are deleted as well?
 		break;
 		case "Help":
-			helpForm('Room',"This form allows you to control the lighting in a particular room " 
-				+ "Select the room that you like to control with the buttons in the top header area " 
+			helpForm('Room',"This form allows you to control the lighting in a particular room. " 
+				+ "Select the room that you like to control with the buttons in the top header area. " 
 				+ "For every device in the room, whether dimmer or switch, users can change the light "
 				+ "setting.\n"
-				+ "The small buttons in the top right corner are special buttons "
+				+ "The small buttons in the top right corner are special buttons. "
 				+ "The leftmost green one allows you to add a device to the active room.\n"
 				+ "The red X allows you to delete a device from the room. Press the X and you'll see "
 				+ "small selection buttons on the left of every device line. Press one and you'll "
@@ -415,7 +402,7 @@ function start_LAMP(){
 				// If Yes: delete row
 			break;
 			case "Help":
-					helpForm('Scene',"This is the Help screen for Scenes (or sequences if you wish)\n\n"
+					helpForm('Scene',"This is the Help screen for Scenes (or sequences if you wish).\n\n"
 						+ "In the header section you see an overview of your scenes defined, "
 						+ "which enables you to view/change or add to a scene of your choice. \n\n"
 						+ "The Context section in the middle shows for each defines scene the sequence "
@@ -626,7 +613,7 @@ function start_LAMP(){
 				// Help for Timer setting
 				//
 			case "Help":
-					helpForm('Timers', "This is the Help screen for Timers\n\n"
+					helpForm('Timers', "This is the Help screen for Timers.\n\n"
 						+ "In the header section you see an overview of your timers defined, "
 						+ "selecting one enables you to view/change or add to a timer. \n\n"
 						+ "The Content section in the middle shows its settings: Which scene should be started, "
@@ -849,7 +836,7 @@ function start_LAMP(){
 				// If Yes: delete row
 			break;
 			case "Help":
-					helpForm('Handsets',"This is the Help screen for Handsets or Remote controls\n\n"
+					helpForm('Handsets',"This is the Help screen for Handsets or Remote controls.<BR>"
 						+ "In the header section you see an overview of your handsets defined, "
 						+ "which enables you to view/change or add to a handset of your choice. \n\n"
 						+ "The Content section in the middle shows for each defined handset the button "
@@ -1091,14 +1078,11 @@ function start_LAMP(){
 								// Is the array empty? Maybe we do not care, 
 								//everything for sensors is IN the record itself
 								var sensors_id = sensors[i]['id'];
-								// Removed is an array too, one element only
-								var removed = sensors.splice(i,1);
-								
-								logger(removed[0]);
-								// Remove the sensors from MySQL
-								send2daemon("dbase","delete_sensors", removed[0]);
-								if (debug>1)
-										myAlert("Removed from dbase:: id: "+removed[0]['id']+" , name: "+removed[0]['name']);
+								var removed = sensors.splice(i,1);	// Removed is an array, one element only
+								logger("Sensor removed: "+removed[0],1);
+								send2daemon("dbase","delete_sensors", removed[0]);	// Remove the sensors from MySQL
+								if (debug>=2)
+									myAlert("Removed from dbase:: id: "+removed[0]['id']+" , name: "+removed[0]['name']);
 							}
 						}
 						
@@ -1119,12 +1103,12 @@ function start_LAMP(){
 				// If Yes: delete row
 			break;
 			case "Help":
-					helpForm('Sensor',"This is the Help screen for sensors stations and sensors\n\n"
+					helpForm('Sensor',"This is the Help screen for sensors stations and sensors<br>"
 						+ "In the header section you see an overview of your sensors defined, "
-						+ "which enables you to view/change or add sensors to a station of your choice. \n\n"
+						+ "which enables you to view/change or add sensors to a station of your choice. <br>"
 						+ "The Content section in the middle shows for each defined station the dials, "
-						+ "it will only show those sensors available for a station\n"
-						+ "It is quite good possible to change the layout of the dials, as well as color etc.\n"
+						+ "it will only show those sensors available for a station. "
+						+ "It is quite good possible to change the layout of the dials, as well as color etc. "
 						+ "At the moment these style definitions are part of the steel subdirectory"
 						);
 					$( '.cw_button' ).removeClass( 'hover' );
@@ -5260,7 +5244,6 @@ function activate_setting(sid)
 
 
 // --------------------------------- BUTTONS ----------------------------------------------
-//
 //		Print a room button to DOM
 //		Please not that the id of the room buttons is only defined here
 //		id = id of the button as defined in the JaSON structure 
@@ -5493,7 +5476,6 @@ function set_timer(tim_id,timer) {
 // Decode a timers scene 'seq' command string in ICS format back to human readable form so that we can build 
 // a scene listing 
 //
-//
 function decode_scene_string (str)
 {
 	logger("decode_scene_string: " + str,2);
@@ -5594,9 +5576,8 @@ function decode_scene_string (str)
 }
 
 
-
 // -------------------------------------------------------------------------------------------------------------
-//	Handle incoming device requests, translate to a standard message and send to device 
+// Handle incoming device requests, translate to a standard message and send to device 
 // This function translate the id's used by the LamPI GUI to the device uaddr addresses
 //
 //	Input: The id of the calling button (!). Which for ICS in general is the same id as the real device name
@@ -5685,9 +5666,6 @@ function handle_device(id,val)
 //	This is a universal piece of code for sending commands for lamp devices
 //  The function only knows about devices "id" 's. Commands for switching on/off
 //  are based on those buttons
-//
-//	The backend function will take care of the command interpretation, at this
-// moment the ICS command structure serves as a universal piece of code
 //
 // input : STRING action setting "device", "scene", "timer" makes easier for backend
 // input : STRING controller_cmd (only ics) in the form of "!R1D2F1" or "!R1D2FdP15" for dimmers
