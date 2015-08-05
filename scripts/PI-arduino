@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+EXEDIR="$HOME/exe"; export EXEDIR
+SCRIPTDIR="$HOME/scripts"; export SCRIPTDIR
+SNIFFER="LamPI-arduino"; export SNIFFER
+LOGDIR="$HOME/log"; export LOGDIR
+
+cd $SCRIPTDIR
+BASENAME=`basename "$0"`
+echo "starting program: $0, $BASENAME"
+#
+LOGFILE="$LOGDIR/$BASENAME.log"; export LOGFILE
+PID=""; export PID
+
+HOSTNAME="localhost"; export HOSTNAME
+PORTNUMBER="5002"; export PORTNUMBER
+#
+#
+sleep 3
+
+#
+#
+if [ "$1" = "-r" ]; then
+	echo "`/bin/date`:: Kill previous version of sniffer" >> $LOGFILE 2>&1
+	pkill $SNIFFER
+fi
+
+#
+PID=`ps -eaf | grep "$SNIFFER" | grep -v grep | awk '{print $2}'`
+if [ -z $PID ]
+then
+	echo "---------------------------------------------------" >> $LOGFILE 2>&1
+	TMP=`grep -Po '(?<=^HOSTNAME=).*' $SCRIPTDIR/PI-config.txt`
+	# Find out whether we have a HOSTNAME in the config file
+	# If so, we use that name for the Daemon server instead of localhost
+	if [ $? = 0 ]; then
+		HOSTNAME=$TMP
+		echo "Hostname of server found in config file: $HOSTNAME" >> $LOGFILE 2>&1  
+	else
+		echo "Hostname of server not found in config file" >> $LOGFILE 2>&1
+	fi
+    # Is PORTNUMBER specified?
+    TMP=`grep -Po '(?<=^PORTNUMBER=).*' $SCRIPTDIR/PI-config.txt`
+    if [ $? = 0 ]; then
+		PORTNUMBER=$TMP
+		echo "Portnumber of server found in config file: $PORTNUMBER" >> $LOGFILE 2>&1  
+	else
+		echo "Portnumber of server not found in config file" >> $LOGFILE 2>&1
+	fi
+	cd $EXEDIR
+    # Do this to put the transmitter in the right state otherwise it will oscillate
+    ./kaku -g 99 -n 1 1 > /dev/null 2>&1
+    
+	echo "`date`:: Starting $SNIFFER" >> $LOGFILE 2>&1
+    # Use -v (=verbose) flag only when necessary
+	nohup ./$SNIFFER -d -v -h $HOSTNAME -p $PORTNUMBER >> $LOGFILE 2>&1 &
+else
+	echo "$PID"
+fi

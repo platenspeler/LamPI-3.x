@@ -366,8 +366,8 @@ int check_n_write_socket(char *binary, char *chkbuf , int binary_count)
  * bit 04-07 Address
  * bit 08-09 Channel
  * bit 10-12 Constant
- * bit 13-20 Hunidity
- * bit 21-34 Temperature
+ * bit 13-19 Hunidity
+ * bit 20-34 Temperature
  * bit 35    Parity
  *
  * The protocol is an FM encoded message of 36 bits. Therefore, the number of pulses
@@ -477,7 +477,7 @@ int wt440h(int p_length)
 				// decode temperature (step 1)
 				temperature=(temperature - 6400) * 10 /128;
 				
-				// if leader != 11
+				// if leader != 10 (1100)
 				// Then break off
 				
 				// if constant != 6 return(0);
@@ -521,7 +521,7 @@ int wt440h(int p_length)
 				{
 					// Fill the Json buffer, 0 for empty value...
 					sprintf(snd_buf, 
-					 "{\"tcnt\":\"%d\",\"action\":\"weather\",\"brand\":\"wt440h\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%d.%d\",\"humidity\":\"%d\"}", 
+					 "{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"wt440h\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%d.%d\",\"humidity\":\"%d\"}", 
 						socktcnt%1000,address,channel,temperature/10,temperature%10,humidity);
 					
 					// Do NOT use check_n_write_socket as weather stations will not
@@ -1088,7 +1088,7 @@ int action(int p_length)
 /**********************************************************************************************
  * Klikaanklikuit timing data
 
-Protocol. (Copied from Wieltje, 
+Protocol. (Timing copied in part from Wieltje, 
 http://www.circuitsonline.net/forum/view/message/1181410#1181410,
 but with slightly different timings)
         _   _
@@ -1102,7 +1102,7 @@ T = short period of ~260 - 295µs.
 
 A full frame looks like this:
 
-- start bit: 1T high, 10.44T low
+- start bit: 1T high, 10T low
 
 - 26 bit:  Address
 - 1  bit:  group bit
@@ -1120,6 +1120,7 @@ int kaku(int p_length)
 	// Kaku messages are 32 bits (or 36 in case of dimmer) of 4 pulses, 
 	// and 1 pulse start, and a long pulse end
 	//
+	
 	if (p_length > 140)
 	{	
 		binary_count = 0;
@@ -1132,17 +1133,17 @@ int kaku(int p_length)
 			&& (pulse_array[ j      % MAXDATASIZE] <   KAKU_MAX_SHORT)
 			)
 		{
-			// End pulse if 20T long
+			// End pulse if 40T (10ms) long
 			if (   (pulse_array[(j+131) % MAXDATASIZE] >  9000) 	// Last pulse of the train switch
 				&& (pulse_array[(j+131) % MAXDATASIZE] < 12000) )
 			{
-				if (debug) printf("\nkaku switch %d\n", pulse_array[(j+131) % MAXDATASIZE]);
+				if (debug) printf("\nkaku switch end: %d\n", pulse_array[(j+131) % MAXDATASIZE]);
 			}
 			else
 			if (   (pulse_array[(j+135) % MAXDATASIZE] >  9000) 	// Last pulse of the train dimmer
 				&& (pulse_array[(j+135) % MAXDATASIZE] < 12000) )
 			{
-				if (debug) printf("\nkaku dimmer %d\n", pulse_array[(j+135) % MAXDATASIZE]);
+				if (debug) printf("\nkaku dimmer end: %d\n", pulse_array[(j+135) % MAXDATASIZE]);
 			}
 			else
 			{
@@ -1166,7 +1167,6 @@ int kaku(int p_length)
 					printf("p 140: %d\n",pulse_array[(j+140) % MAXDATASIZE]);
 					printf("\n");
 				}
-				
 				return(0);
 			}
 			
@@ -1183,6 +1183,7 @@ int kaku(int p_length)
 
 			while (j < (r_index+130))					// total Must be 50
 			{
+				// Test whether this is a 0
 				if (   (pulse_array[ j    % MAXDATASIZE] > KAKU_MIN_SHORT)	// Short
 					&& (pulse_array[ j    % MAXDATASIZE] < KAKU_MAX_SHORT) 
 					&& (pulse_array[(j+1) % MAXDATASIZE] > KAKU_MIN_SHORT) // Short
@@ -1196,6 +1197,7 @@ int kaku(int p_length)
 					binary[binary_count++]=0;
 				}
 				else 
+				// Test whether this is a 1 bit
 				if (   (pulse_array[ j    % MAXDATASIZE] > KAKU_MIN_SHORT) // Short
 					&& (pulse_array[ j    % MAXDATASIZE] < KAKU_MAX_SHORT) 
 					&& (pulse_array[(j+1) % MAXDATASIZE] > KAKU_MIN_LONG) // Long
@@ -1210,6 +1212,7 @@ int kaku(int p_length)
 					binary[binary_count++]=1;
 				}
 				else 
+				// Test whether this is floating bit (we have a dimmer)
 				if (   (pulse_array[ j    % MAXDATASIZE] > KAKU_MIN_SHORT) // Short
 					&& (pulse_array[ j    % MAXDATASIZE] < KAKU_MAX_SHORT) 
 					&& (pulse_array[(j+1) % MAXDATASIZE] > KAKU_MIN_SHORT) // Short
@@ -1527,10 +1530,10 @@ int open_socket(char *host, char *port) {
 int main (int argc, char **argv)
 {
 	int r_pin = 1;							// This is the Raspberry Programmable Interrupt Number (PIN)
-											// At the moment it is fixed on pin 1
-											
+											// At the moment it is fixed on pin 1										
 	int i;									// counters
 	int c;
+	int pri;
 	unsigned int lcnt=1;					// Loop Count
 	int last_r_index = 0;
 	
@@ -1621,6 +1624,7 @@ int main (int argc, char **argv)
 	//
 	
 	wiringPiSetup();
+	pri =  piHiPri(40); if (pri <0) { perror("No receiver priority setting"); exit(1); }
 	wiringPiISR (r_pin, INT_EDGE_BOTH, &lampi_interrupt) ;
 
 	//	------------------ PRINTING Parameters ------------------------------
@@ -1640,6 +1644,7 @@ int main (int argc, char **argv)
 	// If we are in daemon mode, initialize sockets etc.
 	//
 	if (dflg) {
+		printf("Sniffer:: Init daemon process\n");
 		daemon_mode(hostname, port);
 	}
 	

@@ -1,9 +1,8 @@
 #
 # Makefile:
-#	LamPI - WiringPI Compatable receiver library for the Raspberry Pi
+#	LamPI - WiringPI Compatable transceiver library for the Raspberry Pi
 #	
-#
-#	Copyright (c) 2013 Maarten Westenberg
+#	Copyright (c) 2013, 2014, 2015 Maarten Westenberg
 #################################################################################
 # Copyright, Use terms, Distribution etc.
 # ========================================
@@ -21,7 +20,6 @@
 # License along with this library; if not, If not, see <http://www.gnu.org/licenses/>.
 #################################################################################
 
-
 #DEBUG	= -g -O0
 DEBUG	= -O3
 CC	= gcc
@@ -32,15 +30,15 @@ LDFLAGS	= -L/usr/local/lib
 LDLIBS    = -lwiringPi -lwiringPiDev -lpthread -lm
 INSTALL = /home/pi/exe
 
-SRC	= sniffer.c cJSON.c transmitter.c
+SRC	= LamPI-arduino.c cJSON.c
     
-# Should not alter anything below this line
+# Fo not alter anything below this line
 ###############################################################################
 
 OBJ=$(SRC:.c=.o)
 BINS=$(SRC:.c=)
 
-all:	sniffer
+all:	LamPI-arduino
 
 readme:
 	@cat README.TXT
@@ -49,7 +47,7 @@ readme:
 
 really-all:	$(BINS)
 
-sniffer:	$(OBJ)
+LamPI-arduino:	$(OBJ)
 	@echo [link]
 	@$(CC) -o $@ $(OBJ) $(LDFLAGS) $(LDLIBS)
 
@@ -59,10 +57,10 @@ sniffer:	$(OBJ)
 
 install:
 	@echo "[install]"
-	/usr/bin/pkill LamPI-receiver
-	@cp sniffer $(INSTALL)/LamPI-receiver
-	chown root $(INSTALL)/LamPI-receiver
-	chmod u+s $(INSTALL)/LamPI-receiver
+	@-/usr/bin/pkill LamPI-arduino
+	cp ./LamPI-arduino $(INSTALL)/LamPI-arduino
+	chown root $(INSTALL)/LamPI-arduino
+	chmod u+s $(INSTALL)/LamPI-arduino
 
 clean:
 	@echo "[Clean]"

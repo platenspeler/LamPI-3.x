@@ -1949,7 +1949,7 @@ function icsHandler(buf, socket) {
 			
 			var s = ics.indexOf('F');
 			var val = ics.substr(s+1,2).match(r);
-			logger("icsHandler:: handset addr: "+addr+",unit: "+unit+", val: "+val,0);
+			logger("icsHandler:: Handset addr: "+addr+",unit: "+unit+", val: "+val+", sender: "+socket.name,0);
 			var i = findHandset(addr, unit, val);
 			if (i>=0) {
 				var h = config['handsets'][i];

@@ -55,11 +55,9 @@ kaku: ./kaku/kaku
 	cd kaku; make
 
 install: 
-	cd sniffer; make install
-	cd livolo; make install
-	cd lights; make install
-	cd kopou; make install
-	cd kaku; make install
+	cd sniffer; sudo make install
+	cd arduino; sudo make install
+    cd rfm69; sudo make install
 
 clean:
 	@echo "[Clean]"

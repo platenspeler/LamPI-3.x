@@ -1,0 +1,128 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+</head>
+
+<body>
+<h1>Arduino messaging</h1>
+<h5>Version 3.6 Alpha; Message format may (and will) change between LamPI releases</h5>
+<h2>Intro</h2>
+<p>When using the Arduino as a gateway for 433MHz messages, the Raspberry will loose a lot of cpu/interrupt intensive workload which is taken over by the Arduino. The Raspberry will then send simple and short messages to the arduino, for example to switch on the lights and the Arduino will message the Raspberry upon receiving sensor values or&nbsp;handset commands from 433 MHz devices.</p>
+<h2>Message format</h2>
+<p>Initially, we will focus on the klikaanklikuit commands as those are the devices I do have in my home. We like to include some other protocols as well, so that the direct connected devices to the Raspberry and those supported by the Arduino gateway become the same. </p>
+<p>This will mean in short that we like to include support for weather sensors etc.</p>
+<p>Of course we have to keep in mind that the Arduino received, which is interrupt based, will spend mroe time in recognizing incoming pulses if we include a great deal of protocols in the Arduino. Therefore it is wise that the Arduino will only selectively receive messages and non important message format of devices not used will be excluded from its parser.</p>
+<p>Keep in mind thta we keep the message layout VERY SIMPLE, initially we supported a set which was more verbose, however this would mean a lot more work on the Arduino side to understand the messages, interpret and send responses.&nbsp;The current message format is so simple that almost every command and parameter will fit in a char, except group codes etc. which will be interger in length.</p>
+<p>* Message&nbsp;formats not supporte but planned are put in the table with a *</p>
+<h3>Initiated by the Raspberry</h3>
+<table width="1125" height="115" border="1">
+  <tr>
+    <th width="291" scope="col">Command</th>
+    <th width="287" scope="col">Send</th>
+    <th width="525" scope="col">Notes</th>
+  </tr>
+  <tr>
+    <td>* Admin command to select messages</td>
+    <td>&gt; {cnt} 0 0 (list of codecs to support)</td>
+    <td>First byte is admin mode; Second byte is code select command; rest of list is codecs (integers) to support when receiving</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&gt; {cnt} 0 1 (list of codecs to transmit)</td>
+    <td>Same as above, but for transmitter</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>Send to device</td>
+    <td>&gt; {cnt} 1 {codec} {group}  {unit} {value}</td>
+    <td>First byte is &quot;send&quot; mode; second byte codec. Codec: 0 for Kaku, 1 for Action (see database.cfg for brands)</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>Set Debug level</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p>The first &quot;word&quot; is the message counter that should be in every message. The second gives the command for the Arduino, The next byte is a subcommand e.g. all admin commands or all transmitter commands etc. The rest of the string are bytes to support these subcommands.</p>
+<p>&nbsp;</p>
+<h2>Initiated by the Arduino</h2>
+<p>Messages generated and sent by the arduino are short and simple and are either a reply (for command above) to a Raspberry request or are coming from 433MHz messages received over its antenna. </p>
+<table width="1126" height="115" border="1">
+  <tr>
+    <th width="298" scope="col">Command</th>
+    <th width="335" scope="col">Receive</th>
+    <th width="471" scope="col">Notes</th>
+  </tr>
+  <tr>
+    <td>All other comments or messages coming from Arduino</td>
+    <td>! {Message}</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>Reply to a device message of Raspi</td>
+    <td>&lt; {cnt} 1 {codec} {group} {unit&gt;} {value}</td>
+    <td><p>This is a reply on a Raspberry message.</p></td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>Received a kaku message (handset etc)&nbsp;on the receiver</td>
+    <td>&lt; {cnt} 2 {codec} {group} {unit&gt;} {value}</td>
+    <td>Value is &quot;off&quot;, &quot;on&quot; and 0-15 as a dim value</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>Receive a 433 Sensor message</td>
+    <td>&lt; {cnt} 3 {codec} {address} {channel} {temperature} {humidity}</td>
+    <td>wt440h is one codec 0 but there are more</td>
+  </tr>
+</table>
+<p>As you can see, the message coming in from the Arduino of a device is the same as the message that is sent by the Raspberry to get the Arduino to send a command to a KlikAanKlikAuit device.</p>
+<p>&nbsp;</p>
+<h2>Codec</h2>
+<p>The codec is different for different commands. So the codec for handsets and sensors is different.</p>
+<h3>Handsets</h3>
+<p>Please keep in mind that for the current version not all protocols are supported. </p>
+<ul>
+  <li>0 kaku, klikaanklikuit new remotes</li>
+  <li>1 action (*)</li>
+  <li>2 Blokker (*)</li>
+  <li>3 Klikaanklikuit old version (*)</li>
+  <li>4 Elro (*)</li>
+  <li>5 Livolo (*)</li>
+  <li>6 Kopou (*)</li>
+</ul>
+<h3>Sensors</h3>
+<p>Some sensors may have their own manufacturer protocol and their own transmitter. But there may also be ones that are connected to an Arduino who will forward the sensor message to the LamPI-node daemon.</p>
+<ul>
+  <li>0: wt440h weather sensor</li>
+  <li>1: </li>
+</ul>
+<p>&nbsp;</p>
+<p><br />
+</p>
+</body>
+</html>
