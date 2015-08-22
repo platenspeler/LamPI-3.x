@@ -8,21 +8,24 @@
 
 <h1>LamPI ToC</h1>
 <h4>This page contains the Table of Content fo LamPI. For other information such as code please visit its  GIT repository on <a href="https://github.com/platenspeler">https://github.com/platenspeler</a>, and the documentation on <a href="http://platenspeler.github.io">http://platenspeler.github.io</a></h4>
+<p><img src="UserGuide/screenshots/rules_timing_1.jpg" width="741" height="300"></p>
 <h1>Release Manual</h1>
 <ul>
   <li><a href="changelog.html">Read the Changelog</a></li>
   <li><a href="planned.html#KnownIssues">Known Issues</a></li>
   <li><a href="planned.html">Planned Functions</a></li>
 </ul>
-<h1>Hardware Support Guide</h1>
+<h1>Hardware Guide</h1>
 <ul>
-  <li><a href="Hardware/hardware_guide.html">Hardware Guide</a></li>
-  <li><a href="Hardware/transceiver.html">Transceiver (Receiver and Transmitter)</a></li>
+  <li><a href="HardwareGuide/hardware_guide.html">Hardware Guide</a></li>
+  <li><a href="HardwareGuide/transceiver.html">Transceiver (Receiver and Transmitter)</a>`</li>
+  <li><a href="HardwareGuide/Arduino-Gateway/installation.html">Using an Arduino Gateway</a></li>
+  <li><a href="HardwareGuide/Zwave-Gateway/RazBerry/zwave_gateway.html">Z-Wave and Razberry</a> Gateway</li>
 </ul>
 <h1>Installation Guide</h1>
 <ul>
-  <li><a href="Installation_Manual/setup.html">Initial LamPI Setup</a></li>
-  <li><a href="Installation_Manual/PI-install.html">Using Automated Installation with PI-install</a></li>
+  <li><a href="InstallationGuide/setup.html">Initial LamPI Setup</a></li>
+  <li><a href="InstallationGuide/PI-install.html">Using Automated Installation with PI-install</a></li>
 </ul>
 <h1>User Guide; LamPI GUI</h1>
 <p>LamPI contains 7 main screens at the moment: Rooms, Scenes, Timers, Handsets, Sensors, Energy and Config.  For every screen I have assembled a few pages that contain instructions on common tasks you will perform. The documentation for the LamPI functions can be found on this site on the following pages.</p>
@@ -49,38 +52,39 @@
 </ul>
 <h2>LamPI Look-'n-feel with css files</h2>
 <ul>
-  <li>.scss files and .css files</li>
-  <li>Using Koala (or other css authoring tools)</li>
+  <li><a href="DeveloperGuide/LookAndFeelSets/Scss_Programming.html">.scss files and .css files</a></li>
+  <li><a href="DeveloperGuide/LookAndFeelSets/Scss_Programming.html">Using Koala (or other css authoring tools)</a></li>
   <li> Customizing LamPI Gui</li>
 </ul>
 <h2>LamPI Rules Editor</h2>
 <p>The LamPI rules editor is based on the Google Blockly work, and enables user to make dynamic rules that will be executed in LamPI.</p>
 <ul>
-  <li><a href="Rules_Manual/index.html">Rules Developer Info</a></li>
+  <li><a href="DeveloperGuide/Rules_Manual/index.html">Rules Developer Info</a></li>
 </ul>
 <h2>LamPI Backend</h2>
 <p>Apart from the GUI interface, on the backend there are some other programs active that interact with home automation switches in our house. Backend services are provided by the LamPI-node.js process and located in the ~ directory. Some supporting executables are located in the ~/exe directory, especially as these need root privileges to run I put them all in a separate location.<br>
 </p>
 <ul>
-  <li><a href="sensors/weather_sensors_msg_format.html"></a>LamPI-node.js (see directory ~)</li>
+  <li><a href="HardwareGuide/Wired-Sensors/weather_sensors_msg_format.html"></a>LamPI-node.js (see directory ~)</li>
   <li>Command-Line Interface (see directory ~/exe) for sensors, transmitters and receiver</li>
-  <li>LamPI-receiver (see directory ~/exe)<br>
+  <li>LamPI-receiver (see directory ~/exe)</li>
+  <li>LamPI-arduino (see directory ~/exe) for USB connected Arduino Gateways<br>
   </li>
 </ul>
 <h2>LamPI Sensors</h2>
 <ul>
-  <li><a href="sensors/weather_sensors_msg_format.html">Background information on weather sensors  (temperature, humidity etc).</a></li>
-  <li><a href="sensors/no_bus_sensors.html">Wired sensors, not connected with a bus</a></li>
-  <li><a href="sensors/dallas_sensors.html">Wired sensors connected with the Dallas bus</a></li>
-  <li><a href="sensors/i2c_sensors.html">Wired sensors connected with the i2c bus</a></li>
+  <li><a href="HardwareGuide/Wired-Sensors/weather_sensors_msg_format.html">Background information on weather sensors  (temperature, humidity etc).</a></li>
+  <li><a href="HardwareGuide/Wired-Sensors/no_bus_sensors.html">Wired sensors, not connected with a bus</a></li>
+  <li><a href="HardwareGuide/Wired-Sensors/dallas_sensors.html">Wired sensors connected with the Dallas bus</a></li>
+  <li><a href="HardwareGuide/Wired-Sensors/i2c_sensors.html">Wired sensors connected with the i2c bus</a></li>
   <li><a href="index.html#planned_functions">Message format for weather sensors</a></li>
   <li>Energy sensors and message format for energy sensors</li>
 </ul>
 <h2>LamPI and TemPI Graphics</h2>
 <p>How to make sensor trend graphics for historical temperature, humidity etc. using rrdtool</p>
 <ul>
-  <li><a href="Graphs_Manual/graphs.html">Introduction to rrdtool graphs</a> </li>
-  <li><a href="Graphs_Manual/making_graphs.html">How to make your own Graphs</a></li>
+  <li><a href="DeveloperGuide/Graphs_Manual/graphs.html">Introduction to rrdtool graphs</a> </li>
+  <li><a href="DeveloperGuide/Graphs_Manual/making_graphs.html">How to make your own Graphs</a></li>
 </ul>
 <p>&nbsp;</p>
 <p>July 07, 2015</p>

@@ -36,7 +36,9 @@
  ***********************************************************************************************
 */
 
+
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -46,11 +48,14 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <ifaddrs.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+
 #include <wiringPi.h>
 
 #include "cJSON.h"
@@ -80,7 +85,7 @@ int verbose = 0;
 int debug = 0;									// Global var, used in all scanner functions
 
 char snd_buf[255];
-
+char timebuffer [26];
 
 // ----------------------------------------------------------------------------------	
 // 	look up the time and put in a buffer
@@ -107,8 +112,8 @@ int write_socket(int sockfd, char *snd_buf)
 	if (write(sockfd, snd_buf, strlen(snd_buf)) == -1) {
 				fprintf(stderr,"socket write error\n");
 	}
-
-	if (verbose) printf("Buffer sent to daemon: %s\n",snd_buf);
+	time2buf(timebuffer);
+	if (verbose) printf("%s:: %s\n",timebuffer, snd_buf);
 	return(0);
 }
 
@@ -206,9 +211,14 @@ int send2device(int ttyfd, int dev, char *gaddr, char *uaddr, char *val)
 		int ivalue= (int) ( (atoi(val)-1)/2 );
 		sprintf(arduinoBuf,"> %d 1 %d %s %s %d\n", socktcnt, dev, gaddr, uaddr, ivalue);
 	}
-	if (debug >=1) fprintf(stderr,"send2device:: %d: \(%s\)\n",strlen(arduinoBuf), arduinoBuf);
+	if (debug >=1) {
+		fprintf(stderr,"send2device:: %d: \(%s\)\n",strlen(arduinoBuf), arduinoBuf);
+	}
 	ret = write(ttyfd, arduinoBuf, strlen(arduinoBuf));
-	if (ret == -1) fprintf(stderr,"dkaku:: ERROR transmit failed\n");
+	if (ret == -1) {
+		fprintf(stderr,"dkaku:: ERROR transmit failed\n");
+		return(-1);
+	}
 	socktcnt++;
 	return(0);
 }
@@ -219,7 +229,7 @@ int send2device(int ttyfd, int dev, char *gaddr, char *uaddr, char *val)
 // command directly.
 // NOTE:: The command is called with the json arguments gaddr,uaddr and
 //        not with the GUI addresses
-// The value 'Val' is between 0 and 31.
+// The value 'Val' is between 0 and 31 for dimmers. and for switches 0 and 1
 //
 int arduinoXmit(int ttyfd, char *brand, char *gaddr, char *uaddr, char *val) 
 {
@@ -227,17 +237,23 @@ int arduinoXmit(int ttyfd, char *brand, char *gaddr, char *uaddr, char *val)
 	// The device specific executable uses unit addresses starting from 1 to n
 	// And for Blokker that starts with 0, is corrected in the exe code.
 	//
-	if (strcmp(brand,"kaku") ==0)     { send2device(ttyfd, 0, gaddr,uaddr,val); return(0); }
-	if (strcmp(brand,"action") ==0)   { send2device(ttyfd, 1, gaddr,uaddr,val); return(0); }
-	if (strcmp(brand,"livolo") ==0)   { send2device(ttyfd, 2, gaddr,uaddr,val); return(0); }
-	if (strcmp(brand,"elro") ==0)     { send2device(ttyfd, 3, gaddr,uaddr,val); return(0); }
-	if (strcmp(brand,"blokker") ==0)  { send2device(ttyfd, 4, gaddr,uaddr,val); return(0); }
-	if (strcmp(brand,"kiku") ==0)     { send2device(ttyfd, 5, gaddr,uaddr,val); return(0); }
-	if (strcmp(brand,"kopou") ==0)    { send2device(ttyfd, 6, gaddr,uaddr,val); return(0); }
-	if (strcmp(brand,"zwave") ==0)    { if (verbose == 1) printf("arduinoXmit:: brand is zwave\n"); fflush(stdout); return(0); }
+	if (strcmp(brand,"kaku") ==0)     		{ send2device(ttyfd, 0, gaddr, uaddr, val); return(0); }
+	else if (strcmp(brand,"action") ==0)	{ send2device(ttyfd, 1, gaddr, uaddr, val); return(0); }
+	else if (strcmp(brand,"livolo") ==0)	{ send2device(ttyfd, 2, gaddr, uaddr, val); return(0); }
+	else if (strcmp(brand,"elro") ==0)		{ send2device(ttyfd, 3, gaddr, uaddr, val); return(0); }
+	else if (strcmp(brand,"blokker") ==0)	{ send2device(ttyfd, 4, gaddr, uaddr, val); return(0); }
+	else if (strcmp(brand,"kiku") ==0)		{ send2device(ttyfd, 5, gaddr, uaddr, val); return(0); }
+	else if (strcmp(brand,"kopou") ==0)		{ send2device(ttyfd, 6, gaddr, uaddr, val); return(0); }
 	
-	fprintf(stderr,"arduinoXmit:: brand not recognized %s\n", brand);
-	return(-1);
+	// Exception for 868 devices. Arranged through different ZWave gateway
+	else if (strcmp(brand,"zwave") ==0)    { 
+		if (verbose == 1) printf("arduinoXmit:: brand is zwave\n"); fflush(stdout); 
+		return(0); 
+	}
+	else {
+		fprintf(stderr,"arduinoXmit:: brand not recognized %s\n", brand);
+		return(-1);
+	}
 };
 
 // -------------------------------------------------------------------------------
@@ -338,17 +354,19 @@ int read_socket_and_transmit(int sockfd, int ttyfd)
 				goto next;
 			}
 		}
-				
-		// If we receive a weather notification (a broadcast), ignore
+		// Discard most of messages below (maybe later)	
+		// WEATHER:: If we receive a weather notification (a broadcast), ignore
 		if  (strcmp(action,"weather") == 0) { 
 			if (debug >= 2) printf("parse_cjson:: weather message received. DISCARD\n");
 			goto next; 
 		}
+		// SENSOR
 		// If we receive a sensor notification (a broadcast), ignore
 		if  (strcmp(action,"sensor") == 0) { 
 			if (debug >=2) printf("parse_cjson:: sensor message received. DISCARD\n");
 			goto next; 
-		}		
+		}
+		// ENERGY	
 		// If we receive a energy notification (a broadcast), ignore
 		if  (strcmp(action,"energy") == 0) { 
 			if (debug >= 2) fprintf(stderr,"parse_cjson:: energy message received. DISCARD\n");
@@ -460,7 +478,57 @@ int socket_init(char *hostname, char* port)
 }
 
 // --------------------------------------------------------------------------------
-// Parse a few well-known protocols
+// Parse admin command
+//
+int parse_admin(char *tok, int cod)
+{
+	int i, db;
+	char * codecs;
+	int len;
+	
+	switch(cod) {
+		case 0:
+			codecs = strtok(NULL, " \r\n"); 
+			len = strlen(codecs);
+			codecs[len] = '\0';			// Get rid of end of line stuff etc.
+			fprintf(stderr,"-------------------\n");
+			fprintf(stderr,"parse_admin:: %d codecs received: <%s>\n",len,codecs);
+			for (i=0; i< strlen(codecs); i++) {
+				if (codecs[len-1-i] == '1') {		
+				  switch (i) {
+				    // Handsets
+				  	case 0: fprintf (stderr,"Kaku \n"); break;
+					case 1: fprintf (stderr,"Action \n"); break;
+					case 2: fprintf (stderr,"Blokker \n"); break;
+					case 3: fprintf (stderr,"KakuOld \n"); break;
+					case 4: fprintf (stderr,"Elro \n"); break;
+					case 5: fprintf (stderr,"Livolo \n"); break;
+					case 6: fprintf (stderr,"Kopou \n"); break;
+					// Sensors
+					case 16: fprintf (stderr,"Onboard \n"); break;
+					case 17: fprintf (stderr,"WT440 \n"); break;
+					case 18: fprintf (stderr,"Oregon \n"); break;
+					case 19: fprintf (stderr,"Auriol \n"); break;
+					case 20: fprintf (stderr,"Cresta \n"); break;
+				  }
+				}
+			}
+			fprintf(stderr,"-------------------\n");
+		break;
+		case 3:
+			tok = strtok(NULL, " ,"); db = atoi(tok);
+			fprintf(stderr,"parse_admin:: debug received: %d\n\n",db);
+		break;
+		default:
+			fprintf(stderr,"parse_admin:: admin command not recognized %d\n",cod);
+		break;
+	}
+	return(0);
+}
+
+
+// --------------------------------------------------------------------------------
+// INCOMING TTY: Parse a few well-known protocols
 //
 char * parse_remote(char *tok, int cod)
 {
@@ -475,7 +543,7 @@ char * parse_remote(char *tok, int cod)
   // Remotes do not do dimlevel, but if necessary we can ...
   // XXX Trick: if there is no integer function atoi() returns 0
   if (level > 0) {
-	if (verbose) printf("parse_remote:: Address: %d, Unit: %d, Level: %d\n",group,unit,level);
+	if (verbose) printf("parse_remote:: Address: %d, Unit: %d, Level: %d\n", group, unit, level);
 	sprintf(snd_buf, "{\"tcnt\":\"%d\",\"action\":\"handset\",\"type\":\"raw\",\"message\":\"!A%dD%dFdP%d\"}", 
 			socktcnt%1000,group,unit,level);
   }
@@ -494,22 +562,75 @@ char * parse_remote(char *tok, int cod)
 //
 char * parse_sensor(char *tok, int cod)
 {
-  int address;
-  int channel;
-  int temperature;
-  int humidity;
-
-  tok = strtok(NULL, " ,"); address = atoi(tok);
-  tok = strtok(NULL, " ,"); channel  = atoi(tok);
-  tok = strtok(NULL, " ,"); temperature = atoi(tok);
-  tok = strtok(NULL, " ,"); humidity = atoi(tok);
-  
-  temperature = (temperature - 6400) * 10 / 128;
-  
-  sprintf(snd_buf, 
+	int address;			// Integer address
+	int channel;
+	int temperature;					// Parameter 1, temperature most often
+	int humidity;					// Parameter 2, humidity or airpressure
+	int airpressure;
+	int altitude;
+	float temp;
+	float humi;
+	char host[NI_MAXHOST];
+	int fake;
+	
+  switch (cod) {
+  	case 0: // onboard
+		tok = strtok(NULL, " ,"); address = atoi(tok);
+		tok = strtok(NULL, " ,"); channel  = atoi(tok);				// Always 0, discard
+		
+		if (getLocalAddress(host) < 0) {
+			fprintf(stderr,"Cannot determine local address\n");
+		}
+		sscanf(host,"%d.%d.%d.%d",&fake,&fake,&fake,&channel);		// Overwrite channel with last byte of IP address
+		
+		switch (address)
+		{	// Code for SHT21 or HTU21
+			case 40:
+				tok = strtok(NULL, " ,"); temp = atof(tok);
+				tok = strtok(NULL, " ,"); humi = atof(tok);
+				sprintf(snd_buf, 	"{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"sht21\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%2.1f\",\"humidity\":\"%2.1f\"}", 
+				socktcnt%1000,address,channel,temp,humi);
+			break;
+			// Code for BMP085 and BMP180
+			case 77:
+				tok = strtok(NULL, " ,"); temperature = atoi(tok);
+				tok = strtok(NULL, " ,"); airpressure = atoi(tok);
+				tok = strtok(NULL, " ,"); altitude = atoi(tok) / 100;
+				sprintf(snd_buf, 	"{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"bmp085\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%d.%d\",\"airpressure\":\"%d\"}", 
+				socktcnt%1000,address,channel,temperature/10,temperature%10,airpressure/100);
+			break;
+			default:
+				;
+			break;
+		}
+	break;
+	
+	case 1:	// wt440h
+		tok = strtok(NULL, " ,"); address = atoi(tok);
+		tok = strtok(NULL, " ,"); channel  = atoi(tok);
+		tok = strtok(NULL, " ,"); temperature = atoi(tok);
+		tok = strtok(NULL, " ,"); humidity = atoi(tok);
+		temperature = (temperature - 6400) * 10 / 128;
+		sprintf(snd_buf, 
 "{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"wt440h\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%d.%d\",\"humidity\":\"%d\"}", 
 		socktcnt%1000,address,channel,temperature/10,temperature%10,humidity);
-		
+	break;
+	
+	case 3:	// Auriol
+		tok = strtok(NULL, " ,"); address = atoi(tok);
+		tok = strtok(NULL, " ,"); channel  = atoi(tok);
+		tok = strtok(NULL, " ,"); temperature = atoi(tok);
+		tok = strtok(NULL, " ,"); humidity = atoi(tok);
+		sprintf(snd_buf, 
+"{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"auriol\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%d.%d\",\"humidity\":\"%d\"}", 
+		socktcnt%1000,address,channel,temperature/10,temperature%10,humidity);
+	break;
+	
+	default:
+		fprintf(stderr,"parse_sensor:: Codec %d not supported\n", cod);
+  }
+  tok = strtok(NULL, "!"); 
+  if (tok != NULL) fprintf(stderr,"Comment: %s\n", tok);
   socktcnt++;
   return(snd_buf);
 }
@@ -530,8 +651,8 @@ char * parse_tty(char *inp)
   ptr = strtok(NULL, " ,"); cmd = atoi(ptr);
   switch (cmd) {
   	case 0:
-		fprintf(stderr,"parse_tty %d:: Incoming admin message (not used)\n",cnt);
-		
+		ptr = strtok(NULL, " ,"); cod = atoi(ptr);
+		parse_admin(ptr, cod);
 	break;
 	case 1:
 		fprintf(stderr,"parse_tty %d:: Incoming confirm message\n",cnt);
@@ -539,12 +660,12 @@ char * parse_tty(char *inp)
 	break;
 	case 2:
 		ptr = strtok(NULL, " ,"); cod = atoi(ptr);
-		if (debug >= 1) { printf("parse_tty %d:: Incoming message codec %i\n",cnt, cod); fflush(stdout); }
+		if (debug >= 2) { printf("parse_tty %d:: Incoming message codec %i\n",cnt, cod); fflush(stdout); }
 		res = parse_remote(ptr, cod);
 	break;
 	case 3:
 		ptr = strtok(NULL, " ,"); cod = atoi(ptr);
-		printf("parse_tty %d:: Incoming sensor message\n", cnt);
+		// if (debug>= 2) printf("parse_tty %d:: Incoming sensor message\n", cnt);
 		res = parse_sensor(ptr, cod);
 	break;
 	default:
@@ -559,42 +680,42 @@ char * parse_tty(char *inp)
 //
 int set_interface_attribs (int fd, int speed, int parity)
 {
-        struct termios tty;
-        memset (&tty, 0, sizeof tty);
-        if (tcgetattr (fd, &tty) != 0)
-        {
+	struct termios tty;
+	memset (&tty, 0, sizeof tty);
+	if (tcgetattr (fd, &tty) != 0)
+	{
                 fprintf (stderr,"error %d from tcgetattr", errno);
                 return -1;
-        }
+	}
 
-        cfsetospeed (&tty, speed);
-        cfsetispeed (&tty, speed);
+	cfsetospeed (&tty, speed);
+	cfsetispeed (&tty, speed);
 
-        tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;     // 8-bit chars
-        // disable IGNBRK for mismatched speed tests; otherwise receive break
-        // as \000 chars
-        tty.c_iflag &= ~IGNBRK;         // disable break processing
-        tty.c_lflag = ICANON;           // no signaling chars, no echo,
+	tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;     // 8-bit chars
+	// disable IGNBRK for mismatched speed tests; otherwise receive break
+	// as \000 chars
+	tty.c_iflag &= ~IGNBRK;         // disable break processing
+	tty.c_lflag = ICANON;           // no signaling chars, no echo,
                                         // XXX normally no canonical processing
-        tty.c_oflag = 0;                // no remapping, no delays
-        tty.c_cc[VMIN]  = 0;            // read doesn't block
-        tty.c_cc[VTIME] = 5;            // 0.5 seconds read timeout
+	tty.c_oflag = 0;                // no remapping, no delays
+	tty.c_cc[VMIN]  = 0;            // read doesn't block
+	tty.c_cc[VTIME] = 5;            // 0.5 seconds read timeout
 
-        tty.c_iflag &= ~(IXON | IXOFF | IXANY); // shut off xon/xoff ctrl
+	tty.c_iflag &= ~(IXON | IXOFF | IXANY); // shut off xon/xoff ctrl
 
-        tty.c_cflag |= (CLOCAL | CREAD);// ignore modem controls,
+	tty.c_cflag |= (CLOCAL | CREAD);// ignore modem controls,
                                         // enable reading
-        tty.c_cflag &= ~(PARENB | PARODD);      // shut off parity
-        tty.c_cflag |= parity;
-        tty.c_cflag &= ~CSTOPB;
-        tty.c_cflag &= ~CRTSCTS;
+	tty.c_cflag &= ~(PARENB | PARODD);      // shut off parity
+	tty.c_cflag |= parity;
+ 	tty.c_cflag &= ~CSTOPB;
+	tty.c_cflag &= ~CRTSCTS;
 
-        if (tcsetattr (fd, TCSANOW, &tty) != 0)
-        {
+	if (tcsetattr (fd, TCSANOW, &tty) != 0)
+	{
                 fprintf (stderr,"error %d from tcsetattr\n", errno);
                 return -1;
-        }
-        return 0;
+	}
+	return 0;
 }
 
 // --------------------------------------------------------------------------------
@@ -604,6 +725,7 @@ int set_interface_attribs (int fd, int speed, int parity)
 int tty_init(char * portname) 
 {
   int fd;
+  char arduinoBuf[64];
   fd = open(portname, O_RDWR| O_NOCTTY | O_SYNC);
   if (fd < 0)
   {
@@ -611,9 +733,23 @@ int tty_init(char * portname)
         exit(1);
   }
   set_interface_attribs (fd, B115200, 0);
-  write (fd, "100 1 10\n", 9);
-  usleep(2000);
-  write (fd, "100 1 0\n", 8);
+  
+  if (debug) {
+  	usleep(1000000);
+	fprintf(stderr,"tty_init:: Switch debug ON\n");
+	sprintf(arduinoBuf, "> 0 0 3 1 \n");
+  	write (fd, arduinoBuf, strlen(arduinoBuf));
+  }
+  if (verbose) {
+	fprintf(stderr,"tty_init:: Request Codecs\n");
+	usleep(1000000);
+  	sprintf(arduinoBuf, "> 0 0 0 \n" );
+	write (fd, arduinoBuf, strlen(arduinoBuf));
+  }
+  usleep(1000000);
+  sprintf(arduinoBuf, "> 1 1 0 100 1 10\n"); write (fd, arduinoBuf, strlen(arduinoBuf));
+  usleep(2000000);
+  sprintf(arduinoBuf, "> 1 1 0 100 1 0\n"); write (fd, arduinoBuf, strlen(arduinoBuf));
   fprintf(stderr,"tty_init:: Done\n");
   return(fd);
 }
@@ -646,12 +782,12 @@ int main (int argc, char **argv)
         switch(c) {
 		case 'c': checks = atoi(optarg); cflg = 1; break;	// Checks
 		case 'd': debug = 1; break;							// Debug mode
-		case 'h': hostname = optarg; break; 		// Socket communication
-		case 'p': port = optarg; break; 			// Port number
-		case 's': sflg = 1; break;					// Do Statistics
-		case 't': tty = optarg; break;				// tty port setting manual
-		case 'v': verbose = 1; break; 				// Verbose, output long timing/bit strings
-		case ':':       							// -f or -o without operand
+		case 'h': hostname = optarg; break; 				// Socket communication
+		case 'p': port = optarg; break; 					// Port number
+		case 's': sflg = 1; break;							// Do Statistics
+		case 't': tty = optarg; break;						// tty port setting manual
+		case 'v': verbose = 1; break; 						// Verbose, output long timing/bit strings
+		case ':':       									// -f or -o without operand
 			fprintf(stderr,"Option -%c requires an operand\n", optopt);
 			errflg++;
 		break;
@@ -678,11 +814,6 @@ int main (int argc, char **argv)
 		fprintf(stderr, "\n\nObsolete settings, not doing any action:\n");
         exit (2);
     }
-	
-	// ------------------ SETUP WIRINGPI --------------------------------------------
-	// Now start with setup wiringPI
-	//wiringPiSetup();
-	//pri =  piHiPri(40); if (pri <0) { perror("No receiver priority setting"); exit(1); }
 
 	// ------------------ VERBOSE PRINT --------------------------------------------
 	if (verbose == 1) {
@@ -690,6 +821,8 @@ int main (int argc, char **argv)
 		printf("-v\t; Verbose option\n");
 		if (sflg>0)		printf("-s\t; Statistics option\n");
 		if (debug>0)	printf("-d\t; Debug option\n");
+		printf("-h %s\t; hostname used\n", hostname);
+		printf("-p %s\t; port used\n", port);
 		printf("\n");		 
 	}
 	
@@ -732,7 +865,7 @@ int main (int argc, char **argv)
 	  
 		if (FD_ISSET(ttyfd,  &fds)) {
 			if ((ret = read(ttyfd, ttyInput, 1024)) >0 ) {
-				ttyInput[ret] = '\0';						// Including "\n", maybe use ret-1
+				ttyInput[ret] = '\0';							// Including "\n", maybe use ret-1
 
 				// Now do something with that info!
 				if (ttyInput[0] == '!' ) {						// Incoming comments text
@@ -747,8 +880,8 @@ int main (int argc, char **argv)
 				}
 				else if (ttyInput[0]=='<' ) {					// Incoming command
 					buf = parse_tty(ttyInput);
-					if (buf == NULL) fprintf(stderr,"main:: No buffer to sens to socket\n");
-					else { write_socket(sockfd,buf); }
+					if (buf == NULL) fprintf(stderr,"main:: No buffer to send to %s\n", hostname);
+					else { write_socket(sockfd, buf); }
 				}
 				else {											// Discard
 				}
@@ -764,7 +897,7 @@ int main (int argc, char **argv)
 		
 		else if (FD_ISSET(sockfd, &fds)) {
 			if (debug >= 1) printf("main:: sockfd message\n");
-			if (read_socket_and_transmit(sockfd, ttyfd) == -2) {
+			if ((ret = read_socket_and_transmit(sockfd, ttyfd)) == -2) {
 				// If connection failed due to LamPI-daemon not running, we have to wait until
 				// the daemon is restarted by cron after 60 secs and restart again.
 				// The easiest way is to quit the program and let it be restarted by cron too
@@ -781,23 +914,31 @@ int main (int argc, char **argv)
 				};
 				if (verbose==1) printf("main:: reopened the socket\n");
 				// New socket created, hopefully we're fine now
+			} else 
+			if (ret == -1){				// Nothing was read but no error 
+				reads++;
 			}
 		}
 		else {
 			// No message available
 			reads++;
 			if (debug >= 1) printf("main:: Select returns 1 but has no message(rc:%d)\n",rc);
+			sleep(1);
 		}
 		
 		if (reads >= 10) {
 			fprintf(stderr,"main:: ERROR reading empty messages, resetting connection\n");
 			close(ttyfd);
+			close(sockfd);
 			sleep(10);
+			// re-init both connections
 			ttyfd = tty_init(tty);
+			sockfd = socket_init(hostname, port);
+			reads = 0;
 		}
 	  }	
 	  fflush(stdout);
-	  //if (rc == 0) fprintf(stderr,"Timeout\n");
+
 	  if (rc == 2) perror("Select error: ");	
 		
 	}// for;;;

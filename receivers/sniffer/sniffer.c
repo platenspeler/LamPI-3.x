@@ -1,7 +1,7 @@
  /* **************************************************************************************
  * sniffer.c Sniffer program for the LamPI project
  * 
- *   Copyright (c) 2013,2014 Maarten Westenberg, mw12554@hotmail.com 
+ *   Copyright (c) 2013,2014,2015 Maarten Westenberg, mw12554@hotmail.com 
  * 
  *  This software is licensed under GNU license as detailed in the root directory
  *  of this distribution and on http://www.gnu.org/licenses/gpl.txt
@@ -525,7 +525,7 @@ int wt440h(int p_length)
 						socktcnt%1000,address,channel,temperature/10,temperature%10,humidity);
 					
 					// Do NOT use check_n_write_socket as weather stations will not
-					// send too many repeating messages (1 or 2 will come in one trasmission)
+					// send too many repeating messages (1 or 2 will come in one transmission)
 					//
 					if (write(sockfd, snd_buf, strlen(snd_buf)) == -1) {
 						fprintf(stderr,"socket write error\n");
@@ -842,7 +842,7 @@ int livolo(int p_length)
  *
  * Action/Impuls timing data
  * See http://dzrmo.wordpress.com/2012/07/08/remote-control-pt2272-for-android/
- * and the datasheet of the Princeton PT2262
+ * and the datasheet of the Princeton PT2262 which is used in MANY remotes today.
  *
  *         _     _
  * '0':   | |___| |___ (T,3T,T,3T)
@@ -851,7 +851,7 @@ int livolo(int p_length)
  *         _     ___
  * float: | |___|   |_ (T,3T,3T,T) used in addresses
  *         _
- * Sync:  | |_______________________________|
+ * Sync:  | |_______________________________| (T, 31T)
  *
  * 
  *  Every code bit is 4 pulses. Short pulses are T=170 uSec and Long pulses 3T 

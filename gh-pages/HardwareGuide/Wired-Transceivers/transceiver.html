@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>LamPI Transceiver Interface</title>
+</head>
+
+<body>
+
+<h1>Transceiver interface</h1>
+<p>This part of the documentation describes the use of the lower-level &quot;transceiver&quot; functions that enable transmitting and receiving 433MHz (or 868MHz) messages using a shell/executable interface. No nice screenshots, but explanation of the comand-line interface</p>
+<p>The following topics are available:</p>
+<ul>
+  <li><a href="#compile">Compiling and building the code</a></li>
+  <li><a href="#interfaces">What interfaces are available</a></li>
+  <li><a href="#daemon">Use LamPI-receiver as a daemon process</a></li>
+  <li><a href="#sniffer">Use LamPI-receiver as a sniffer or stand-alone</a></li>
+  <li><a href="../../transmitters">Using the transmitter programs (for Kaku, Livolo, Action etc.)</a></li>
+  <li><a href="../../DeveloperGuide/ArchitectureGuide/message_format.html">Message Formats (raw and jSon messages)</a></li>
+</ul>
+<p>If you like to know more about the design/architecture considerations for this interface, please go to the <a href="../../DeveloperGuide/ArchitectureGuide/architecture.html">architecture documentation</a>.</p>
+<h1><a name="compile"></a>Compiling and Building</h1>
+<p>The code is written in C, with source location in ~/receivers directory and with compiled code available in ~/exe subdirectory. You can compile and install the sources as follows:</p>
+<p><code><strong>&gt; cd ~/receivers<br>
+&gt; cd sniffer<br>
+&gt; make</strong></code></p>
+<p>and to install use the following command:</p>
+<p><code><strong>&gt; sudo make install</strong></code></p>
+<p>The compiled program will be put in the ~/exe directory and will have root privileges when running. The latter will allow regular users to execute the command while still being able to access the GPIO library and interfaces.</p>
+<p>&nbsp;</p>
+<h1><a name="interfaces"></a>What interfaces are available?</h1>
+<p>This is different for the transmit or receiver function, and it also differs whether you just want to send messages using the commandline or whether you want some sort of daemon function that watches a well-known socket and based on incoming messages for a certain brand of equipment will use the correct transmitter command.</p>
+<p>So let me explain.</p>
+<ul>
+  <li>LamPI-receiver daemon; read 433MHz handsets and transmits device commands over sockets on default port 5000 (socket TCP)</li>
+  <li>Use LamPI-receiver as a stand-alone shell function to see incoming messages, timing and see statistics</li>
+  <li>Use the shell transmitter executables to send single command to your connected devices</li>
+</ul>
+<h1><a name="daemon"></a>LamPI-receiver as daemon</h1>
+<p>The command to use to have LamPI-receiver behave as a daemon is:</p>
+<p><code><strong>&gt; cd ~/exe ; ./LamPI-receiver -d &amp;</strong></code></p>
+<p>which will start LamPI-receiver as a background process. If you like to start LamPI-receiver and get more information in log files:</p>
+<p><code><strong>&gt; cd ~/exe; sh ./LamPI-receiver -d -s &gt; LamPI-receiver.log 2&gt;&amp;1 &amp;</strong></code></p>
+<h1><a name="sniffer"></a>LamPI-receiver as a sniffer</h1>
+<p>LamPI-receiver actually should have been called LamPI-transceiver as the executable contains both transmitter and receiver functions. If you run LamPI-receiver as a command in a shell, it behaves as a receiver for incoming messages. Using the appropriate flags to the command it will behave as a sniffer for incoming wireless traffic and it will show brand, address, unit and status (On/OFF/dimlevel) information for every incoing 433MHz message that is recognized.</p>
+<p>At the time of writing, the LamPI-receiver supports the following handsets, remotes and sensors:</p>
+<ul>
+  <li>Klikaanklikuit.nl remote controls (kaku for short)</li>
+  <li>Action (or impuls) handsets</li>
+  <li>Livolo keychains</li>
+  <li>Kopou keychains</li>
+  <li>several other keychain FOB's or remotes that have similar message format as action</li>
+  <li>Weather stations</li>
+</ul>
+<p>The commandline sniffer can be activated as follows: </p>
+<p><code><strong>&gt; cd ~/exe<br>
+&gt; ./LamPI-receiver -v -s -t</strong></code></p>
+<p>The -v, -s and -t flags ar options and have the following meaning:</p>
+<ul>
+  <li>-v; Verbose option, will output not only the resulting address, unit and value but also the bitstring</li>
+  <li>-s; Statistics. This option will display statistics for every brand (it will keep administration for every supported receiver brand during the execution of the command) and it will display pulse-length/timing as well as shortest and longest pulse received for that type of device. This greatly helps debugging code.</li>
+  <li>-t; Testing mode, will output pulse timing for every received message</li>
+  <li>-d; Daemon mode. Officially the -d flag should not be used for command-line usage, but it allows debugging of the working daemon from the commandline with output as described while still working as a daemon and communicating with the LamPI-daemon process over socket connection.</li>
+</ul>
+<h1><a name="transmitters"></a>Use transmitters on commandline (example)</h1>
+<p>There are several transmitter programs available for communication to 433MHz &quot;connected&quot; devices, supporting a range of (remote) 433MHz receiver devices from brands such as klikaanklikuit, Action, Blokker etc. Some I ported from Arduino example library in C++, some I wrote myself. Most common is of course the transmitter program for 433MHz klikaanklikuit receivers. The transmitter executable programs are located in the directory ~/exe. The source programs for these transmitters are located in the directory ~/receivers. This may feel strange (naming), but the directories are named ater the device types that are supported (receivers, for controlling remote receiver devices; sensors, for weather, temperature and humidity sensors;  energy, for measuring power usage in the home) etc.</p>
+<p><code><strong>&gt; cd ~/exe<br>
+  &gt; ./kaku -g 100 -n 1 on<br>
+&gt; ./kaku -g 100 -n 2 8<br>
+&gt; ./kaku -g 100 -n 2 off</strong></code></p>
+<p>Using the command ./kaku -h will provide help on the command interface. Most transmitters have following options:</p>
+<ul>
+  <li>-g &lt;switch address&gt;; The <strong>g</strong>roup address is different for every brand of receiver. New kaku equipment has very large addresses that are coded in the remotes and switches can &quot;learn&quot; their address when pairing. Other brands such as Action/Impuls only have 31 room addresses and only 5(!) device addresses. This makes it VERY difficult to integrate action stuff easily in every room as you need to reserve one of the first addresses for sich switch.</li>
+  <li>-n &lt;device&gt;; Like the address, the index number of devices is dependent on the brand implementation as well. For Action this is 1-5 (A-E) whereas for Kaku this can be 16 different devices in a group.</li>
+  <li>-p &lt;pin&gt;; Optional flag for identifying the pin number of the Raspberry output pin. </li>
+  <li>&lt;value&gt;; The last value in the chain does not have a leading flag. Its value is &quot;on&quot; or &quot;off&quot; for switches and van be a value for Kaku dimmers &quot;0&quot; to &quot;31&quot;. For Livolo and Kopou wall switches, the on value will toggle the lights whereas the off value will switch off ALL devices with the same address (like pressing the D button on the remote will switch off the lights of A, B and C button.</li>
+  <li></li>
+</ul>
+<p>&nbsp;</p>
+</body>
+</html>

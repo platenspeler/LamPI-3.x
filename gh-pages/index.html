@@ -16,7 +16,7 @@ Please start reading on that page when you finished reading this page.</p>
 <p><a href="UserGuide/screenshots/room_screen_black.JPG"><img src="UserGuide/screenshots/room_screen_black_xs.jpg" alt="Black skin scalable" width="228" height="156" hspace="2" vspace="2"></a><a href="UserGuide/screenshots/room_screen_wood.JPG"><img src="UserGuide/screenshots/room_screen_wood_xs.jpg" alt="" width="228" height="156" hspace="2" vspace="2"></a><a href="UserGuide/screenshots/room_screen_sea.JPG"><img src="UserGuide/screenshots/room_screen_sea_xs.jpg" width="228" height="155" hspace="2" vspace="2"></a><a href="UserGuide/screenshots/room_screen_linen.JPG"><img src="UserGuide/screenshots/room_screen_linen_xs.jpg" width="228" height="155" hspace="2" vspace="2"></a></p>
 <p>&nbsp;</p>
 <p>You can find LamPI GIT repository on <a href="https://github.com/platenspeler">https://github.com/platenspeler</a>, and the documentation on <a href="http://platenspeler.github.io">http://platenspeler.github.io</a></p>
-<p>LamPI is a Home Automation project for switching equipment in your house over 434 MHz transmitters/receivers on a RaspberryPI. As of release 2.0 LamPI offers  support for Z-Wave devices. Support for Z-Wave 868MHz devices is implemented with a separate Raspberry bridge computer using the Razberry board. Please read more on Z-Wave support &lt;<a href="Zwave/RazBerry/zwave_gateway.html"><strong>Here</strong></a>&gt;</p>
+<p>LamPI is a Home Automation project for switching equipment in your house over 434 MHz transmitters/receivers on a RaspberryPI. As of release 2.0 LamPI offers  support for Z-Wave devices. Support for Z-Wave 868MHz devices is implemented with a separate Raspberry bridge computer using the Razberry board. Please read more on Z-Wave support &lt;<a href="HardwareGuide/Zwave-Gateway/RazBerry/zwave_gateway.html"><strong>Here</strong></a>&gt;</p>
 <h1>Control your Devices</h1>
 <p>This is where I initially developed LamPI for. It will control your light switches and your dimmers and your other switches as well (if you want LamPI can switch your stereo or microwave too). It also controls your radiators (Z-Wave) and other devices.</p>
 <p><img src="UserGuide/screenshots/room_screen_grey.JPG" width="899" height="582" /></p>
@@ -39,12 +39,12 @@ Please start reading on that page when you finished reading this page.</p>
 <p>In case I missed something, please send me an email or make a note on this page. For the moment I'm the only author of LamPI so it can take a few days before I answer.</p>
 <h1>LamPI Sensor Graphs</h1>
 <p>For general sensors and the special energy sensors LamPI has a separate program to chart/graphs the various sensors over time. When clicking on the dials of the sensor screen in LamPI GUI, a new screen opens where users can specify their own combination of sensors and make a graphs of these sensors (plotted against time).</p>
-<p><a href="Graphs_Manual/graphs/temperature_1.JPG"><img src="Graphs_Manual/graphs/temperature_1.JPG" width="684" height="444"></a></p>
+<p><a href="DeveloperGuide/Graphs_Manual/graphs/temperature_1.JPG"><img src="DeveloperGuide/Graphs_Manual/graphs/temperature_1.JPG" width="684" height="444"></a></p>
 <p>&nbsp;</p>
 <h1>Rules Editor</h1>
-<p>As from LamPI release 3.3 we offer a set of Blockly elements to help the user define his/her own rules in LamPI. Read the separate section on Rules<a href="Rules_Manual/index.html"> &lt;HERE&gt;</a>. LamPI Rules offer the use a graphical interface to define rules based on temperature, humidity, time of day, Sunset or any other sensor value and based on these reading define actions in LamPI to be taken.</p>
+<p>As from LamPI release 3.3 we offer a set of Blockly elements to help the user define his/her own rules in LamPI. Read the separate section on Rules<a href="DeveloperGuide/Rules_Manual/index.html"> &lt;HERE&gt;</a>. LamPI Rules offer the use a graphical interface to define rules based on temperature, humidity, time of day, Sunset or any other sensor value and based on these reading define actions in LamPI to be taken.</p>
 <p>All sensors can be used in queries and actions include setting devices values , showing alerts on the screen or logging values in the log file.</p>
-<p><a href="Rules_Manual/screenshots/sunset_1.JPG"><img src="Rules_Manual/screenshots/sunset_1.JPG" width="1041" height="669"></a></p>
+<p><a href="DeveloperGuide/Rules_Manual/screenshots/sunset_1.JPG"><img src="DeveloperGuide/Rules_Manual/screenshots/sunset_1.JPG" width="1041" height="669"></a></p>
 <p>The content of the screen above was enlarged&nbsp; little bit to enhance redibiliy. The message&nbsp;in the message area&nbsp;would normally fit.</p>
 <h1>LamPI History</h1>
 <p>The goal of my project was to provide an easy interface to the family to control the lights in our house. We had klikaanklikuit.nl switches and we have an iPad (and some Android phones and Laptops) and want to control our light switches with an easy-to-use GUI interface. This meant that I needed at least 2 components: A component that would control transmitter and receiver and handle low-level device commands, and a GUI in JavaScript/jQuery that would handle the human interaction. In order to store configuration information and for timing commands and unattended use, we would also need a daemon process serving in the background as well as a database (written in MySQL) to store configuration information.</p>
@@ -54,7 +54,7 @@ Please start reading on that page when you finished reading this page.</p>
 <p>LamPI contains 7 main screens: Rooms, Scenes, Timers, Handsets, Weather, Energy and Config. For every screen I have written a few pages that contain instructions on common tasks you will perform. </p>
 <p>The documentation for the LamPI functions can be found on this site on the following pages.</p>
 <ul>
-  <li><a href="Installation_Manual/setup.html">Initial LamPI Setup</a></li>
+  <li><a href="InstallationGuide/setup.html">Initial LamPI Setup</a></li>
   <li><a href="UserGuide/getting_started.html">Getting Started with the GUI</a></li>
   <li><a href="UserGuide/rooms.html">The Rooms Screen</a></li>
   <li><a href="UserGuide/scenes.html">The Scenes Screen</a></li>
@@ -69,9 +69,9 @@ Please start reading on that page when you finished reading this page.</p>
 <p>Apart from the GUI interface, on the backend there are some other programs active: The main LamPI_daemon, some receivers (wireless and wired)<br>
 </p>
 <ul>
-  <li>Transceiver interface; If you only want to use the <a href="Hardware/transceiver.html">LamPI-receiver  command-line</a> to send and receive 433MHz messages </li>
-  <li><a href="Hardware/hardware_guide.html">Background information  433MHz hardware for RaspberryPI</a></li>
-  <li><a href="sensors/weather_sensors_msg_format.html">Background information on Wired Sensors for PI (temperature, humidity etc).</a><br>
+  <li>Transceiver interface; If you only want to use the <a href="HardwareGuide/Wired-Transceivers/transceiver.html">LamPI-receiver  command-line</a> to send and receive 433MHz messages </li>
+  <li><a href="HardwareGuide/hardware_guide.html">Background information  433MHz hardware for RaspberryPI</a></li>
+  <li><a href="HardwareGuide/Wired-Sensors/weather_sensors_msg_format.html">Background information on Wired Sensors for PI (temperature, humidity etc).</a><br>
     <br>
   </li>
   <li>Background information on the <a href="DeveloperGuide/ArchitectureGuide/architecture.html">LamPI Architecture</a></li>

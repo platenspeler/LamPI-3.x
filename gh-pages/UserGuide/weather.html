@@ -10,7 +10,7 @@
 <p>This part of the documentation describes the weather screen and what you can (and sometimes cannot) do with weather sensors. Since version 1.8 LamPI does support weather station sensors. At first only the UPM WT440H (outdoor) sensor is supported and it works fine. Other sensors can be added to the LamPI-receiver/sniffer program later, but it is good to know that the LamPI-daemon offers support for receiving Json messages from weather sensors.</p>
 <p>If you like to know more about te various sensors, check out their &quot;hardware&quot; pages. </p>
 <ul>
-  <li><a href="../Hardware/wt440h/wt440h.html">WT-440H</a> for information about the WT-440H temperature and humidity sensor (433MHz unit)</li>
+  <li><a href="../HardwareGuide/433-Sensors/wt440h/wt440h.html">WT-440H</a> for information about the WT-440H temperature and humidity sensor (433MHz unit)</li>
 </ul>
 <p>Of course temperature sensors can be meaningful in weather context, but also be used in energy applications. In the application I make that distinction (for the moment) as I expect most temperature, humidity and pressure sensors to be used most in context of weather. However, users are free to choose differently. As soon as I have my smart-meter up and running I will have a look at the energy sensors and their application as well.</p>
 <p>Below you see a screenshot of the weather screen...</p>
@@ -46,7 +46,7 @@ rainfall : char(8) # (mm per hour)</code></p>
   <li>The 1-wire Dallas bus</li>
   <li>A sensor with I2C support</li>
 </ol>
-<p>For more info on wired weather sensors, read the <a href="../sensors/weather_sensors_msg_format.html">sensors.html</a> page </p>
+<p>For more info on wired weather sensors, read the <a href="../HardwareGuide/Wired-Sensors/weather_sensors_msg_format.html">sensors.html</a> page </p>
 <h1>Logging our Sensor data</h1>
 <p>The LamPI-daemon will listen to all incoming json messages on its port 5000. Incoing messages from sensors will be matched against the configuration items in the database.cfg file for missing data such as names, location etc that are not sensor defined but defined by the user.</p>
 <p>But in order to watch trends in data and analyze the collected data we need to add logging capabilities to the LamPI environment. There are several options:</p>

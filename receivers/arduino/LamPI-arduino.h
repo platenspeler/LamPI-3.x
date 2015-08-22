@@ -23,6 +23,13 @@
 extern "C"
 {
 #endif
+// Sensor Definitions
+#define ONBOARD 0
+#define WT440 1
+#define OREGON 2
+#define AURIOL 3
+#define CRESTA 4
+
 
 // 
 // WAIT settings for the daemon and sockets
@@ -44,6 +51,47 @@ extern "C"
 //
 extern char * parse_cjson(cJSON *ptr, char * pattern);
 
+/*
+ *********************************************************************************
+ * Get local address
+ *********************************************************************************
+ */
+int getLocalAddress(char *host) {
+
+    struct ifaddrs *ifaddr, *ifa;
+    int s;
+    //char host[NI_MAXHOST];
+
+    if (getifaddrs(&ifaddr) == -1)
+    {
+        perror("getifaddrs");
+		return(-1);
+        //exit(EXIT_FAILURE);
+    }
+	//fprintf(stderr,"Starting loop\n");
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+    {
+        if (ifa->ifa_addr == NULL)
+            continue;
+
+        s=getnameinfo(ifa->ifa_addr,sizeof(struct sockaddr_in),host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+
+        if((strcmp(ifa->ifa_name,"wlan0")==0)&&(ifa->ifa_addr->sa_family==AF_INET))
+        {
+            if (s != 0)
+            {
+                fprintf(stderr,"getnameinfo() failed: %s\n", gai_strerror(s));
+				return(-1);
+                //exit(EXIT_FAILURE);
+            }
+//            fprintf(stderr,"\tInterface : <%s>\n",ifa->ifa_name );
+//            fprintf(stderr,"\t  Address : <%s>\n", host);
+        }
+    }
+
+    freeifaddrs(ifaddr);
+    return(0);
+}
 
 #ifdef __cplusplus
 }

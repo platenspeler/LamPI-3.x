@@ -1,0 +1,44 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+</head>
+
+<body>
+<h1>Nano-PI Showdown</h1>
+<p>So how good is the Arduino really when it comes to handling incoming sensor (or handset) messages. That is difficult to say as it depends on several factors, some of which are hard to control.</p>
+<ul>
+  <li>Location; How hard we try, it is impossible to put two receivers exactly on the same position</li>
+  <li>Raspberry hardware; So are all raspberries exactly equal (memory etc) and do the have the same workload.</li>
+  <li>etc etc.</li>
+</ul>
+<h2>Setup</h2>
+<p>Still, I like to compare the performance of the Raspberry as a transmitter/receiver station with the Arduino Nano. So what is the setup?</p>
+<p>I configures three of my Raspberry machines with a transmitter/receiver pair and have them all report such values to the LamPI-node daemon on one of them. Not entirely fair maybe, but the one that is running the damon (192.168.2.50) is configured as a master node, it is a Raspberry version 2 with local transceiver pair attached so it will enable me to compare with two slave devices that will only run the transceiver hardware and a few other (directy attached) sensors.</p>
+<p>So the other two Raspberries are 192.168.2.53 and 192.168.2.54&nbsp;and both are located within 0 centimeters from each other. The Arduino code is configured so that at least two (2) identical messages need to be received before the Arduino will report such sensor value. The direct attached hardware is programmed differently and so all values are reported to the daemon.</p>
+<p>In a later stage I might change the Arduino code for the 433MHz sensor to send all messages&nbsp;too. The sensor message does contain parity checking code to we should be OK with this.</p>
+<h2>Configuration</h2>
+<p>192.168.2.53:</p>
+<ul>
+  <li>Raspberry model B, </li>
+  <li>Transmitter and receiver are direct attached (GPIO)</li>
+  <li>4 sensors ( 2 * 1w and 2* i2c)</li>
+  <li>16MB RAM</li>
+</ul>
+<p>192.168.2.54:</p>
+<ul>
+  <li>Raspberry model B+</li>
+  <li>Transmitter/Receiver pair is attached to Arduino and connected to Rapsberry with a USB cable</li>
+  <li>baudrate: 115200 / 8bit / no parity</li>
+  <li>2 sensors (1w and i2c)</li>
+  <li>16MB of RAM</li>
+  <li>MySQL, rrdtool etc.</li>
+</ul>
+<p>I started a fresh logging with ~/scripts/PI-log so after running for an hour or 2 it is possible to scan the output of the ~/log/PI-node.log on the master node 192.168.2.50 and scan for occurrences of these 433MHz sensors in the logfile. </p>
+<h2>CPU usage</h2>
+<p>Comparing the cpu idle time of the PI B+ and the normal PI with direct connected transmitter/receiver we see that the first one has on average 74% idle time and the one with direct connect I/O only 42%. The last system spends 32% of its time on LamPI-receiver process. The first one spends most time on the node system (9 to 10%) and only a very small amount of time on LamPI-aduino (&lt; 1%).</p>
+<p>&nbsp;</p>
+<h2>Sesitivity Performance</h2>
+</body>
+</html>

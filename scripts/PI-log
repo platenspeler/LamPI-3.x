@@ -11,7 +11,7 @@ SCRIPTDIR="/home/pi/scripts"; export SCRIPTDIR
 LOGDIR="/home/pi/log"; export LOGDIR
 #
 cd $LOGDIR
-for i in PI-rcv PI-1w PI-rht03 PI-i2c PI-node TemPI PI-energy
+for i in PI-rcv PI-1w PI-rht03 PI-i2c PI-node TemPI PI-energy PI-arduino
 do
 	mv $LOGDIR/$i.3.log $LOGDIR/$i.4.log
 	mv $LOGDIR/$i.2.log $LOGDIR/$i.3.log

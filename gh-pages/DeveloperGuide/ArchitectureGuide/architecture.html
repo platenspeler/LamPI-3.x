@@ -7,9 +7,9 @@
 <body>
 
 <h1>LamPI Architecture Intro</h1>
-<p><strong><em>*** As of June 2015 all PHP files have been converted to node.js code. This page still needs to be reritten to reflect this change.</em></strong></p>
+<p><strong><em>*** As of June 2015 all PHP files have been converted to node.js code. This page still needs to be rewritten to reflect this change.</em></strong></p>
 <p>This chapter describes some design and architecture considerations for LamPI. It is meant to provide background information on why the components and their setup are chosen the way they are, and at the same time will allow you to judge if you can live with that setup or whether you are convinced that you can do better yourself. </p>
-<p>Please tell me if you consider certain aspects a major flaw, and I might re-design those parts. Also, if you like to partitipate in the project and rewrite some new parts of the code, please tell me. This chapter contains the following subjects (for easy navigation):</p>
+<p>Please tell me if you consider certain aspects a major flaw, and I might re-design those parts. Also, if you like to participate in the project and rewrite some new parts of the code, please tell me. This chapter contains the following subjects (for easy navigation):</p>
 <ul>
   <li><a href="#maincomponents">Overview of the main components and their relation.</a></li>
   <li><a href="#lampidaemon">Architecture of the LamPI-daemon</a></li>
@@ -17,37 +17,38 @@
   </li>
   <li><a href="#lampigui">The webbrowser front-end client in Javascript/jQuery</a></li>
   <li><a href="#android">The Android client</a></li>
-  <li><a href="#zwave">Z-Wave device support (how to control Z-Wave devices)</a></li>
+  <li><a href="#zwave">Z-Wave device gateway (how to control Z-Wave devices)</a></li>
   <li><a href="message_format.html">Message Formats (layout of messages exchanged between LamPI components)</a></li>
 </ul>
 <p>LamPI started as an alternative controller to the ICS-1000 controller of klikaanklikuit.nl (150 EURO), but today it offers support for other brands as well as well support for sensors and even 868MHz Z-Wave devices.</p>
 <h1><a name="maincomponents"></a>Main Components and Relations</h1>
-<p>LamPI consists of a few major components as outlined in the pisture below. Starting with release 1.7 all communication between the front-end and the controlling daemon takes place over websockets. Of course, when you work with the ICS-1000 this will be an exception. </p>
+<p>LamPI consists of a few major components as outlined in the picture below. Starting with release 1.7 all communication between the front-end and the controlling daemon takes place over websockets. Of course, when you work with the ICS-1000 this will be an exception. </p>
 <ul>
   <li>All communication between the GUI frontend and the sensors or devices takes place through the LamPI-node.js daemon process. This process is the spider in the web, it maintains the database relation (consistency) and an administration of all sensors and devices in the system</li>
 </ul>
 <ul>
-  <li>The LamPI-3.x.js gui application will take care of  all user communicaion related to the first line of user interface. Only sensors and energy graphs and the rules editor are not implemented by this file</li>
+  <li>The LamPI-3.x.js gui application will take care of  all user communication related to the first line of user interface. Only sensors and energy graphs and the rules editor are not implemented by this file</li>
   <li>Located in the ~/www/graphs directory the two files sensor.js and energy.js implement the files to show graphs on your screen.</li>
   <li>The rules editor is found in the ~/www/rules directory and is implemented by the file rules.js</li>
 </ul>
 <ul>
   <li>Sensors executables are found in the directory ~/exe , the sources of the sensors in ~/sources</li>
 </ul>
-<p><a href="architecture1.gif"><img src="architecture2.gif" width="960" height="720"></a></p>
+<p><a href="architecture2.gif"><img src="architecture2.gif" width="960" height="720"></a></p>
 <p>Let's explain a little bit more about the architecture. There are a few main components to be recognized that are further described in this document. These components or modules are the following:</p>
 <ul>
   <li>The GUI of LamPI</li>
   <li>The LamPI-node.js process</li>
   <li>The device handling, with transmitters (send 2 device) and receivers (from sensors)</li>
   <li>The mySql database</li>
-  <li>New: The Z-Wave gateway</li>
+  <li>The Z-Wave gateway (not in picture)</li>
+  <li>The Arduino 433MHz gateway (not in picture)</li>
 </ul>
 <p>When you have a lot of devices, or sensors around the house you might duplicate functions for more reach, or duplicate to spread the load on the system more evenly. In this case the described modules can be put on separate systems. These do not have to be Raspberry systems per-se but can also be your fileserver or NAS or your router.</p>
-<p>You have to keep in mind though that these systems have dependensies and need other packages to be available in order to work. For example the LamPI-gui probably needs apache and webserver availability including websocket support, the database function needs MySQL support and the LamPI-node.js needs a node.js system in place. Communication between modules takes place with regular sockets or websockets (with exception of the database where we use the mysql function). There are advantages and disadvantages wrt to the approach chosen for the communication between GUI frontend and LamPI-node backend.</p>
-<p>The disadvantage is that with the old plain socket communication and supporting ajax PHP scripts such as backend_rasp.php all looked much easier and developer is in control. Only you think you are, as most of the ajax calls are asynchronous in nature, and the backend PHP scripts run only once so information that is not directy available from the LamPI-daemon will not be received and results in a time-out.</p>
+<p>You have to keep in mind though that these systems have dependencies and need other packages to be available in order to work. For example the LamPI-gui probably needs apache and webserver availability including websocket support, the database function needs MySQL support and the LamPI-node.js needs a node.js system in place. Communication between modules takes place with regular sockets or websockets (with exception of the database where we use the mysql function). There are advantages and disadvantages wrt to the approach chosen for the communication between GUI frontend and LamPI-node backend.</p>
+<p>The disadvantage is that with the old plain socket communication and supporting ajax PHP scripts such as backend_rasp.php all looked much easier and developer is in control. Only you think you are, as most of the ajax calls are asynchronous in nature, and the backend PHP scripts run only once so information that is not directly available from the LamPI-daemon will not be received and results in a time-out.</p>
 <p>Webserver transmission is rather simple, once the socket is open you're good to go. Incoming messages are more complicated, they arrive asynchronously to the LamPI-x.y.js client and so we must make sure that these messages are delivered to the correct handler of the program. Also, it is good to define a standard message format between GUI &lt;-&gt; LamPI-node &lt;-&gt; Transmitter/Receiver/Sensors.</p>
-<p>As good example is what we do with incoming startus changes for devices in the program.</p>
+<p>As good example is what we do with incoming status changes for devices in the program.</p>
 <ul>
   <li>If we receive status change for a device which is in our current room on screen, we want to update the switch or slider on the screen to reflect the change in value.</li>
   <li>If the update is for a device not on screen, someone should have updated the value in the database and working buffers so that if we switch to that device we see the current (just changed) value.</li>
@@ -56,8 +57,8 @@
 <p>&nbsp;</p>
 <h1><a name="lampigui"></a>The LamPI.js GUI</h1>
 <p>The LamPI-x.y.js file contains (most of) the front end of the LamPI application. It contains Javascript code in combination with a lot of jQuery functions that will shield the complex Ajax functions from the user and expands the code with useful widgets and buttons. The LamPI GUI system is written in Javascript, with libraries jQuery, and some functions of jQuery-Mobile and jQuery-UI.</p>
-<p>The LamPI Javascript program with with regular browser programs in which it will make use of jQuery UI function. Alternatively, when using the mobile clients such as Android client, the program will make use of jQuery Mobile libraries that are optimized for use in mobile devices such as Android clients. Javascript is an interpreted language, so it cannot really be compiled. However, Adobe provides a &quot;Closure Compiler Service&quot; that will analyse your JavaScript code, remove all the comments and changes long identifier names to short ones if necessary. The result is a smaller javascript file which takes less time to interpret as well. Therefore we provide the original LamPI-x.x.js file for development and debugging and the smaller/faster LamPI-x.x.min.js file that is used by default for running LamPI.</p>
-<p>You can start the GUI by calling one of the main .html files. By default this is the ~/www/index.html file. The index.html will setup the libraries, css file and may override some standard settings in the LamPI-x.x.min.js file (if you choose to do so). For eample you can use this to make a dev.html file that uses other development libraries etc for testing, or a mobile.html file that calls LamPI-x.x.min.js with the mobile settings activated.<br>
+<p>The LamPI Javascript program with with regular browser programs in which it will make use of jQuery UI function. Alternatively, when using the mobile clients such as Android client, the program will make use of jQuery Mobile libraries that are optimized for use in mobile devices such as Android clients. Javascript is an interpreted language, so it cannot really be compiled. However, Adobe provides a &quot;Closure Compiler Service&quot; that will analyze your JavaScript code, remove all the comments and changes long identifier names to short ones if necessary. The result is a smaller javascript file which takes less time to interpret as well. Therefore we provide the original LamPI-x.x.js file for development and debugging and the smaller/faster LamPI-x.x.min.js file that is used by default for running LamPI.</p>
+<p>You can start the GUI by calling one of the main .html files. By default this is the ~/www/index.html file. The index.html will setup the libraries, css file and may override some standard settings in the LamPI-x.x.min.js file (if you choose to do so). For example you can use this to make a dev.html file that uses other development libraries etc for testing, or a mobile.html file that calls LamPI-x.x.min.js with the mobile settings activated.<br>
 The startup html file calls LamPI-x.x.min.js which will perform the following initial actions:</p>
 <ul>
   <li>It will initialize a set of handlers for Javascript events (such as key presses)</li>
@@ -65,7 +66,7 @@ The startup html file calls LamPI-x.x.min.js which will perform the following in
   <li>It will call an Ajax script to get the content of the device and setting database</li>
   <li>After the document.ready()) function has ended the GUI will be initialized and the first &quot;room&quot; screen is activated.</li>
 </ul>
-<p>The GUI has the following areas (pre-) defined:</p>
+<p>The GUI page has the following areas (pre-) defined:</p>
 <ul>
   <li>#gui_header</li>
   <li>#gui_menu</li>
@@ -75,15 +76,15 @@ The startup html file calls LamPI-x.x.min.js which will perform the following in
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 <h1><a name="lampidaemon"></a>Architecture of the LamPI-node.js daemon</h1>
-<p>The LamPI daemon can be found in the ~ directory together with its supporting local libraries in the ~/modules directory. LamPI-node.js is written in Javascript and is started automatically with a cron script every minute. This way we know that the systen will start even when it encountered a fatal error. Not that there are any known at the moment of writing, the daemon will run fine for weeks in a row, but just in case. Actually, since we use the log aging system - every night at 02:00 hrs the log files are moved to a .log.x file - the node daemon needs to be restarted so that it again writes to the new and correct ~/www/log/LamPI-daemon.log file</p>
-<p>The LamPI-node.js is a node.js Javascript program that will accept socket connections from clients and  transceivers. It will accept device commands from the front end and send back status changes of devices (for example from timers). On the &quot;other side&quot; it will messages from the transceiver with read sensor and handset information and may act upon those messages. LamPI-node will also initiate messages to the 433MHz devices based on either incoing commands from the client(s) or timers that expire for certain actions. The LamPI-daemon is found in the ~ directory.</p>
+<p>The LamPI daemon can be found in the ~ directory together with its supporting local libraries in the ~/modules directory. LamPI-node.js is written in Javascript and is started automatically with a cron script every minute. This way we know that the system will start even when it encountered a fatal error. Not that there are any known at the moment of writing, the daemon will run fine for weeks in a row, but just in case. Actually, since we use the log aging system - every night at 02:00 hrs the log files are moved to a .log.x file - the node daemon needs to be restarted so that it again writes to the new and correct ~/www/log/LamPI-daemon.log file</p>
+<p>The LamPI-node.js is a node.js Javascript program that will accept socket connections from clients and  transceivers. It will accept device commands from the front end and send back status changes of devices (for example from timers). On the &quot;other side&quot; it will messages from the transceiver with read sensor and handset information and may act upon those messages. LamPI-node will also initiate messages to the 433MHz devices based on either incoming commands from the client(s) or timers that expire for certain actions. The LamPI-daemon is found in the ~ directory.</p>
 <h2>Why use node.js</h2>
-<p>Not ong ago the LamPI&nbsp;daeon was implemented in PHP, and I was reasonable satisfied with the results. However, in April 2015 I decided to rewrite the code to node.js. If offered a set of distict advantages: </p>
+<p>Not long ago the LamPI&nbsp;daemon was implemented in PHP, and I was reasonable satisfied with the results. However, in April 2015 I decided to rewrite the code to node.js. If offered a set of distinct advantages: </p>
 <ul>
-  <li>One language to work in. May not seem that important, and it certainly was not a big deal for me. However I found that sharing object defnitions and working with websockets is indeed easier&nbsp;f both sides use more or less same language, libraries and tools.</li>
-  <li>Performance of node.js is quite OK. Only the static webserver does not have enough performance and therefore it is adviced to use apache to run the gui website. It is possible to use the static webserver of node.js on port 8080 as well, then the user should start his/her page with &quot;http://&lt;your-IP&gt;:8080&quot; as LamPI-node.js listens to port 8080.</li>
+  <li>One language to work in. May not seem that important, and it certainly was not a big deal for me. However I found that sharing object definitions and working with websockets is indeed easier&nbsp;lf both sides use more or less same language, libraries and tools.</li>
+  <li>Performance of node.js is quite OK. Only the static webserver does not have enough performance and therefore it is advised to use apache to run the gui website. It is possible to use the static webserver of node.js on port 8080 as well, then the user should start his/her page with &quot;http://&lt;your-IP&gt;:8080&quot; as LamPI-node.js listens to port 8080.</li>
   <li>The whole concept of node.js - asynchronous execution - is very, very much suitable for LamPI</li>
-  <li>Node.js is hot and there is support from user communicties and modules are developed on a daily base.</li>
+  <li>Node.js is hot and there is support from user communities and modules are developed on a daily base.</li>
 </ul>
 <h3>Disadvantages:</h3>
 <ul>
@@ -92,7 +93,7 @@ The startup html file calls LamPI-x.x.min.js which will perform the following in
 </ul>
 <h3>Some disadvantages of not using C/C++</h3>
 <ul>
-  <li>Speed; PHP is an interpreted language. This may sound as a serious disadvantage, but speed as in reaction time is not important for LamPI-daemon as the resolution for timing is 1 minute for timing settings, and a second for timing of commands coming from clients. Sor sensors this is different, they work on interrupt basis and therefore handling of incoming pulses or sensor values is critical. Therefore sensors are programmed in C for speed and deliver their values over the network to the daemon.</li>
+  <li>Speed; PHP is an interpreted language. This may sound as a serious disadvantage, but speed as in reaction time is not important for LamPI-daemon as the resolution for timing is 1 minute for timing settings, and a second for timing of commands coming from clients. For sensors this is different, they work on interrupt basis and therefore handling of incoming pulses or sensor values is critical. Therefore sensors are programmed in C for speed and deliver their values over the network to the daemon.</li>
   <li>Linux standard for daemons is C; true in most cases, and daemons are started in services/init.d or inet in most cases. However, for a Raspberry which is dedicated to just this task or one or two others this is not a problem.</li>
 </ul>
 <p>So, after some consideration I decided that building this daemon in node.js would offer me enough functionality, allow me to put the daemon on almost any webserver without the need of a C/C++ compiler and be much more flexible when making changes.</p>
@@ -104,9 +105,9 @@ The startup html file calls LamPI-x.x.min.js which will perform the following in
   <li>The main Loop for the daemon with globally three stages:<br>
     <br>
     <ol>
-      <li>Starting all connection endpoints and database. The whole initialisation takes quite some time&nbsp;on an old model Raspberry.</li>
-      <li>After initializations, messages coming in on the system are forwarded to the socketHandler() function which in turn will split out to dbaseHandler(), guidHandler(), rulesHandler() etc based on the nature of the message received.</li>
-      <li>poll_loop() - A timer loop with a medium length interval that will poll the Z-Wave device for changed device values. If found, it will update the internal LamPI-device object ith these changed values. Remember LamPI has both 433 and 868MHz devices attached and this loop will only deal with the Z-Wav (868 MHz) devices.</li>
+      <li>Starting all connection endpoints and database. The whole initialization takes quite some time&nbsp;on an old model Raspberry.</li>
+      <li>After initializations, messages coming in on the system are forwarded to the socketHandler() function which in turn will split out to dbaseHandler(), guiHandler(), rulesHandler() etc based on the nature of the message received.</li>
+      <li>poll_loop() - A timer loop with a medium length interval that will poll the Z-Wave device for changed device values. If found, it will update the internal LamPI-device object with these changed values. Remember LamPI has both 433 and 868MHz devices attached and this loop will only deal with the Z-Wav (868 MHz) devices.</li>
       <li>alarm_loop() - An interval timer that is running with a VERY short interval. It should be able to handle alarms coming in to the system and deal with rules that are present in the config['rules'] object</li>
       <li>zwave_loop() -&nbsp; This is a logging loop for Z-Way devices only. It is run once every 2 minutes and will show the status of the various ZWave devices on the log file. This function is not critical by any means and if not necessary the user can decide to increase its timer to a much higher value.</li>
       <li>timer_loop() - This loop will study the config['timers']&nbsp;array looking for timers that need to run. It is started every 30 seconds or so. Since LamPI timers have a resolution of one minute it does not make sense to decrease the timer lower than 30 seconds.</li>
@@ -116,24 +117,23 @@ The startup html file calls LamPI-x.x.min.js which will perform the following in
 </ul>
 <p>Note: The run queue might also consist of more complex commands such as &quot;All Off&quot; in a room. If such a complex command is encountered on the Run Queue it is replaced with the individual device &quot;OFF&quot; commands which are then each added separately to the Run Queue instead.</p>
 <h3>&nbsp;</h3>
-<h1><a name="transceiver"></a>Device Handling: Transmitters &amp; Receivers</h1>
-<p>Transceivers is not entirely the correct name for the programs in this section. But as seen from the LamPI-daemon (<a href="#lampidaemon">see next main section</a>) these are the functions interfacing with the physical 433MHz receiver and transmitter devices on the RaspberryPI. The daemon sees it as one connection with the Raspberry for both receiving handset/sensor information as well as sending device commands.</p>
+<h1><a name="transceiver"></a>Device and Sensor Handling</h1>
+<p>Transceivers is not entirely the correct name for the programs in this section. But as seen from the LamPI daemon (<a href="#lampidaemon">see next main section</a>) these are the functions interfacing with the physical 433MHz receiver and transmitter devices on the RaspberryPI. The daemon sees it as one connection with the Raspberry for both receiving handset/sensor information as well as sending device commands.</p>
+<h2>Transmitters, Receivers, Transceivers and Gateways</h2>
+<p>There are several ways to have the LamPI-node daemon talk with sensors and devices in your house. If these sensors and devices are connected to a Raspberry (Master of slave node) we talk about a direct connection. The first LamPI releases, up and to release 3.4, would only offer these connection options.</p>
+<ol>
+  <li> ~/receivers/sniffer; you will find the sniffer program sources for a direct connected transmitter/receiver pair to a Raspberry.</li>
+  <li>~/transmitters/* would contain the set of transmitter programs necessary to interface with the devices. These programs are used by LamPI-receiver when sending its messages.</li>
+  <li>~/sensors would contains a set of sensor programs to read values of directly connected LamPI sensors.</li>
+</ol>
+<p>But since release 3.5 we offer an additional way of connecting transmitter, receiver and sensor devices to your Raspberry. You can make use of a gateways devices that will handle all low-level communication with your devices and sensors and provide a simple interface to your Raspberry. For LamPI we make use of an Arduino device and as a result we'll have to split part of it's definition in two ways:</p>
+<ol>
+  <li>~/receivers/arduino will contain the Raspberry side of the gateway.</li>
+  <li>http://platenspeler.github.com will contain a separate Arduino program that you can use with the Arduino Integrated Development Environment (IDE) and that will contain all Arduino programming needed to interface the Raspberry on one side and all necessary/supported transmitters/receivers and sensors on the other side.</li>
+</ol>
+<p>In the following sections we will describe the functions in more detail.</p>
 <p><em>Note: In the last revision of the LamPI software, sensors or receivers (= receivers) send messages to the LamPI-daemon  and LamPI-daemon sending device commands (= transmitters) will be in separated directories.</em></p>
-<p>The sources of the receiver functions are located in the ~/receivers subdirectory.</p>
-<h2>Transmitters</h2>
-<p>The transmitter function is the most straightforward function implemented. For every known and supported brand we compile and build and executable which is installed in the ~/exe directory. It is possible to call these functons from the commandline, but if we run the LamPI-receiver in daemon mode (-d option) the daemon will also provide transmitter functions (for requests coming in on sockets). The LamPI-receiver will call these command-line programs directly using the PHP system() command.</p>
-<p>Therefore it makes sense to keep the naming of the transmitter programs standard (make no change, or if you do change the transmitter.c code as well). Also the commandline options for each of the transmitter programs are the same (makes sense too, not?). All programs must be called as follows&quot;</p>
-<p><code>&gt; cd ~/.exe<br>
-  &gt; ./mysender -g &lt;adress&gt; -n &lt;unit&gt; [-p &lt;pin&gt;] &quot;on&quot; | &quot;off&quot; | &quot;dimlevel&quot;
-</code></p>
-<p>Of course, on and off are universal commands for both switches and dimmers, dimlevel is at the moment only supported for klikaanklikuit devices.</p>
-<p>the following options are supported and must be present in new transmitter programs too:</p>
-<ul>
-  <li>-g &lt;address&gt;</li>
-  <li>-n &lt;address&gt;</li>
-  <li>-p &lt;pin number&gt; ; optional: according to the  wiringPi convention</li>
-</ul>
-<p>The source code for the transmitter programs reside in dfferent sub-directories of ~/receivers: Some C++ code in the &quot;lights&quot; directory was ported from an existing Arduino library and contains support for multiple transmitters with same prototype definitions in C++. Some other code such as for Kopou, WT440H and Livolo was developed.</p>
+<h1>Direct Attached</h1>
 <h2>Receivers; LamPI-receiver</h2>
 <p>The LamPI receiver is used to receive and recognize 440MHz pulses coming from remote sensors (such as temperature readers) and/or remote control units from klikaanklikuit or others. The way that the sniffer function works needs some explaining.</p>
 <h4>lampi_interrupt  (sniffer.c)</h4>
@@ -148,17 +148,37 @@ The startup html file calls LamPI-x.x.min.js which will perform the following in
   <li>If the write pointer p_index risks to overwrite the r_index position (so we write far more than we read) we set a special variable stop_ints that will stop further writing to the array until we read up in the pulse_array buffer</li>
 </ul>
 <h4>The main reader loop  (sniffer.c)</h4>
-<p>&nbsp;</p>
+<p>The sniffer.c file contains a set of funcions that parse the incoming pulses on the receiver for existence of particular protocol messages.</p>
 <h4>transmitter (transmitter.c)</h4>
 <p>Without the -d option to the commandline, the sniffer program will not be configured to interface with the various transmitters. But with the -d options specified, the sniffer executable (or if you run make install it is called ~/exe/LamPI-receiver) will act as a daemon listening to port 5000 on a socket TCP connection. It will write all received handset and sensor codes to the socket, but more importantly for this discussion, it will also listen to incoming commands over the socket and than call the corresponding transmitter program.</p>
 <h3>Message format</h3>
 <p>The message format that is exchanged between the LamPI-daemon and the LamPI-receiver process (2-way) is described<a href="message_format.html"> in a separate document</a>.</p>
+<p></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<h2>LamPI Transmitters</h2>
+<p>The transmitter function is the most straightforward function implemented. For every known and supported brand we compile and build and executable which is installed in the ~/exe directory. It is possible to call these functions from the commandline, but if we run the LamPI-receiver in daemon mode (-d option) the daemon will also provide transmitter functions (for requests coming in on sockets). The LamPI-receiver will call these command-line programs directly using the PHP system() command.</p>
+<p>Therefore it makes sense to keep the naming of the transmitter programs standard (make no change, or if you do change the transmitter.c code as well). Also the commandline options for each of the transmitter programs are the same (makes sense too, not?). All programs must be called as follows&quot;</p>
+<p><code>&gt; cd ~/.exe<br>
+  &gt; ./mysender -g &lt;address&gt; -n &lt;unit&gt; [-p &lt;pin&gt;] &quot;on&quot; | &quot;off&quot; | &quot;dimlevel&quot;
+</code></p>
+<p>Of course, on and off are universal commands for both switches and dimmers, dimlevel is an interger that decibes the level (0 to 31). At the moment only supported for klikaanklikuit devices.</p>
+<p>the following options are supported and must be present in new transmitter programs too:</p>
+<ul>
+  <li>-g &lt;address&gt;</li>
+  <li>-n &lt;address&gt;</li>
+  <li>-p &lt;pin number&gt; ; optional: according to the  wiringPi convention</li>
+</ul>
+<p>The source code for the transmitter programs reside in different sub-directories of ~/receivers: Some C++ code in the &quot;lights&quot; directory was ported from an existing Arduino library and contains support for multiple transmitters with same prototype definitions in C++. Some other code such as for Kopou, WT440H and Livolo was developed.</p>
+<h1>Gateways</h1>
+<p>Gateways are protocol converters connected to our LamPI environment. This connection can be a Wifi connection such as for Z-Wave devices but can also be an USB connect (to a raspberry) which is done for the 433MHz messages.</p>
+<h2>LamPI-arduino gateway</h2>
 <p>&nbsp;</p>
 <h2><a name="zwave"></a>Z-wave Gateway Connect</h2>
 <p>The Z-Wavy messaging format is described on the separate Z-Wave page. Reason is that this is not so much a programming interface but communication takes place as a URL string that is executed by &quot;curl&quot; in the LamPI-daemon. At the moment the communication is therefore initiated by the LamPI-daemon only.</p>
 <p>The Z-Way software contains Javascript library functions to build actions and initiate communication from the Razberry device but this is not implemented (yet), and therefore for example administrative functions for adding Z-Wave devices must be done using the Razberry interface on that machine itself.</p>
 <p><strong><em>http://&lt;raspberry_ip_address&gt;:8083</em></strong></p>
-<p>Then choose the traditional blue expert interface and then &quot;network&quot; to setup your new Z-Wave device. The id that is given to the Z-Wave device must be used in the gateway and in the LamPI-daemon as the unit id to address the coreect device. So make sure that the dorrect id/unit values are present in the database (or in the 'database.cfg' file when starting the daemon the first time with the script command: </p>
+<p>Then choose the traditional blue expert interface and then &quot;network&quot; to setup your new Z-Wave device. The id that is given to the Z-Wave device must be used in the gateway and in the LamPI-daemon as the unit id to address the correct device. So make sure that the correct id/unit values are present in the database (or in the 'database.cfg' file when starting the daemon the first time with the script command: </p>
 <p><em><strong>cd ~/scripts; ./PI-run -i</strong></em></p>
 <p></p>
 <p>&nbsp;</p>
