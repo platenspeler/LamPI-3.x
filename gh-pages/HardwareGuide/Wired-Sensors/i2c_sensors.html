@@ -29,48 +29,48 @@
 <h2>3.1 Common I2C Sensors available</h2>
 <p>The following (not so expensive) sensors are available for connection to the
   LamPI system.</p>
-<table width="84%" border="1">
+<table width="88%" border="1">
   <tr>
     <th width="13%" scope="col">device</th>
-    <th width="9%" scope="col">alias</th>
-    <th width="12%" scope="col">Address</th>
-    <th width="54%" scope="col">Comment</th>
-    <th width="12%" scope="col">xxx</th>
+    <th width="8%" scope="col">alias</th>
+    <th width="9%" scope="col">Address</th>
+    <th width="55%" scope="col">Comment</th>
+    <th width="15%" scope="col">Accuracy</th>
   </tr>
   <tr>
-    <td>:LM75a</td>
+    <td>LM75a</td>
     <td>&nbsp;</td>
     <td>0x48 - 04F</td>
     <td>Temperature Sensor (made by NXP and others)</td>
-    <td>&nbsp;</td>
+    <td>+/- 2 &deg;C</td>
   </tr>
   <tr>
     <td>BMP085</td>
     <td>GY-65</td>
     <td>0x77</td>
     <td>Digital Barometric Pressure Sensor board Barometer sensor module</td>
-    <td>&nbsp;</td>
+    <td>+/- 2 &deg;C</td>
   </tr>
   <tr>
     <td height="48">BMP180</td>
     <td><p>GY-68</p></td>
     <td>0x77</td>
     <td>This module replaces the BMP085 (according to Bosch it is pi compatible)</td>
-    <td>&nbsp;</td>
+    <td>+/- 2 &deg;C</td>
   </tr>
   <tr>
     <td>SHT21</td>
     <td>GY-21</td>
     <td>0x40</td>
     <td>Humidity and Temperature Sensor</td>
-    <td>&nbsp;</td>
+    <td>+/- 0.3 &deg;C, 5% RH</td>
   </tr>
   <tr>
     <td>HTU21</td>
     <td>&nbsp;</td>
     <td>0x40</td>
     <td>Humidity and Temperature Sensor</td>
-    <td>&nbsp;</td>
+    <td>+/- 0.3 &deg;C, 5% RH</td>
   </tr>
   <tr>
     <td>AM2321</td>
@@ -161,13 +161,13 @@ src="I2C/LM75/lm75.jpg" alt="" width=500 height=400 border=0 id="Picture 6"></td
   <li>pin 8: Vcc</li>
 </ul>
 <p>&nbsp;</p>
-<h2>3.4 Barometric Pressure Sensor BMP085</h2>
+<h2>3.4 Barometric Pressure Sensor BMP085 and BMP180</h2>
 <p>Another interesting sensors available on the I2C bus is the barometric
   pressure sensor BPM085 which also goes by the name of GY-65. It can be bought on eBay with free shipping for as low as $6.00. Next to the barometric pressure it can also measure the temperature. Below you see a picture of my type of sensor. However that are a numbe of different boards on the market so yours might be looking somewhat different. </p>
 <p><img
 src="I2C/BMP085/BMP085_LRG.jpg" alt="" width=600 height=461 border=1 id="Picture 22"></p>
 <p>In order to make this sensor work you only need to connect 4 of the pins: Vcc (to header pin 1), SCL (header 3), SDA (header pin 5) and GND (pin 9).</p>
-<p>&nbsp;</p>
+<p>The original BMP085 is end-of-life and availability is not good (June 2015). Fortunately the BMP180 is according to Bosch pin-compatible (and software compatible) so it is a good replacement. Only the BMP180 has only 4 pins instead of 6, but the advantage is that we did not use the other 2 pins and the result is a smaller foot-print.</p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
@@ -178,10 +178,14 @@ src="I2C/BMP085/BMP085_LRG.jpg" alt="" width=600 height=461 border=1 id="Picture
 <p><img src="I2C/GY-21/i2cdetect_1.JPG" alt="" width="473" height="180"></p>
 <p>My sensor shows up on address 40 Hex.</p>
 <p>&nbsp;</p>
-<h2>3.6 HMC5883 3-Axis Compass modules</h2>
+<h2>3.6 HTU21D Temperature and Humidity Sensor</h2>
+<p><img src="I2C/HTU21D/HTU21D.jpg" alt="" width="400" height="338"></p>
+<p>I ordered two of these HTU21D modules on eBay for round 5$ a piece (including shipping). </p>
+<p>&nbsp;</p>
+<h2>3.7 HMC5883 3-Axis Compass modules</h2>
 <p>I ordered one of these cheap compass modules on eBay for around 2$ a piece (including shipping).</p>
 <p>&nbsp;</p>
-<h2>3.7 AM2321 Sensor</h2>
+<h2>3.8 AM2321 Sensor</h2>
 <p>This little IC again has a pin spacing of around 1.27mm which makes it difficult to work with. I have this sensor for a while now but because of the pin spacing did not yet include it in my setup (it looks like a micro DHT22)</p>
 <p>I ended up soldering the small module to the same type of conversion board I also used for the LM75a temperature sensor, making use of pin 1 to 4 of the small board only.</p>
 <p>The pin-out of the AM2321 is as follows:</p>
@@ -191,10 +195,8 @@ src="I2C/BMP085/BMP085_LRG.jpg" alt="" width=600 height=461 border=1 id="Picture
   <li>Pin 3: GND</li>
   <li>Pin 4: SCL</li>
 </ul>
-<p>Unfortunately I did connect them the other way to the small conversion board, but that's no major issue provided that I keep that in mind when soldering the board to one of the Raspberries' breakout boards.</p>
-<h2>3.8 HTU21D Temperature and Humidity Sensor</h2>
-<p><img src="I2C/HTU21D/HTU21D.jpg" alt="" width="400" height="338"></p>
-<p>I ordered two of these HTU21D modules on eBay for round 5$ a piece (including shipping). </p>
+<p>Unfortunately I did connect them the other way around to the small conversion board, but that's no major issue provided that I keep that in mind when soldering the board to one of the Raspberries' breakout boards.</p>
+<h2>&nbsp;</h2>
 <p>&nbsp;</p>
 <h2>3.9 Programming I2C</h2>
 <p>By default, the I2C bus module is blacklisted on the RPI. Edit the /etc/modprobe.d/raspi-blacklist.conf file and uncomment the module (put a # character as first character of the line i2c-bcm2708). After this, probably rebooting the system is the best way to get everything initialised correctly.</p>

@@ -1,0 +1,7 @@
+<h1>LamPI-arduino Process</h1>
+<p>This file describes the LamPI-arduino process, one of the key processes of the LamPI-system. LamPI-arduino is started for every Raspberry node in the system, Master or Slave, where the transmitter and/or receiver or the sensors are connected with the Arduino Gateway.</p>
+<p>In other words, this process is the host-side of the Arduino Gateway; it will receive <a href="../ArchitectureGuide/message_format.html">JSON messages</a> from the&nbsp;LamPI-node daemon over the network and translate these to simple <a href="../../HardwareGuide/Arduino-Gateway/message.html">Arduino Gateway messages</a> that are sent over the USB connection of the connected arduino system.</p>
+<p>Als, it will read the TTY interface of the Arduino gateway and convert these simple Arduino messages back to LamPI-node JSON messages that are then sent to the LamPI-node daemon.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

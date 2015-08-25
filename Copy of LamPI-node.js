@@ -10,8 +10,7 @@ LamPI Version:
 
 ***********************************************************************************	*/
 // Configuration
-var debug = 1;						// 0 is nothing, 1 is normal >= 2 is serious debugging
-var init = 0;						// Set to 1 if the init process is running. Stop daemons and incoming.
+var debug = 1;
 
 var poll_interval =   6000;			// Determine how often we poll the devices for changed values
 var log_interval  = 120000;			// Determines how often Z-Wave values are logged in the logfile
@@ -36,19 +35,10 @@ var par   = require('./config/params');
 var mysql = require('mysql'); console.log("mySQL loaded");
 var fs    = require("fs"); console.log("fs loaded");
 var strip = require("strip-json-comments"); console.log("strip-json-comments loaded");
-var async = require("async"); console.log("ssync loaded");
 
 var logDir  = par.homeDir+"/log"
 var rrdDir  = par.homeDir+"/rrd"
 var wwwDir  = par.homeDir+"/www"
-
-
-var connection = mysql.createConnection({
-  host     : par.dbHost ,
-  user     : par.dbUser ,
-  password : par.dbPassword ,
-  database : par.dbName
-});
 
 // --------------------------------------------------------------------------------
 // Logging function
@@ -80,7 +70,6 @@ process.argv.forEach(function (val, index, array) {
   if (index < 2) logger("process.argv["+index+"] skipping: "+val);		// Skip node command and the LamPI-node.js script
   else switch (val) {
 	case "-i":
-		init = 1;							// We are doing an init operation
 		logger("Calling init",1);
 		// init, read config file and make new database
 		for (var i=0; i<loops.length; i++) clearInterval(loops[i]);		// Skip command and path
@@ -104,7 +93,6 @@ process.argv.forEach(function (val, index, array) {
 				start_loops();
 			});
 		});
-		init = 0;
 	break;
 	case "-r":
 		// Only re-read the database into the config structure
@@ -126,16 +114,15 @@ process.argv.forEach(function (val, index, array) {
   }
 });
 
-
 // --------------------------------------------------------------------------------
-// Put regular startup require dependencies here
+// Put refular startup require dependencies here
 // --------------------------------------------------------------------------------
 
 var http  = require('http'); console.log("http loaded");
 var net   = require('net');	console.log("net loaded");					// Raw Sockets Server
 var dgram = require("dgram"); console.log("dgram loaded");
 var express= require('express'); console.log ("express loaded");		// Middleware
-
+var async = require("async"); console.log("ssync loaded");
 var S     = require("string"); console.log("string loaded");
 					// Filesystem
 var exec  = require('child_process').exec; console.log("child_process loaded");
@@ -151,7 +138,6 @@ var woonveilig = require('./modules/woonveilig'); console.log("woonveilig loaded
 
 console.log("All required modules loaded");
 
-
 // --------------------------------------------------------------------------------
 // EXPRESS middleware
 // With help of express we can make routes to separate sections too (and make a REST interface)
@@ -162,7 +148,6 @@ var app = express();
 // Re-read the database from the init file database.cfg, temporary suspend all loops
 // 
 app.all('/init', function (req, res, next) {
-	init = 1;									// We are doing an init operation
 	logger('Accessing the init section ...',1);
 	var str = "";
 	str += 'init started<br>';
@@ -183,7 +168,6 @@ app.all('/init', function (req, res, next) {
 			start_loops();
 		});
 	});
-	init = 0;
   //next(); // pass control to the next handler
 });
 
@@ -222,7 +206,6 @@ app.all('/config', function (req, res, next) {
 
 //  ROUTE to alarm
 app.use('/alarm', alarmRouter);
-
 
 // --------------------------------------------------------------------------------
 // Initiate Filesystem and define related functions
@@ -520,14 +503,12 @@ var server = net.createServer(function(socket) { //'connection' listener
 	socket.on('data', function(data) {				// This function is calld when receiving data from sensors
 		logger("SOCKET:: socket data received: "+ data+", trusted: "+socket.trusted, 2);
 		//socket.write(200,{ 'Content-Type': 'text/html' });"
-		if (init==0) socketHandler(data,socket);
-		else logger("socket:: Discard incoming message",1);
+		socketHandler(data,socket);
 	});
 	socket.on('message', function(data) {
 		logger("SOCKET:: socket message received: "+ data,2);
 		//socket.write(200,{ 'Content-Type': 'text/html' });
-		if (init==0) socketHandler(data,socket);
-		else logger("socket:: Discard incoming message",1);
+		socketHandler(data,socket);
 	});
 	socket.on('upgrade', function(request, sock, head) {
 		logger("SOCKET:: socket upgrade received: "+ request,1);
@@ -548,11 +529,9 @@ var server = net.createServer(function(socket) { //'connection' listener
 	});
 });
 
-server.listen(tcpPort, HOST, function() { 			//'listening' listener	
+server.listen(tcpPort, HOST, function() { 			//'listening' listener							   
 	logger('TCP server listening to addr:port: '+HOST+":"+tcpPort);
 });
-
-
 
 // ----------------------------------------------------------------------------
 // WEBSOCKET SERVER
@@ -581,8 +560,7 @@ wss.on('connection', function(ws) {
 	clients.push(ws);								// Put this new client in the list
 	ws.on('message', function(message) {
 		if (debug >=2) console.log('WS rcv msg, trusted: '+ws.trusted+': %s', message);
-		if (init==0) socketHandler(message, ws);
-		else logger("websocket:: Discard incoming message",1);
+		socketHandler(message, ws);
 	});
 	// ws.send('ping');
 	ws.on('close',function() {
@@ -606,9 +584,8 @@ userver.on("message", function (msg, rinfo) {
   logger("UDP message from " + rinfo.address + ":" + rinfo.port,2);
   logger("UDP server  msg: " + msg,3);
   rinfo.name = rinfo.address + ":" + rinfo.port;
-  rinfo.type = "udp";
-  if (init==0) { socketHandler(msg, rinfo); }
-  else { logger("udp:: Discard message",1); }
+  rinfo.type = "udp"
+  socketHandler(msg, rinfo);
 });
 userver.on("listening", function () {
   var address = userver.address();
@@ -622,6 +599,12 @@ userver.on("listening", function () {
 //	definitions and address to name translation for Z-Wave devices in our
 //	network
 // ----------------------------------------------------------------------------
+var connection = mysql.createConnection({
+  host     : par.dbHost ,
+  user     : par.dbUser ,
+  password : par.dbPassword ,
+  database : par.dbName
+});
 
 function connectDbase(cbk) {
 	connection.connect(function(err) {
@@ -2021,7 +2004,7 @@ function loginHandler(buf, socket) {
 			if (rows.length == 0) { 							// No password match
 				logger("loginHandler:: ERROR not results for user "+buf.login,1); 
 				buf.action="login";
-				if (init==0) socketHandler(JSON.stringify(buf), socket);
+				socketHandler(JSON.stringify(buf), socket);
 			}
 			else if (rows.length > 1) { 						// Should be impossible, more than 1 match
 				logger("loginHandler:: ERROR returning "+rows.length+" values",1); 

@@ -1,0 +1,359 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+</head>
+
+<body>
+<h1>433 Protocol and Timing</h1>
+<p>The various protocols and message formats for sensors are listed on this page. As I developed a received programs based on my own sensors, my naming in LamPI might be different from that is accepted as the correct naming, but in general that does not matter.</p>
+<h5>Version 3.6 alpha<br />
+Date: August 2015. The page will be under construction for a while    </h5>
+<p>We will start with a set of common devices (switches and dimmers) followed by a description of sensors protocols (weather stations).</p>
+<h2>Kaku (Klik aan klik uit)</h2>
+<p>We mean the new auto select type of klik-aan-klik-uit equipment that has no wheel. As a result, the codes are longer particularly the adresses to avoid overlap and more or less guarantee that every remote sold has a unique value (so the neighbours have their own house codes).</p>
+<ul>
+  <li>klikaanklikuit remotes</li>
+</ul>
+<p>There are more devices with this codec, however as we do not have them in house, none can be documented to work yet.</p>
+<h4>timing</h4>
+<p><code>  &nbsp;&nbsp; &nbsp; &nbsp; _<br />
+  Sync:  | |_________________| (T, 10,5T)<br />
+  &nbsp;&nbsp; &nbsp;&nbsp; _&nbsp; &nbsp;_<br />
+  '0':   | |_| |_____ (T,T,T,5T)<br />
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+_      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _<br />
+'1':   | |_____| |_	(T,5T,T,T)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+_  &nbsp; _<br />
+dim:   | |_| |_     (T,T,T,T)</code><br />
+<code>&nbsp;&nbsp; &nbsp; &nbsp; _<br />
+Stop:  | |_________ .. _____| (T, 40T)</code><br />
+</p>
+<p><code>T = Pulase period of ~260µs.</code></p>
+<h4>bit code</h4>
+<p>This bit-code is simple for Kaku: Most&nbsp;bits are for address selection which must be uniue as the receivers are self-learning (and every handset therefore has to be shipped with a unique address code to recognize THAT handset/remote)</p>
+<table width="814" border="0">
+  <tr>
+    <th width="167" scope="col">0-7</th>
+    <th width="185" scope="col">8-15</th>
+    <th width="180" scope="col">16-23</th>
+    <th width="161" scope="col">24-31</th>
+    <th width="99" scope="col">32-35</th>
+  </tr>
+  <tr>
+    <td>A A A A A A A A</td>
+    <td>A A A A A A A A</td>
+    <td>A A A A A A A A</td>
+    <td>A A G X U U U U</td>
+    <td>D D D D</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p>The last 4 bits are OPTIONAL and will only present when sending a dimmer message. A dimmer message&nbsp;will have a special bit 27. If that is 2(!) we have a dimmer message and bits 32 to 35 will be there to code the dimmer value.</p>
+<h4>legend</h4>
+<table width="962" border="1">
+  <tr>
+    <th width="158" scope="col">Bits</th>
+    <th width="32" scope="col">#B</th>
+    <th width="152" scope="col">Legend</th>
+    <th width="592" scope="col">Comment</th>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>AAAA</td>
+    <td>26</td>
+    <td>Address</td>
+    <td>&nbsp;So long because codes must be &quot;Unique&quot;</td>
+  </tr>
+  <tr>
+    <td>G</td>
+    <td>1</td>
+    <td>Group code</td>
+    <td>Used on remotes (not by LamPI)</td>
+  </tr>
+  <tr>
+    <td>X</td>
+    <td>1</td>
+    <td>On/Off/Dim</td>
+    <td>This bit is either 0, 1 or 2 (for dimmers)</td>
+  </tr>
+  <tr>
+    <td>UUUU</td>
+    <td>4</td>
+    <td>Unit code</td>
+    <td>&nbsp;Only 16 units PER address are supported</td>
+  </tr>
+  <tr>
+    <td>DDDD</td>
+    <td>4</td>
+    <td>Dimmer value</td>
+    <td>&nbsp;If X-bit == 2, we have 4 bits == 16 dimmer values</td>
+  </tr>
+</table>
+<p>SYNC and STOP bits are ot included in the legend as they have no content but are needed to make the receiver aware that a message is coming (and hopefully other transmitters will shut-up in between). Well, the Epic ones for example do not shut up ...</p>
+<p>As the Kaku protocol is not fast and takes some time to transmit ....&nbsp; be aware that other will from time to time break into the protocol.</p>
+<p>&nbsp;</p>
+<h2>Impuls</h2>
+<p>Action receivers are part of a family of remotes that all use more or less the same message format. Other members are:</p>
+<ul>
+  <li>Old Klikaanklikuit remotes (with a wheel)</li>
+  <li> Impuls sets, sold&nbsp; by Action stores</li>
+  <li>Blokker</li>
+</ul>
+<p>Under the hood these sets all use the same technology and chips.</p>
+<h4>timing</h4>
+<p>&nbsp;</p>
+<h4>bit code</h4>
+<p>&nbsp;</p>
+<h4>legend</h4>
+<p></p>
+<p>&nbsp;</p>
+<h2>Livolo</h2>
+<p>Livolo makes wonderful switches and dimmers and some can be controlled by a remote. HOWEVER, their protocol is simple and pollutes the air and makes the receiver interrupt function works hard. So, this would be a protocol to delete from your system if not used.</p>
+<h4>timing</h4>
+<p>&nbsp;</p>
+<h4>bit code</h4>
+<p>&nbsp;</p>
+<h4>legend</h4>
+<p></p>
+<p>&nbsp;</p>
+<h2>Kopou</h2>
+<p>Same as Livolo. Kopou makes a set of devices that look the same, and their protocol is almost the same as well. So lots of (re)transmissions of codes and heavy load on the receiver to recognize these messages.</p>
+<h4>timing</h4>
+<p>&nbsp;</p>
+<h4>bit code</h4>
+<p>&nbsp;</p>
+<h4>legend</h4>
+<p>&nbsp;</p>
+<h2>UPM/Esic</h2>
+<p>Supported devices:</p>
+<ul>
+  <li>WT-440h</li>
+  <li>WT-440</li>
+  <li>WT-450</li>
+  <li>&nbsp;etc etc</li>
+</ul>
+<p>I do have three WT-440 devices that report temperature and humidity around the house. Well, two of them (WT-440h) also report the humidity, one (WT-440) does not. The UPM sensor allows setting a few things by the user:</p>
+<ul>
+  <li>House-code, to be set 1-15</li>
+  <li>Channel, to be set 1-4</li>
+  <li>Reporting degrees in Fahrenheit or Celcius</li>
+</ul>
+<h4>timing</h4>
+<p> <code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _ <br />
+ '1':   |_| |     (T,T)<br />
+ <br />
+'0':   |___|     (2T)</code></p>
+<p>Timing T for the pulses is around 1000 uSec (1mSec) for T</p>
+<h4>bit code</h4>
+<p>For the WT-440 temperature/humidity sensor, the house code is between 1 and 15, which is over the air reported as 0-14, and the channel is reported as a value of 0 to 3. The UPM message format is a 36-bit code as follows:</p>
+<table width="814" border="0">
+  <tr>
+    <th width="167" scope="col">0-7</th>
+    <th width="185" scope="col">8-15</th>
+    <th width="180" scope="col">16-23</th>
+    <th width="161" scope="col">24-31</th>
+    <th width="99" scope="col">32-35</th>
+  </tr>
+  <tr>
+    <td>x x x x H H H H</td>
+    <td>C C y y B H H H</td>
+    <td>H H H H T T T T </td>
+    <td>T T T T T T T T</td>
+    <td>T T T P</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<h4>legend</h4>
+<table width="962" border="1">
+  <tr>
+    <th width="158" scope="col">Bits</th>
+    <th width="32" scope="col">#B</th>
+    <th width="152" scope="col">Legend</th>
+    <th width="592" scope="col">Comment</th>
+  </tr>
+  <tr>
+    <td>xxxx</td>
+    <td>4</td>
+    <td>unknown</td>
+    <td>&nbsp;0x1100</td>
+  </tr>
+  <tr>
+    <td>HHHH</td>
+    <td>4</td>
+    <td>House Code</td>
+    <td>&nbsp;On the device display this is 1 to 15, over the air 0 to 14</td>
+  </tr>
+  <tr>
+    <td>CC</td>
+    <td>2</td>
+    <td>Channel Code</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>yy</td>
+    <td>2</td>
+    <td>unknown</td>
+    <td>&nbsp;0x00</td>
+  </tr>
+  <tr>
+    <td>B</td>
+    <td>1</td>
+    <td>Battery OK bit</td>
+    <td>&nbsp;0x1 (If allright)</td>
+  </tr>
+  <tr>
+    <td>HHH HHHH</td>
+    <td>7</td>
+    <td>Humidity </td>
+    <td>&nbsp;0x0101011 is 43%</td>
+  </tr>
+  <tr>
+    <td>TTTT TTTTTTTT</td>
+    <td>15</td>
+    <td>Temperature</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>P</td>
+    <td>1</td>
+    <td>Parity</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p>The temperature is calculated as: ( received + 50 ) * 128. For integers it is better to rewrite: (received * 128) + 6400 and this way all values are positive (not signed). When sending over the line to the daemon, we will multiply by 10 to remove fractional parts! (as the resoution is 0.1 degree between 0 and 40 degrees anyway).</p>
+<p>According to the nethome website, the UPM protocol also supports wind, windspeed and rain sensors. However, their protocol description differs from what I saw myself as the corect protocol. You find my protocol description above (which is same as Jaakko published).</p>
+<ul>
+  <li>If the house code is 10, and channel code is 2, wind speed and wind direction are reported (instead of temperature and humidity) in the same message format. </li>
+  <li>If the house code is 10 and channel code is 3, then rain fall is reported on the position of humidity bits.</li>
+</ul>
+<p>I found the following pages with protocol description:</p>
+<ul>
+  <li><a href="http://ala-paavola.fi/jaakko/doku.php?id=wt450h">Jaakko Ala-Paavola's</a> page. Jaakoo did a write-up based on work of a Norwegians Johan Adler and Øyvind Kaurstadearlier in 2005.</li>
+  <li><a href="http://wiki.nethome.nu/doku.php/upmprotocol">UPM Nethome page</a> ; found this one long after analysing myself and making my own programs. Unsure whether this is correct</li>
+</ul>
+<p>I did build support for</p>
+<ul>
+  <li>wt440h receiver in ~/receivers/sniffer/sniffer.c (direct connect to Raspberry)</li>
+  <li>wt440 receiver on http://github.com/platenspeler in Arduino Gateway library</li>
+  <li>wt440 transmitter(!!) on http://github.com/platenspeler in Arduino Gateway library&nbsp;so it is possible for Arduino Gateway to emulate the protocol.</li>
+</ul>
+<p>&nbsp;</p>
+<h2>Auriol</h2>
+<p>The Auriol sensor is from a cheap weather station sold by LIDL in the Netherlands. It only reports temperature, but as it's ange compared to the Epic WT-440 is much better, I use it to measure outside temperature around my home.</p>
+<h4>timing</h4>
+<p>The Auriol sensor uses a pulse length of around 500 uSec. Every message is preceded by a SYNC bit. It's bit coding and timing is as follows:</p>
+<p><code> &nbsp;&nbsp; &nbsp; &nbsp; _<br />
+  Sync:  | |_________________| (T, 18T)<br />
+  &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; _ <br />
+  &nbsp; '1':   | |________|          (T,8T)<br />
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; _ <br />
+  &nbsp; '0':   | |____|              (T, 4T)</code></p>
+<p>&nbsp;</p>
+<h4>bit code</h4>
+<table width="711" border="0">
+  <tr>
+    <th width="167" scope="col">0-7</th>
+    <th width="185" scope="col">8-15</th>
+    <th width="180" scope="col">16-23</th>
+    <th width="161" scope="col">24-31</th>
+  </tr>
+  <tr>
+    <td>A A A A A A A A</td>
+    <td>B x x x T T T T</td>
+    <td>T T T T  T T T T </td>
+    <td>y y y y  z z z P</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<h4>legend</h4>
+<table width="962" border="1">
+  <tr>
+    <th width="158" scope="col">Bits</th>
+    <th width="32" scope="col">#B</th>
+    <th width="152" scope="col">Legend</th>
+    <th width="592" scope="col">Comment</th>
+  </tr>
+  <tr>
+    <td>S</td>
+    <td>1</td>
+    <td>Sync</td>
+    <td>&nbsp;1 pulse HI, 18 pulses LO</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>AAAAAAAA</td>
+    <td>8</td>
+    <td>Address ID bits</td>
+    <td>Address</td>
+  </tr>
+  <tr>
+    <td>B</td>
+    <td>1</td>
+    <td>Battery OK bit</td>
+    <td>&nbsp;0x1 (If allright)</td>
+  </tr>
+  <tr>
+    <td>xxx</td>
+    <td>3</td>
+    <td>unknown</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>TTTT TTTTTTTT</td>
+    <td>12</td>
+    <td>Temperature</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>yyyy</td>
+    <td>4</td>
+    <td>unknown</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>zzz</td>
+    <td>3</td>
+    <td>unknown</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>P</td>
+    <td>1</td>
+    <td>Parity</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p>It is not possible to set anything for the Auriol receiver. But its protocol is simple and reliable.</p>
+<p>Auriol is NOT supported in direct connected receivers, however it IS supported by the Arduino Gateway.</p>
+</body>
+</html>

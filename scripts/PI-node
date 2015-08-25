@@ -22,12 +22,12 @@ fi
 # If instead of -r (reset) -i (init) is specified, the database.cfg file is reread as well
 if [ "$1" = "-i" ]; then
 	echo "`date`:: Kill previous version of daemons" >> $LOGFILE
-	pkill $PROGRAM
+	pkill -f $PROGRAM
+    shift
     sleep 2
-    echo "`date`:: Start init of database" >> $LOGFILE
+    echo "`date`:: PI-node: Start init of database" >> $LOGFILE
     PARAMS=" -i $PARAMS"
 fi
-
 #
 PID=`ps -eaf | grep "$PROGRAM" | grep -v grep | awk '{print $2}'`
 if [ -z "$PID" ]
@@ -35,5 +35,5 @@ then
 	echo "`/bin/date`:: $BASENAME does not run, Starting $PROGRAM" >> $LOGFILE
 	nohup /usr/local/bin/node $HOME/$PROGRAM $PARAMS >> $LOGFILE 2>&1 &
 else
-	echo "$PID"
+	echo "`/bin/date`:: $BASENAME is running: $PID"
 fi

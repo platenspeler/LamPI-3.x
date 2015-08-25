@@ -192,7 +192,6 @@ int open_socket(char *host, char *port) {
 // In arduinoXmit we check whether the tramsnitter value is a well-known device in the 
 // /home/pi/exe directory.
 //
-// XXX We really need to figure out the -p (outpin) for wiringPi value
 //
 int send2device(int ttyfd, int dev, char *gaddr, char *uaddr, char *val)
 {
@@ -562,21 +561,22 @@ char * parse_remote(char *tok, int cod)
 //
 char * parse_sensor(char *tok, int cod)
 {
-	int address;			// Integer address
+	int address;					// Integer address
 	int channel;
-	int temperature;					// Parameter 1, temperature most often
+	int temperature;				// Parameter 1, temperature most often
 	int humidity;					// Parameter 2, humidity or airpressure
 	int airpressure;
 	int altitude;
 	float temp;
 	float humi;
 	char host[NI_MAXHOST];
+	char * sAddress;
 	int fake;
 	
   switch (cod) {
   	case 0: // onboard
-		tok = strtok(NULL, " ,"); address = atoi(tok);
-		tok = strtok(NULL, " ,"); channel  = atoi(tok);				// Always 0, discard
+		tok = strtok(NULL, " ,"); sAddress = tok; address = atoi(tok);
+		tok = strtok(NULL, " ,"); fake  = atoi(tok);				// Always 0, discard
 		
 		if (getLocalAddress(host) < 0) {
 			fprintf(stderr,"Cannot determine local address\n");
@@ -599,8 +599,12 @@ char * parse_sensor(char *tok, int cod)
 				sprintf(snd_buf, 	"{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"bmp085\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%d.%d\",\"airpressure\":\"%d\"}", 
 				socktcnt%1000,address,channel,temperature/10,temperature%10,airpressure/100);
 			break;
-			default:
-				;
+			default:		// We could parse, but assume those long DALLAS addresses at this moment
+				channel = 0;
+				tok = strtok(NULL, " ,"); temp = atof(tok);
+				tok = strtok(NULL, " ,"); humidity = atoi(tok);
+				sprintf(snd_buf, 	"{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"ds18b20\",\"type\":\"json\",\"address\":\"%s\",\"channel\":\"%d\",\"temperature\":\"%2.1f\",\"humidity\":\"%d\"}", 
+				socktcnt%1000,sAddress,channel,temp,humidity);
 			break;
 		}
 	break;
@@ -630,7 +634,7 @@ char * parse_sensor(char *tok, int cod)
 		fprintf(stderr,"parse_sensor:: Codec %d not supported\n", cod);
   }
   tok = strtok(NULL, "!"); 
-  if (tok != NULL) fprintf(stderr,"Comment: %s\n", tok);
+  if (tok != NULL) fprintf(stderr,"Comment: %s", tok);
   socktcnt++;
   return(snd_buf);
 }

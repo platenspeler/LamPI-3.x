@@ -37,6 +37,7 @@
   </li>
   <li><a href="#zigbee_guide">Zigbee Guide</a></li>
 </ul>
+<p>&nbsp;</p>
 <h2><a name="supported_devices"></a>Supported Devices</h2>
 <p>By connecting transmitter, receiver and/or sensors directly to the Raspberry, it is possible to control a great deal of devices and/or sensors. The Raspberry has 26 or 40 pins and a lot of these pins are GPIO pins and can be used to transmit or receive pulses. If connections were the only important thing here, than the Raspberry could be extended to talk to almost every device you like it to connect with.</p>
 <p>The most simple cofiguraton is the transmitter on the picture: It uses only 3 pins: Vcc (black), Gnd (red) and a data line (yellow). Yes, I know red would be the better color for Vcc, but unfortunately the connector had its wires fixed in the wrong order :-) Later versions of the Raspberry gpio devices I made use more pin's and can receive over-the-air messages and measure temperature etc. There are all explained in separate sections.</p>
@@ -78,7 +79,7 @@
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 <h1><a name="wired_devices"></a>Wired Devices Guide</h1>
-<p>This chapter contains information about sensor devices,  transmitters and receivers that are <strong>directly by wire</strong> connected to the <strong>Raspberry</strong>. So this CAN BE 433 transmitters too, just to avoid confusion.</p>
+<p>This chapter contains information about sensor devices,  transmitters and receivers that are <strong>directly by wire</strong> connected to the <strong>Raspberry</strong>. So these CAN BE 433MHz transmitters too, just to avoid confusion.</p>
 <p>As you might expect,  the list of equipment that we can interface to is long. But what hardware do we need to install in order to control all these devices?  And how to connect your Weather and Energy Sensors? </p>
 <ul>
   <li><a href="#connector">The Raspberry P1 Connector</a></li>
@@ -161,12 +162,19 @@
 <h2><a name="wsensors"></a>Connecting Wired Sensors</h2>
 <p>Connecting weather sensors (hardware installation) is not difficult as long as their interface sticks to the more well-known I2C bus or to the Dallas (1w) bus.</p>
 <p>There is a separate chapter on connecting sensors which you find <a href="Wired-Sensors/wired_sensors.html">&lt;HERE&gt;</a>. The special message format used by devices to send messages to LamPI-node.js can be found <a href="Wired-Sensors/weather_sensors_msg_format.html">&lt;HERE&gt;</a>.</p>
+<ul>
+  <li><a href="Wired-Sensors/dallas_sensors.html">1-Wire Sensors</a></li>
+  <li><a href="Wired-Sensors/i2c_sensors.html">I2C buts Sensors</a></li>
+  <li><a href="Wired-Sensors/no_bus_sensors.html">No Bus (direct Connect)</a></li>
+  <li>Infra Red</li>
+  <li><a href="Wired-Sensors/energy_sensors.html">Energy</a></li>
+</ul>
 <p></p>
 <h2><a name="433transceivers"></a>Connecting 433MHz Transmitters and Receivers</h2>
 <p>How to make the RaspberryPI a transmitter/receiver host for 433MHz? It is probably simpler than you thinkt. Apart from the PI itself you need two really cheap small pieces of hardware, some solder and wires and a little time to put it together. So what you need are a small transmitter board and a receiver board. These boards are sold on eBay, Aliexpress and some internet shops for prices ranging from 2 $ a pair to 20$ for a receiver. In my experience, both cheap and more expensive boards work OK, if have both.</p>
 <p>I found that most ASK/OOK based transmitters and receivers work with the 433MHz devices that are used for home automation. The protocol used by klikaanklikuit (Kaku) is OOK.</p>
 <h3>Cheap eBay Transmitters and Receivers</h3>
-<p>In the picture you see a receiver (L) and transmitter (R) pair that can be bought for around 3$ a pair wih free shipping. It is Chinese made, and although specifications might differ from unit to unit, they work quite OK.</p>
+<p>In the picture you see a receiver (L) and transmitter (R) pair that can be bought for around 2.00 $ a pair wih free shipping. It is (of-course) Chinese made, and although specifications might differ from unit to unit, they work quite OK.</p>
 <p><img src="images/pi transmitter receiver.jpg" alt="" width="400" height="300"></p>
 <p>Frankly, I love these sets as for just 10$ I can make at least 5 prototype boards and see which one fits my PI better. </p>
 <p><img src="images/vmstat_cheapebay_noload.JPG" alt="" width="893" height="529"></p>
@@ -183,9 +191,15 @@
 <p><img src="Wired-Transceivers/iPrototype/665_big.png" alt="" width="298" height="250"><img src="Wired-Transceivers/iPrototype/640_big.png" alt="" width="298" height="250"></p>
 <p>Link: <a href="https://iprototype.nl/products/components/communications/rf-transmitter-434mhz#">https://iprototype.nl/products/components/communications/rf-transmitter-434mhz#</a></p>
 <h2>FSK (Won't Work)</h2>
-<p>I bought a set of FSK (Frequency Shift Keying) transmitter/receivers as an alternative to separate tranmitter/receiver sets. These work in a FSK environment only and are <strong>NOT</strong> usable for Klikaankliuit communication. Kiku modules wiork with a different type of modulation, based on  ASK (amplitude-shift keying) or OOK (OOK is On Off Keyking, an ASK variant with 100% amplitude modulation, so on or off). <br>
+<p>I bought a set of FSK (Frequency Shift Keying) transmitter/receivers as an alternative to separate tranmitter/receiver sets. These work in a FSK environment only and are <strong>NOT</strong> usable for Klikaankliuit communication. Kaku modules work with a different type of modulation, based on  ASK (Amplitude-Shift Keying) or OOK (OOK is On Off Keyking, an ASK variant with 100% amplitude modulation, so on or off). <br>
   <br>
   Link: <a href="http://www.hoperf.com/rf/data_link_module/HM-T.htm">http://www.hoperf.com/rf/data_link_module/HM-T.htm</a></p>
+<p>&nbsp;</p>
+<h2>Transceivers</h2>
+<p>Apart from separate transmitters/receivers it is also possible to wort with so-called transceiver devices. These are devices that have both tranmitter and receiver capabilities.</p>
+<h3>SI4432</h3>
+<p>The SI4432 is a transceiver with a high sensitivity and high power. According to datasheets and articles its range is 1000-1500 meter (free sight) which is still a lot more than the average klik-aan-klik-uit equipment.</p>
+<p>http://www.electrodragon.com/w/SI4432_433M-Wireless_Transceiver_Module_%281.5KM_Range,_Shield-Protected%29</p>
 <p>&nbsp;</p>
 <h2>Filter</h2>
 <p>Especially the receivers can pick up quite some noise, expecially in an urban area. I have been experimenting with external filters that would keep the higher-frequency crap from my receiver, and some people like those in pilight for example make an art of building a filter around those components. Thing is that with all those sensors in and around the house there is a lot of pollution which will impact the receiver. Not only will it make our received not recognize incoming messages if two transmitters send their data at the same time, it will also impact the amount of compute power needed to clearly recognize messages coming in if there is lots of noise in the air.</p>
@@ -270,6 +284,8 @@
 <h3>LamPI Choice</h3>
 <p>In its first releases, LamPI supports the first approach mainly, with support for an Arduino gateway now as a second option. The Arduino gateway does not support all sensors or devices at the moment, but work will be done to get this working. On the other hand, some protocols are supported by Arduino Gateway only&nbsp;such as Auriol weather sensor.</p>
 <p> The rfxcom solution would probably work (after some work) but is not tested because of the potential cost.</p>
+<p>There seems to be another community project started RFlink with the same intentions as my Arduino project. <a href="http://www.nemcon.nl/blog2/2015/07/devlist">http://www.nemcon.nl/blog2/2015/07/devlist</a>. <br>
+  Hardware neede to make such a node can be bought in <a href="http://www.nodo-shop.nl/nl/home/116-rflink-bouwpakket.html">the Nodo shop</a>. </p>
 <p>&nbsp;</p>
 <h2><a name="gateway"></a>Arduino 433MHz Gateway</h2>
 <p><img src="Arduino-Gateway/images/family_2.jpg" width="1196" height="422"></p>
@@ -306,7 +322,7 @@
 <p>Also, such a small Aruino&nbsp;with connectors for a few DS18B20 devices would be an excellent sensor station for temperature sensing for example for the Central Heating installation. At this moment we use a&nbsp;Raspberry for his purpose which is a waste of power (of the Raspberry) and energy usage as well.</p>
 <p>&nbsp;</p>
 <h2><a name="arduino_repeater"></a>Arduino Repeater</h2>
-<p>It is possible using the Arduino to buld a 433MHz range extender and build a repeater. Also it is possible to make a protocol conversion using this solution by building a solution with a 868MHz receiver and a 433MHz transmitter. This way, several devices in my house that are operated wirelessly using a proprietary communication protocol (not Z-Wave) can be integrated in the LamPI environment as well.</p>
+<p>WHena adding a received and antenna to an existing Arduino Sensor it should also be possible to use the Arduino to build a 433MHz range extender or a repeater. Also it is possible to make a protocol conversion using this solution by building a solution with a 868MHz receiver and a 433MHz transmitter. This way, several devices in my house that are operated wirelessly using a proprietary communication protocol (not Z-Wave) can be integrated in the LamPI environment as well.</p>
 <p>&nbsp;</p>
 <h2>Connecting Sensors to Arduino</h2>
 <ul>
@@ -338,11 +354,12 @@
 <p>If you like to read more on the software for the Razberry and how LamPI interfaces with the hardware, please read further &lt;<a href="Zwave-Gateway/RazBerry/zwave_gateway.html">HERE</a>&gt;</p>
 <p>&nbsp;</p>
 <h1><a name="zigbee_guide"></a>Zigbee Guide</h1>
-<p>The third protocol that is used in Home Automation environments is Zigbee. It was invented by Philips and used for its lumination solutions. However, as the protocol is difficult and is a closed and proprietary solution, not so many other vendors are using Zigbee at the moment.</p>
+<p>The third protocol that is used in Home Automation environments is Zigbee. It was invented by Philips and used for its lumination solutions. However, as the protocol is difficult and is a closed and proprietary solution, not that many other vendors are using Zigbee at the moment, but their numbers increase.</p>
 <p>&nbsp;</p>
 <h2>2.4GB Zigbee devices</h2>
 <p>I bought a module that potentially could work in a Zigbee environment, but it could very well be that I am lacking supported Zigbee devices for this soluton. I will &nbsp;have a look shortly to see if I can make it work in the LamPI environment.</p>
-<p>For the moment: Zigbee devices are on the (wish-) list of being supported </p>
+<p>I did buy a RaspBee device from Dresden-Elektronik.de and that setup module for the Raspberry should be able to handle the Zigbee 2.4GHz traffic (like the Razberry&nbsp;does for Z-Wave)</p>
+<p>For the moment Zigbee devices are on the (wish-) list of being supported </p>
 <ul>
   <li>TBD (None supported yet)</li>
 </ul>

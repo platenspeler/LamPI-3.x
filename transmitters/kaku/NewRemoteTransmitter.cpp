@@ -122,7 +122,7 @@ void NewRemoteTransmitter::_sendBit(bool isBitOne) {
                 digitalWrite(_pin, HIGH);
                 delayMicroseconds(_periodusec);
                 digitalWrite(_pin, LOW);
-                delayMicroseconds(_periodusec * 1);				// was 1
+                delayMicroseconds(_periodusec * 1);			// was 1
         } else {
                 // Send '0'
                 digitalWrite(_pin, HIGH);

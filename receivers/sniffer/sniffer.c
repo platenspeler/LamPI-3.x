@@ -365,8 +365,8 @@ int check_n_write_socket(char *binary, char *chkbuf , int binary_count)
  * bit 00-03 Leader
  * bit 04-07 Address
  * bit 08-09 Channel
- * bit 10-12 Constant
- * bit 13-19 Hunidity
+ * bit 10-12 Constant (bit 
+ * bit 13-19 Humidity
  * bit 20-34 Temperature
  * bit 35    Parity
  *

@@ -18,7 +18,7 @@
 <h1>Hardware Guide</h1>
 <ul>
   <li><a href="HardwareGuide/hardware_guide.html">Hardware Guide</a></li>
-  <li><a href="HardwareGuide/transceiver.html">Transceiver (Receiver and Transmitter)</a>`</li>
+  <li><a href="HardwareGuide/Wired-Transceivers/transceiver.html">Transceiver (Receiver and Transmitter)</a>`</li>
   <li><a href="HardwareGuide/Arduino-Gateway/installation.html">Using an Arduino Gateway</a></li>
   <li><a href="HardwareGuide/Zwave-Gateway/RazBerry/zwave_gateway.html">Z-Wave and Razberry</a> Gateway</li>
 </ul>
@@ -48,7 +48,8 @@
 <ul>
   <li><a href="DeveloperGuide/ArchitectureGuide/architecture.html">Architecture Guide for LamPI</a></li>
   <li>LamPI Directory Structure</li>
-  <li><a href="DeveloperGuide/ArchitectureGuide/message_format.html">LamPI message format</a></li>
+  <li><a href="DeveloperGuide/ArchitectureGuide/message_format.html">LamPI message format</a> ; JSON format exchanged between daemon and connected RasPI devices over (Wifi) network</li>
+  <li><a href="DeveloperGuide/433Transmitters/433messaging.html">433MHz protocols and messages description</a> ; what goes over the air</li>
 </ul>
 <h2>LamPI Look-'n-feel with css files</h2>
 <ul>
@@ -65,10 +66,10 @@
 <p>Apart from the GUI interface, on the backend there are some other programs active that interact with home automation switches in our house. Backend services are provided by the LamPI-node.js process and located in the ~ directory. Some supporting executables are located in the ~/exe directory, especially as these need root privileges to run I put them all in a separate location.<br>
 </p>
 <ul>
-  <li><a href="HardwareGuide/Wired-Sensors/weather_sensors_msg_format.html"></a>LamPI-node.js (see directory ~)</li>
+  <li><a href="DeveloperGuide/LamPI Backend/LamPI-node.html">LamPI-node.js (see directory ~)</a></li>
   <li>Command-Line Interface (see directory ~/exe) for sensors, transmitters and receiver</li>
-  <li>LamPI-receiver (see directory ~/exe)</li>
-  <li>LamPI-arduino (see directory ~/exe) for USB connected Arduino Gateways<br>
+  <li><a href="DeveloperGuide/LamPI Backend/LamPI-receiver.html">LamPI-receiver</a> (see directory ~/exe)</li>
+  <li><a href="DeveloperGuide/LamPI Backend/LamPI-arduino.html">LamPI-arduino</a> (see directory ~/exe) for USB connected Arduino Gateways<br>
   </li>
 </ul>
 <h2>LamPI Sensors</h2>
