@@ -9,8 +9,9 @@
 <h1>Arduino Gateway messaging</h1>
 <h5>Version 3.6 Alpha; Message format may (and will) change between LamPI releases</h5>
 <h2>Intro</h2>
-<p>When using the Arduino as a gateway for 433MHz messages, the Raspberry will lose a lot of cpu/interrupt intensive workload which is taken over by the Arduino. The Raspberry will then send simple and short messages to the arduino, for example to switch on the lights and the Arduino will message the Raspberry upon receiving sensor values or&nbsp;handset commands from 433 MHz devices.</p>
-<p>For more information about Raspberry an Arduino Gateway, <a href="../hardware_guide.html">visit the dedicated page</a> on the Hardware Guide.</p>
+<p>When using the Arduino as a gateway for 433MHz messages, the Raspberry will lose a lot of cpu/interrupt intensive workload which is taken over by the Arduino. The Raspberry will then send simple and short messages to the arduino <strong>over USB</strong>, for example to switch on the lights and the Arduino will message the Raspberry upon receiving sensor values or&nbsp;handset commands from 433 MHz devices.</p>
+<p>For more information about Raspberry and Arduino Gateway, <a href="../hardware_guide.html">visit the dedicated page</a> on the Hardware Guide.</p>
+<p>For more information on the 433 MHz messaging formats recognized by the Arduino receiver, visit the <a href="../../DeveloperGuide/433Transmitters/433messaging.html">433messaging</a> page</p>
 <h2>Message format</h2>
 <p>Initially, we will focus on the klikaanklikuit commands as those are the devices I do have in my home. We like to include some other protocols as well, so that the direct connected devices to the Raspberry and those supported by the Arduino gateway become the same. </p>
 <p>This will mean in short that we like to include support for weather sensors etc.</p>
@@ -110,8 +111,8 @@
   <tr>
     <th width="259" scope="col">Command</th>
     <th width="19" scope="col">&nbsp;</th>
-    <th width="326" scope="col">Receive</th>
-    <th width="494" scope="col">Notes</th>
+    <th width="342" scope="col">Receive</th>
+    <th width="478" scope="col">Notes</th>
   </tr>
   <tr>
     <td>All other comments or messages coming from Arduino</td>
@@ -219,7 +220,7 @@
     <td><strong>Receive 433 Sensor message</strong></td>
     <td>&nbsp;</td>
     <td>&lt; {cnt} 3 {codec} {address} {channel} {temperature} {humidity}</td>
-    <td>wt440h (UPM/Esic) is one codec 0 but there are more</td>
+    <td>wt440h (UPM/Esic) is one codec 1 but there are more</td>
   </tr>
   <tr>
     <td><blockquote>
@@ -231,11 +232,19 @@
   </tr>
   <tr>
     <td><blockquote>
-      <p>WT440h example:</p>
+      <p>WT440h normal:</p>
     </blockquote></td>
     <td>&nbsp;</td>
     <td>&lt; {cnt} 3 1 1 0 8984 85</td>
     <td>Receive UPM weather message temp (20.1 Celcius encoded) and humi (85%)</td>
+  </tr>
+  <tr>
+    <td><blockquote>
+      <p>WT440 in BMP180 mode:</p>
+    </blockquote></td>
+    <td>&nbsp;</td>
+    <td>&lt; {cnt} 3 2 1 0 8984 85</td>
+    <td>Alsmost same message as above, but instead of humidity show airpressure value as 85 + 930 = 1015 Hpa</td>
   </tr>
   <tr>
     <td><blockquote>
@@ -284,8 +293,9 @@
 <h3>Sensors</h3>
 <p>Some sensors may have their own manufacturer protocol and their own transmitter. But there may also be ones that are connected to an Arduino who will forward the sensor message to the LamPI-node daemon.</p>
 <ul>
-  <li>0: Reserved for on-board sensors of the Arduino (such as the HTU21D temperature and humidity sensor).</li>
-  <li>1: wt440h (&lt;); UPM (or Esic) weather sensor. Range of reception not so good. The address is 1 to 15, and the Channel is </li>
+  <li>0: Reserved for on-board sensors of the connected Arduino (such as the HTU21D temperature and humidity sensor).</li>
+  <li>1: wt440h (&lt;); UPM (or Esic) weather sensor message. Range of reception not so good. The address is 1 to 15, and the Channel is 0-3</li>
+  <li>2: Special wt440h message (mis-) used to&nbsp;transmit temperature and <strong>airpressure</strong> of a BMP085 device</li>
   <li>3: Auriol messages. </li>
 </ul>
 <h3>Blinds, Curtains, Motors</h3>

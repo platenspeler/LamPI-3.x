@@ -10,7 +10,17 @@
 <p>The various protocols and message formats for sensors are listed on this page. As I developed a received programs based on my own sensors, my naming in LamPI might be different from that is accepted as the correct naming, but in general that does not matter.</p>
 <h5>Version 3.6 alpha<br />
 Date: August 2015. The page will be under construction for a while    </h5>
-<p>We will start with a set of common devices (switches and dimmers) followed by a description of sensors protocols (weather stations).</p>
+<p>We will start with a set of common devices (switches and dimmers) followed by a description of sensors protocols (weather stations). The following devices are fond on this page:</p>
+<ul>
+  <li>Kaku (Klik aan klik uit)</li>
+  <li>Impuls, Action </li>
+  <li>Livolo switches</li>
+  <li>Kopou switches<br />
+    <br />
+  </li>
+  <li>UPC/Esic weather stations</li>
+  <li>Auriol Temperature sensor</li>
+</ul>
 <h2>Kaku (Klik aan klik uit)</h2>
 <p>We mean the new auto select type of klik-aan-klik-uit equipment that has no wheel. As a result, the codes are longer particularly the adresses to avoid overlap and more or less guarantee that every remote sold has a unique value (so the neighbours have their own house codes).</p>
 <ul>
@@ -19,17 +29,17 @@ Date: August 2015. The page will be under construction for a while    </h5>
 <p>There are more devices with this codec, however as we do not have them in house, none can be documented to work yet.</p>
 <h4>timing</h4>
 <p><code>  &nbsp;&nbsp; &nbsp; &nbsp; _<br />
-  Sync:  | |_________________| (T, 10,5T)<br />
+  Sync:  | |_________________|&nbsp; (T,10.5T)<br />
   &nbsp;&nbsp; &nbsp;&nbsp; _&nbsp; &nbsp;_<br />
-  '0':   | |_| |_____ (T,T,T,5T)<br />
+  '0':   | |_| |_____&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (T,T,T,5T)<br />
   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 _      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _<br />
-'1':   | |_____| |_	(T,5T,T,T)<br />
+'1':   | |_____| |_&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	(T,5T,T,T)<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 _  &nbsp; _<br />
-dim:   | |_| |_     (T,T,T,T)</code><br />
+dim:   | |_| |_    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (T,T,T,T)</code><br />
 <code>&nbsp;&nbsp; &nbsp; &nbsp; _<br />
-Stop:  | |_________ .. _____| (T, 40T)</code><br />
+Stop:  | |_________ .. _____| (T,40T)</code><br />
 </p>
 <p><code>T = Pulase period of ~260µs.</code></p>
 <h4>bit code</h4>
@@ -115,8 +125,18 @@ Stop:  | |_________ .. _____| (T, 40T)</code><br />
 </ul>
 <p>Under the hood these sets all use the same technology and chips.</p>
 <h4>timing</h4>
-<p>&nbsp;</p>
+<p><code> &nbsp;        &nbsp;&nbsp;&nbsp; _    &nbsp;&nbsp;&nbsp; _<br />
+ '0':   | |___| |___&nbsp;&nbsp; (T,3T,T,3T)<br />
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ___  &nbsp; ___<br />
+ '1':   |  &nbsp; |_|  &nbsp; |_&nbsp;&nbsp; (3T,T,3T,T)<br />
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _    &nbsp;&nbsp;&nbsp; ___<br />
+ float: | |___|  &nbsp; |_ (T,3T,3T,T) used in addresses<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _<br />
+Sync:  | |___________ .. ___________| (T, 31T)</code></p>
+<p><code><br />
+</code></p>
 <h4>bit code</h4>
+<p>&nbsp;</p>
 <p>&nbsp;</p>
 <h4>legend</h4>
 <p></p>
@@ -133,8 +153,21 @@ Stop:  | |_________ .. _____| (T, 40T)</code><br />
 <h2>Kopou</h2>
 <p>Same as Livolo. Kopou makes a set of devices that look the same, and their protocol is almost the same as well. So lots of (re)transmissions of codes and heavy load on the receiver to recognize these messages.</p>
 <h4>timing</h4>
-<p>&nbsp;</p>
+<p><br />
+  <code><br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _______<br />
+ Start: |_|      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | (T,5T)<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ___ <br />
+ '0':   |_|  &nbsp; |    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (T,2T)<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _ <br />
+ '1':   |___| |    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (2T,T)</code><br />
+<br />
+Every message starts with 2 periods start pulse: 140 + 600 uSec<br />
+There are 16 bits address pulses: 140+260 for a 0-bit and 260+140 for 1-bit<br />
+And there are 8 bits for Device is: 140+260 or 260+140 uSecs<br />
+</p>
 <h4>bit code</h4>
+<p>&nbsp;</p>
 <p>&nbsp;</p>
 <h4>legend</h4>
 <p>&nbsp;</p>
@@ -186,10 +219,10 @@ Stop:  | |_________ .. _____| (T, 40T)</code><br />
 <h4>legend</h4>
 <table width="962" border="1">
   <tr>
-    <th width="158" scope="col">Bits</th>
-    <th width="32" scope="col">#B</th>
-    <th width="152" scope="col">Legend</th>
-    <th width="592" scope="col">Comment</th>
+    <th width="200" scope="col">Bits</th>
+    <th width="41" scope="col">#B</th>
+    <th width="163" scope="col">Legend</th>
+    <th width="530" scope="col">Comment</th>
   </tr>
   <tr>
     <td>xxxx</td>
@@ -213,13 +246,13 @@ Stop:  | |_________ .. _____| (T, 40T)</code><br />
     <td>yy</td>
     <td>2</td>
     <td>unknown</td>
-    <td>&nbsp;0x00</td>
+    <td>&nbsp;0x10</td>
   </tr>
   <tr>
     <td>B</td>
     <td>1</td>
     <td>Battery OK bit</td>
-    <td>&nbsp;0x1 (If allright)</td>
+    <td>This bit is NOT confirmed</td>
   </tr>
   <tr>
     <td>HHH HHHH</td>
@@ -228,7 +261,7 @@ Stop:  | |_________ .. _____| (T, 40T)</code><br />
     <td>&nbsp;0x0101011 is 43%</td>
   </tr>
   <tr>
-    <td>TTTT TTTTTTTT</td>
+    <td>TTTT TTTTTTTT TTT</td>
     <td>15</td>
     <td>Temperature</td>
     <td>&nbsp;</td>
@@ -257,6 +290,11 @@ Stop:  | |_________ .. _____| (T, 40T)</code><br />
   <li>wt440 receiver on http://github.com/platenspeler in Arduino Gateway library</li>
   <li>wt440 transmitter(!!) on http://github.com/platenspeler in Arduino Gateway library&nbsp;so it is possible for Arduino Gateway to emulate the protocol.</li>
 </ul>
+<h3>Updates version 3.5</h3>
+<p>The 3 bits 'Byy' are normally a constant with value 6 (0x110). However, although the first bit might(!) signal the battery condition the other 2 are unknown and considered a constant. </p>
+<p>Out of the box the WT440 protocol is not suited for sending any other info than temperature and humidity, be it that the Nethome page mentions some reserved addresses (address 10) be used for wind and rain reporting.</p>
+<p>If we would like to use the same trick for reporting airpressure, we can of course reserve another address. But it would also be possible to (mis-)use the constant yy bits in the protocol and use them for setting the information to airpressure. If we then would like to report the values of a BMP085 or BMP180 device (which are cheap) then we need room in the message for both the temperature and the airpressure. The 'HHHHHHH' 7 humidity bits to not offer much room to play, as their value is between 0 and 127 and therefore too small to encode airpressure. However, as we would be happy with airpressure readings in one(1) HpA accuracy to if we would use an&nbsp;offset of 930, we would be able to report airpressure readings between 930 and 1056 in these 7 bits. For the Netherlands that is sufficient as never we recorded values above 1050 Hpa and never lower than 950, but if you live in areas with storms etc. you might want to use a different scale.</p>
+<p>Of course this would ONLY work in my house if Arduino Sensors are used and if I modify the wt440Receiver function in the Arduino library.</p>
 <p>&nbsp;</p>
 <h2>Auriol</h2>
 <p>The Auriol sensor is from a cheap weather station sold by LIDL in the Netherlands. It only reports temperature, but as it's ange compared to the Epic WT-440 is much better, I use it to measure outside temperature around my home.</p>
@@ -355,5 +393,6 @@ Stop:  | |_________ .. _____| (T, 40T)</code><br />
 </table>
 <p>It is not possible to set anything for the Auriol receiver. But its protocol is simple and reliable.</p>
 <p>Auriol is NOT supported in direct connected receivers, however it IS supported by the Arduino Gateway.</p>
+<p>&nbsp;</p>
 </body>
 </html>

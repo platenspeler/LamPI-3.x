@@ -153,7 +153,7 @@
   <img src="images/gpio1.png" alt="" width="600" height="295"></p>
 <p>&nbsp;</p>
 <h2>Raspberry B 1+ and B2 pinout</h2>
-<p>The pin-out for the new Raspberry devices is different from the older ones. The new connector is 40-pi instead of 26-pin. Fortunately the first 26-pins are equal between all the B versions of the RaspberryPI.</p>
+<p>The pin-out for the new Raspberry devices is different from the older ones. The new connector is 40-pin instead of 26-pin. Fortunately the first 26-pins are equal between all the B versions of the RaspberryPI.</p>
 <p><br>
   <a href="images/p1header-large.png"><img src="images/p1header-large.png" width="419" height="550" hspace="5" vspace="5"></a><a href="images/j8header-b-plus.png"><img src="images/j8header-b-plus.png" width="375" height="676" hspace="5" vspace="5"></a><br>
 </p>
@@ -200,7 +200,7 @@
 <h3>SI4432</h3>
 <p>The SI4432 is a transceiver with a high sensitivity and high power. According to datasheets and articles its range is 1000-1500 meter (free sight) which is still a lot more than the average klik-aan-klik-uit equipment.</p>
 <p>http://www.electrodragon.com/w/SI4432_433M-Wireless_Transceiver_Module_%281.5KM_Range,_Shield-Protected%29</p>
-<p>&nbsp;</p>
+<p>We recently bought a pair of SI4432 transceivers, but as the pin grid is 1.27 mm we need a converter board first for easy soldering. </p>
 <h2>Filter</h2>
 <p>Especially the receivers can pick up quite some noise, expecially in an urban area. I have been experimenting with external filters that would keep the higher-frequency crap from my receiver, and some people like those in pilight for example make an art of building a filter around those components. Thing is that with all those sensors in and around the house there is a lot of pollution which will impact the receiver. Not only will it make our received not recognize incoming messages if two transmitters send their data at the same time, it will also impact the amount of compute power needed to clearly recognize messages coming in if there is lots of noise in the air.</p>
 <p>During my experiments I found out that with good software design the system time that these receivers use for interrupt handling can be kept close to 10-30% max, which leaves about 75% idle time that can be used for LamPI-node processing and GUI handling. I use a round buffer where pulses received by the received are stored and processed as soon as enough pulses came in to recognize a message.</p>
@@ -293,8 +293,7 @@
 <h3>Nano</h3>
 <p><img src="Arduino-Gateway/images/board_01.jpg" width="400" height="300" hspace="5" vspace="5"></p>
 <p>The Nano is a good system for making an Arduino Gateway device. The little machine is VERY cheap (less than EUR 2.50&nbsp;including shipping) and can do all the things that the larger UNO can do as well. When it arrives at your mailbox, you just have to solder all connectors to the Arduino and it is ready for work. It small footprint will make it difficult to&nbsp;give it a stable stand and therefore a small experiment board will provide that stability and offers place to connct sensors and tranmitter/receiver devices as wel.</p>
-<p> <a href="../Hardware/Gateway/images/nano_gateway_1.jpg"><img src="Arduino-Gateway/images/nano_gateway_1.jpg" width="376" height="500" hspace="10" vspace="10"></a> In the picture you see the Nano which is mounted on an experiment board using connectors. The transmitter is on the front, and the receiver is&nbsp;soldered on the rear end of the board. In the middle is a BPM085 board in the front and a LM75 (not connected) is found at the rear end.</p>
-<p>On the right front side is a DS18b20 device soldered (looks like a transistor). This is for optional later use.</p>
+<p> <a href="../Hardware/Gateway/images/nano_gateway_1.jpg"><img src="Arduino-Gateway/images/nano_gateway_1.jpg" width="376" height="500" hspace="10" vspace="10"></a> In the picture you see the Nano which is mounted on an experiment board using connectors. The transmitter is on the front, and the receiver is&nbsp;soldered on the rear end of the board. In the middle is a BPM085 board in the front and a LM75 (not connected) is found at the rear end. On the right front side is a DS18b20 device soldered (looks like a transistor), together with a 3-pin connector to attach a 1-,meter water-proof sensor to.</p>
 <p>The board is used as the sensor/transmitter/received unit of one of the Raspberries in the home.</p>
 <h3>Uno</h3>
 <p>I also made a version of the Arduino Gateway based on the Arduino Uno. The Uno is somewhat larger and in combination with the Arduino stick-up board Prototype Shield and a small block it is easy to make and change a setup. Functionally, the Nano and the Uno are equivalent and the code runs on both systems.So it is a matter of choice and preference.</p>
@@ -302,15 +301,15 @@
 <p>In the picture above you see the Arduino gateway (Arduin UNO w. prototype board) with a transmitter and receiver (the one with the orange antenna wire). </p>
 <p>&nbsp;</p>
 <h3>Applications</h3>
-<p>At this moment the Arduino can be used for:</p>
+<p>At this moment the Arduino Gateway can be used for:</p>
 <ul>
   <li>For handset (receiver) and transmitter support of kaku devices</li>
-  <li>For sensor support of WT-440h weather sensors</li>
+  <li>For sensor support of WT-440h and Auriol weather sensors</li>
 </ul>
 <p>&nbsp;</p>
 <h2><a name="arduino_sensor"></a>Arduino Sensor (sketch)</h2>
 <p>A variant on the Arduino gateway is the Arduino Sensor. This is an Arduino with a temperature and/or humidity or any other sensor(s) that will forward these sensor readings over the air using a 433MHz transmitter to a Raspberry  receiver.</p>
-<p><a href="Arduino-Gateway/images/arduinoSensor_1.jpg"><img src="Arduino-Gateway/images/arduinoSensor_1.jpg" width="450" height="600" hspace="10" vspace="5" align="left"></a>Earlier, when using the Raspberry to receive 433MHz messages, we would every now and then have problems with the reception of messages. The Arduino however is a much better device to received (interrupt driven) device messages than the Raspberry itself is.</p>
+<p><a href="Arduino-Gateway/images/arduinoSensor_1.jpg"><img src="Arduino-Gateway/images/arduinoSensor_1.jpg" width="450" height="600" hspace="10" vspace="5" align="left"></a>Earlier, when using the Raspberry to receive 433MHz messages, we would every now and then have problems with the reception of messages. The Arduino however is a much better device to receive (interrupt driven) device messages than the Raspberry itself is. Also it's formfactor is smaller, its price is lower and power usage is only a fraction.</p>
 <p>The code is in a separate branch on <a href="http://github.com/platenspeler">http://github.com/platenspeler</a> and the Arduino must be loaded with one of the &quot;Example&quot; programs to make sure it behaves like an Arduino Sensor. Also, it is possible to change the address/channel combination (in the example code) so that you can build an Arduino Sensor (=WT440h device) exactly matching your home setup. </p>
 <p>In the picture you see my setup for the Arduino Sensor. The device works great and as I programmed the Arduino to report the values coming from address 3 and channel 0. The Arduio Sensor only has 1 physical sensor connected, a HTU21 device reporting the temperature and the humidity at the spot the Arduino Sensor is locate in.</p>
 <p>The red version of the sensor is larger than the green one, in next versions of the device I will use that green one which will save a lot of board space.</p>
@@ -322,18 +321,20 @@
 <p>Also, such a small Aruino&nbsp;with connectors for a few DS18B20 devices would be an excellent sensor station for temperature sensing for example for the Central Heating installation. At this moment we use a&nbsp;Raspberry for his purpose which is a waste of power (of the Raspberry) and energy usage as well.</p>
 <p>&nbsp;</p>
 <h2><a name="arduino_repeater"></a>Arduino Repeater</h2>
-<p>WHena adding a received and antenna to an existing Arduino Sensor it should also be possible to use the Arduino to build a 433MHz range extender or a repeater. Also it is possible to make a protocol conversion using this solution by building a solution with a 868MHz receiver and a 433MHz transmitter. This way, several devices in my house that are operated wirelessly using a proprietary communication protocol (not Z-Wave) can be integrated in the LamPI environment as well.</p>
+<p>Wen adding a received and antenna to an existing Arduino Sensor it should also be possible to use the Arduino to build a 433MHz range extender or a repeater. Also it is possible to make a protocol conversion using this solution by building a solution with a 868MHz receiver and a 433MHz transmitter. This way, several devices in my house that are operated wirelessly using a proprietary communication protocol (not Z-Wave) can be integrated in the LamPI environment as well.</p>
+<p>Goto the examples directory of the Arduino code and select repeater433 directory. In the Repeater433.h file it is possible to set compile-time switches that determine which protocols will be compiler into the code and recognized once the Arduino is operating.</p>
 <p>&nbsp;</p>
 <h2>Connecting Sensors to Arduino</h2>
 <ul>
-  <li>Wired sensors: DHT11, DHT22 Temperature/Humidity Sensor</li>
+  <li>Wired sensors: DHT11, DHT22 Temperature/Humidity Sensor (* Not yet supported)</li>
   <li>1-Wire bus sensors: DS18B20 Temperature Sensor</li>
-  <li>2-wire I2C bus sensors: such as BMP085, BMP180, LM75a, SHT21 sensors</li>
+  <li>2-wire I2C bus sensors: such as BMP085, BMP180, LM75a, SHT21 and HTU21D sensors</li>
 </ul>
-<p>Since there is very limited support for 1-wire solutions, we have chosen to use the i2c protocol for LamPI when possible.</p>
+<p>Since there is very limited support for wired solutions, we have chosen to use the i2c protocol for LamPI when possible, and to connect several temperature sensors (waterproof) choose the 1-Wire protocol..</p>
 <p>&nbsp;</p>
 <h2>Arduino Gateway Message Format</h2>
-<p>The message format exchanged between the Arduino Gateway and the Raspberry Host is found on a <a href="Arduino-Gateway/message.html">separate page</a>.</p>
+<p>The message format exchanged between the Arduino Gateway and the Raspberry Host over USB is found on a <a href="Arduino-Gateway/gatewayMsgFormat.html">separate page</a>.</p>
+<p>The 433Messages that go over the ai are expland on <a href="../DeveloperGuide/433Transmitters/433messaging.html">this 433messaging page</a></p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 <h1><a name="zwave_guide" id="zwave_guide"></a>Z-Wave Guide</h1>

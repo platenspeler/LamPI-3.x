@@ -574,7 +574,7 @@ char * parse_sensor(char *tok, int cod)
 	int fake;
 	
   switch (cod) {
-  	case 0: // onboard
+  	case 0: // ONBOARD
 		tok = strtok(NULL, " ,"); sAddress = tok; address = atoi(tok);
 		tok = strtok(NULL, " ,"); fake  = atoi(tok);				// Always 0, discard
 		
@@ -591,6 +591,7 @@ char * parse_sensor(char *tok, int cod)
 				sprintf(snd_buf, 	"{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"sht21\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%2.1f\",\"humidity\":\"%2.1f\"}", 
 				socktcnt%1000,address,channel,temp,humi);
 			break;
+			
 			// Code for BMP085 and BMP180
 			case 77:
 				tok = strtok(NULL, " ,"); temperature = atoi(tok);
@@ -599,6 +600,7 @@ char * parse_sensor(char *tok, int cod)
 				sprintf(snd_buf, 	"{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"bmp085\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%d.%d\",\"airpressure\":\"%d\"}", 
 				socktcnt%1000,address,channel,temperature/10,temperature%10,airpressure/100);
 			break;
+			
 			default:		// We could parse, but assume those long DALLAS addresses at this moment
 				channel = 0;
 				tok = strtok(NULL, " ,"); temp = atof(tok);
@@ -618,6 +620,17 @@ char * parse_sensor(char *tok, int cod)
 		sprintf(snd_buf, 
 "{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"wt440h\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%d.%d\",\"humidity\":\"%d\"}", 
 		socktcnt%1000,address,channel,temperature/10,temperature%10,humidity);
+	break;
+	
+	case 2:	// wt440h modified for BMP085
+		tok = strtok(NULL, " ,"); address = atoi(tok);
+		tok = strtok(NULL, " ,"); channel  = atoi(tok);
+		tok = strtok(NULL, " ,"); temperature = atoi(tok);
+		tok = strtok(NULL, " ,"); airpressure = atoi(tok) + 930;
+		temperature = (temperature - 6400) * 10 / 128;
+		sprintf(snd_buf, 
+"{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"bmp085\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%d.%d\",\"airpressure\":\"%d\"}", 
+		socktcnt%1000,address,channel,temperature/10,temperature%10,airpressure);
 	break;
 	
 	case 3:	// Auriol
