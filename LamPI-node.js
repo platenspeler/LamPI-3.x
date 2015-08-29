@@ -102,13 +102,15 @@ process.argv.forEach(function (val, index, array) {
 				str += '<br>init:: done, restarting loops';
 				logger(str,2);						// Can only send results to web client once
 				start_loops();
+				init = 0;							// Enable connections to accept messages
 			});
 		});
-		init = 0;
+		
 	break;
 	case "-r":
 		// Only re-read the database into the config structure
 		var str = "";
+		init = 1;
 		for (var i=0; i<loops.length; i++) clearInterval(loops[i]); // Stop the loops
 		
 		logger("reload:: read the configuration",1);
@@ -118,6 +120,7 @@ process.argv.forEach(function (val, index, array) {
 				str += '<br>init:: done, restarting loops';
 				logger(str,2);						// Can only send results to web client once
 				start_loops();
+				init = 0;
 		});
 	break;
 	default:
@@ -135,9 +138,7 @@ var http  = require('http'); console.log("http loaded");
 var net   = require('net');	console.log("net loaded");					// Raw Sockets Server
 var dgram = require("dgram"); console.log("dgram loaded");
 var express= require('express'); console.log ("express loaded");		// Middleware
-
 var S     = require("string"); console.log("string loaded");
-					// Filesystem
 var exec  = require('child_process').exec; console.log("child_process loaded");
 var serveStatic= require('serve-static'); console.log("serve-static loaded");
 var WebSocketServer = require('ws').Server; console.log ("ws loaded");
@@ -168,7 +169,7 @@ app.all('/init', function (req, res, next) {
 	str += 'init started<br>';
 	str += 'Suspending '+loops.length+' timers<br>';
 	for (var i=0; i<loops.length; i++) clearInterval(loops[i]);
-	config = readConfig();							// Read the config file first
+	config = readConfig();						// Read the config file first
 	createDbase(function (err, result) {
 		if (err) { logger("init:: ERROR: "+err ); return; }
 		logger("init:: createDbase returned "+result,1);
@@ -180,10 +181,10 @@ app.all('/init', function (req, res, next) {
 			str += '<br>init:: done, restarting loops';
 			logger(str,2);
 			res.send(str);							// Can only send results to web client once
-			start_loops();
+			start_loops();							// Restart the timer loops
+			init = 0;								// Enable the receivers
 		});
 	});
-	init = 0;
   //next(); // pass control to the next handler
 });
 
@@ -1089,13 +1090,19 @@ function deviceGet(ldev,ltype) {
 		headers: { 'Content-Type': 'application/json' }
 	};
 	var callget = function(response) {
+		
 		// In principle this function does not return anything
   		response.on('data', function (chunk) {		
 			logger("ERROR deviceGet received data: "+chunk, 3);
 		});
+		
 		//the whole response has been recieved, so we just print it out here
 		response.on('end', function () {
 			logger("deviceGet:: device: "+dev+", lampi dev index: "+ldev, 2);
+			if (devices[dev] == undefined) {
+				logger("deviceGet:: Device "+dev+" not read yet from ZWave", 2);
+				return;
+			}
 			// If new value <> old value --->> Change 
 			// And If new value <> LamPI-value -->> Update LamPI, we have a manual change
 			switch (ltype) {
@@ -1207,10 +1214,12 @@ function deviceGet(ldev,ltype) {
 				lampi_admin[dev]['val'] = lVal;
 			}
   		});//.on end
+		
 		response.on('error', function () {
     		//console.log(str);
 			logger("ERROR Updating dev: "+dev+"", 1);
   		});
+		
 		response.on('timeout', function () {
   		// Timeout happened. Server received request, but not handled it
   		// (i.e. doesn't send any response or it took to long). You don't know what happend.
@@ -2552,8 +2561,11 @@ function main(err,results) {
 	if (debug>= 1) console.log("Return values: \n",results);
 	// Delayed bind makes sure all initializations are finished
 	userver.bind(udpPort);
-	logger("Starting Loops");
-	start_loops();
+	// If init is running, do not start the loops, init will do this when finished
+	if (! init) {
+		logger("Starting Loops");
+		start_loops();
+	}
 	logger("Starting Static Webserver");
 	// NOTE: All pathnames are relative to the Node Installation directory
 	app.use(serveStatic(__dirname + '/www')); app.listen(webPort);
