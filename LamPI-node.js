@@ -11,7 +11,7 @@ LamPI Version:
 ***********************************************************************************	*/
 // Configuration
 var debug = 1;						// 0 is nothing, 1 is normal >= 2 is serious debugging
-var init = 0;						// Set to 1 if the init process is running. Stop daemons and incoming.
+var init = 0;						// Set to 1 if the init process is running. Stop daemons and ignore incoming messages.
 
 var poll_interval =   6000;			// Determine how often we poll the devices for changed values
 var log_interval  = 120000;			// Determines how often Z-Wave values are logged in the logfile
@@ -230,7 +230,7 @@ app.use('/alarm', alarmRouter);
 // Read the standard database configuration file and return the config array object
 
 function readConfig() {
-	var dbCfg = par.homeDir+"/config/database.cfg";
+	var dbCfg = par.homeDir + "/config/" + par.configFile;			// database.cfg
 	var ff = fs.readFileSync(dbCfg, 'utf8');
 	var obj = JSON.parse(strip(ff));
 	if (debug>=3) { logger("readConfig:: config read: ",3); console.log(obj); }
@@ -239,9 +239,13 @@ function readConfig() {
 
 function writeConfig(cfile) {
 	logger("writeConfig:: wrinting configuration to file "+cfile,1);
-	var j = JSON.stringify(config);
-	fs.writeFileSync(cfile, j);
+	var json = JSON.stringify(config, null, 2);
+	fs.writeFileSync(par.homeDir + "/config/" + cfile, json);
 	return;
+}
+
+function listConfigDir() {
+	return(fs.readdirSync(par.homeDir + "/config"));
 }
 
 function printConfig() {
@@ -1098,11 +1102,12 @@ function deviceGet(ldev,ltype) {
 		
 		//the whole response has been recieved, so we just print it out here
 		response.on('end', function () {
-			logger("deviceGet:: device: "+dev+", lampi dev index: "+ldev, 2);
+			
 			if (devices[dev] == undefined) {
 				logger("deviceGet:: Device "+dev+" not read yet from ZWave", 2);
 				return;
 			}
+			logger("deviceGet:: device: "+dev+", lampi dev index: "+ldev, 2);
 			// If new value <> old value --->> Change 
 			// And If new value <> LamPI-value -->> Update LamPI, we have a manual change
 			switch (ltype) {
@@ -1217,7 +1222,7 @@ function deviceGet(ldev,ltype) {
 		
 		response.on('error', function () {
     		//console.log(str);
-			logger("ERROR Updating dev: "+dev+"", 1);
+			logger("deviceGet:: ERROR Updating dev: "+dev+"", 1);
   		});
 		
 		response.on('timeout', function () {
@@ -1699,6 +1704,14 @@ function dbaseHandler(cmd, args, socket) {
 			if (i != -1) config['devices'][i] = args;
 			else logger("dbaseHandler:: store_device failed for index: "+i);
 		break;
+		// Read the config structure (or database) and backup to file
+		case 'backup_db':
+			//backupDv(args.name);
+		break;
+		// Read from txt file
+		case 'restore_db':
+		break;
+		
 		default:
 			logger("dbaseHandler:: Unknown command: "+cmd,1);
 		break;
@@ -2201,13 +2214,27 @@ function sceneHandler(buf, socket) {
 function settingHandler(buf, socket) {
 	switch (buf.cmd) {
 		case 'store_config':
-			logger("settingHandler:: store_config database name selected",1);
+			logger("settingHandler:: store_config database name selected: "+buf.name,1);
+			writeConfig(buf.message);
 		break;
 		case 'load_config':
-			logger("settingHandler:: load_config database name selected",1);
+			logger("settingHandler:: load_config database name selected: "+buf.name,1);
+			config = readConfig();
 		break;
 		case 'list_config':
-			logger("settingHandler:: list_config database name selected",1);
+			// Read the config directory.
+			var list = listConfigDir();
+			var response = {};
+			logger("settingHandler:: list_config database name selected", 1);
+			response = { tcnt: tcnt++, type: "raw", action: "list_config", cmd: "", list: list };
+			logger("socketHandler:: Sending "+response.action+" message to socket: "+ socket.name);
+
+			var ret = socket.send(JSON.stringify(response),function (error){
+				if (error !== undefined) { 
+					logger("settingHandler:: ERROR responding list config: "+error,1);
+					logger("settingHandler:: Socket: "+socket.name+", type: "+socket.type,1);
+				}
+			});
 		break;
 	}
 }// settingHandler
@@ -2728,13 +2755,13 @@ function zwave_loop() {
 						var val        = classes[cl].data.level.value + 0;
 						var lupdate    = classes[cl].data.level.updateTime;
 						var invalidate = classes[cl].data.level.invalidateTime;
-						logger("\tCl: "+cl+" Switch           , val "+val+", upd: "+printTime(lupdate)+", inval: "+printTime(invalidate),1);
+						logger("\tCl: "+cl+" Switch           , val "+val+", upd: "+printTime(lupdate)+", inval: "+printTime(invalidate),2);
 					break;
 					case '38':									// DIMMER
 						var val = classes[cl].data.level.value + 0;
 						var lupdate = classes[cl].data.level.updateTime;
 						var invalidate = classes[cl].data.level.invalidateTime;
-						logger("\tCl: "+cl+" Dimmer           , val "+val+", upd: "+printTime(lupdate)+", inval: "+printTime(invalidate),1);
+						logger("\tCl: "+cl+" Dimmer           , val "+val+", upd: "+printTime(lupdate)+", inval: "+printTime(invalidate),2);
 					break;
 					case '39':
 						//var val = classes[cl].data.level.value + 0;
@@ -2747,7 +2774,7 @@ function zwave_loop() {
 						}
 						var val = classes[cl].data[1].level.value + 0;
 						var lupdate = classes[cl].data[1].level.updateTime;
-						logger("\tCl: "+cl+" PIR              , val "+val+", upd: "+printTime(lupdate),1);
+						logger("\tCl: "+cl+" PIR              , val "+val+", upd: "+printTime(lupdate),2);
 					break;
 					case '49':									// Sensor Multilevel -> Luminescense
 						if (classes[cl].data.interviewDone.value == false) {
@@ -2760,7 +2787,7 @@ function zwave_loop() {
 							type: "json",
 							address: key+"",
 							channel: "0"
-						}
+						};
 						if( 1 in classes[cl].data) {			// Temperature
 							var val = classes[cl].data[1].val.value + 0;
 							logger("\tCl: "+cl+" Temp             , val "+val,1);

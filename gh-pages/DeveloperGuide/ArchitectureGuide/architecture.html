@@ -16,13 +16,16 @@
   <li><a href="#transceiver">Architecture of the LamPI transceiver part</a><br>
   </li>
   <li><a href="#lampigui">The webbrowser front-end client in Javascript/jQuery</a></li>
-  <li><a href="#android">The Android client</a></li>
+  <li><a href="#android">The Android client</a> (* Need more work)</li>
   <li><a href="#zwave">Z-Wave device gateway (how to control Z-Wave devices)</a></li>
   <li><a href="message_format.html">Message Formats (layout of messages exchanged between LamPI components)</a></li>
 </ul>
 <p>LamPI started as an alternative controller to the ICS-1000 controller of klikaanklikuit.nl (150 EURO), but today it offers support for other brands as well as well support for sensors and even 868MHz Z-Wave devices.</p>
 <h1><a name="maincomponents"></a>Main Components and Relations</h1>
-<p>LamPI consists of a few major components as outlined in the picture below. Starting with release 1.7 all communication between the front-end and the controlling daemon takes place over websockets. Of course, when you work with the ICS-1000 this will be an exception. </p>
+<p>LamPI consists of a few major components as outlined in the picture below. Starting with release 1.7 all communication between the front-end and the controlling daemon takes place over websockets. The picture belo shows the most important parts of LamPI and their relations.&nbsp;Please taje into account that the picture showns the logical relationships, it is possible that one node combines 2 or 3 functions (for example: The Raspberry that is master node can also be its own slave with the sensors connected and it can serve the database and the webGui).</p>
+<p><a href="architecture3.gif"><img src="architecture3.gif" width="860" height="720" hspace="10" vspace="10"></a></p>
+<p>&nbsp;</p>
+<p>&nbsp; </p>
 <ul>
   <li>All communication between the GUI frontend and the sensors or devices takes place through the LamPI-node.js daemon process. This process is the spider in the web, it maintains the database relation (consistency) and an administration of all sensors and devices in the system</li>
 </ul>
@@ -38,11 +41,15 @@
 <p>Let's explain a little bit more about the architecture. There are a few main components to be recognized that are further described in this document. These components or modules are the following:</p>
 <ul>
   <li>The GUI of LamPI</li>
-  <li>The LamPI-node.js process</li>
+  <li>The LamPI-node.js process
+    <ul>
+      <li>The mySql database</li>
+      <li>The configuration fil e(database.cfg)</li>
+    </ul>
+  </li>
   <li>The device handling, with transmitters (send 2 device) and receivers (from sensors)</li>
-  <li>The mySql database</li>
   <li>The Z-Wave gateway (not in picture)</li>
-  <li>The Arduino 433MHz gateway (not in picture)</li>
+  <li>The Arduino 433MHz gateway</li>
 </ul>
 <p>When you have a lot of devices, or sensors around the house you might duplicate functions for more reach, or duplicate to spread the load on the system more evenly. In this case the described modules can be put on separate systems. These do not have to be Raspberry systems per-se but can also be your fileserver or NAS or your router.</p>
 <p>You have to keep in mind though that these systems have dependencies and need other packages to be available in order to work. For example the LamPI-gui probably needs apache and webserver availability including websocket support, the database function needs MySQL support and the LamPI-node.js needs a node.js system in place. Communication between modules takes place with regular sockets or websockets (with exception of the database where we use the mysql function). There are advantages and disadvantages wrt to the approach chosen for the communication between GUI frontend and LamPI-node backend.</p>
@@ -107,7 +114,7 @@ The startup html file calls LamPI-x.x.min.js which will perform the following in
     <ol>
       <li>Starting all connection endpoints and database. The whole initialization takes quite some time&nbsp;on an old model Raspberry.</li>
       <li>After initializations, messages coming in on the system are forwarded to the socketHandler() function which in turn will split out to dbaseHandler(), guiHandler(), rulesHandler() etc based on the nature of the message received.</li>
-      <li>poll_loop() - A timer loop with a medium length interval that will poll the Z-Wave device for changed device values. If found, it will update the internal LamPI-device object with these changed values. Remember LamPI has both 433 and 868MHz devices attached and this loop will only deal with the Z-Wav (868 MHz) devices.</li>
+      <li>poll_loop() - A timer loop with a medium length interval that will poll the Z-Wave device for changed device values. If found, it will update the internal LamPI-device object with these changed values. Remember LamPI has both 433 and 868MHz devices attached and this loop will only deal with the Z-Wave (868 MHz) devices.</li>
       <li>alarm_loop() - An interval timer that is running with a VERY short interval. It should be able to handle alarms coming in to the system and deal with rules that are present in the config['rules'] object</li>
       <li>zwave_loop() -&nbsp; This is a logging loop for Z-Way devices only. It is run once every 2 minutes and will show the status of the various ZWave devices on the log file. This function is not critical by any means and if not necessary the user can decide to increase its timer to a much higher value.</li>
       <li>timer_loop() - This loop will study the config['timers']&nbsp;array looking for timers that need to run. It is started every 30 seconds or so. Since LamPI timers have a resolution of one minute it does not make sense to decrease the timer lower than 30 seconds.</li>
@@ -172,14 +179,17 @@ The startup html file calls LamPI-x.x.min.js which will perform the following in
 <p>The source code for the transmitter programs reside in different sub-directories of ~/receivers: Some C++ code in the &quot;lights&quot; directory was ported from an existing Arduino library and contains support for multiple transmitters with same prototype definitions in C++. Some other code such as for Kopou, WT440H and Livolo was developed.</p>
 <h1>Gateways</h1>
 <p>Gateways are protocol converters connected to our LamPI environment. This connection can be a Wifi connection such as for Z-Wave devices but can also be an USB connect (to a raspberry) which is done for the 433MHz messages.</p>
-<h2>LamPI-arduino gateway</h2>
 <p>&nbsp;</p>
+<h2>LamPI Arduino gateway</h2>
+<p>The Arduino Gateway is described in detail in <a href="../../HardwareGuide/Arduino-Gateway/gatewayMsgFormat.html">a seperate section</a> of the hardware guide and its message format is described<a href="../../HardwareGuide/Arduino-Gateway/gatewayMsgFormat.html"> in a separate page.</a></p>
+<p><img src="../../HardwareGuide/Arduino-Gateway/images/family_1.jpg" width="600" height="289"></p>
 <h2><a name="zwave"></a>Z-wave Gateway Connect</h2>
 <p>The Z-Wavy messaging format is described on the separate Z-Wave page. Reason is that this is not so much a programming interface but communication takes place as a URL string that is executed by &quot;curl&quot; in the LamPI-daemon. At the moment the communication is therefore initiated by the LamPI-daemon only.</p>
+<p><img src="../../HardwareGuide/Zwave-Gateway/RazBerry/razberry_arch.jpg" width="464" height="256"></p>
 <p>The Z-Way software contains Javascript library functions to build actions and initiate communication from the Razberry device but this is not implemented (yet), and therefore for example administrative functions for adding Z-Wave devices must be done using the Razberry interface on that machine itself.</p>
 <p><strong><em>http://&lt;raspberry_ip_address&gt;:8083</em></strong></p>
 <p>Then choose the traditional blue expert interface and then &quot;network&quot; to setup your new Z-Wave device. The id that is given to the Z-Wave device must be used in the gateway and in the LamPI-daemon as the unit id to address the correct device. So make sure that the correct id/unit values are present in the database (or in the 'database.cfg' file when starting the daemon the first time with the script command: </p>
-<p><em><strong>cd ~/scripts; ./PI-run -i</strong></em></p>
+<p><em><strong>cd ~/scripts; ./PI-node -i</strong></em></p>
 <p></p>
 <p>&nbsp;</p>
 <h1><a name="android"></a>Android Clients</h1>

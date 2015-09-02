@@ -4671,7 +4671,7 @@ function activate_setting(sid)
 		break; //0
 			
 		// LAYOUT SETTING
-		// Select whether you want to use the ICS controller or the do-it-yourself of Raspberry PI
+		// Select what layout to use in the main screen
 		case "1":
 			var debug_help = ' <br>'
 					+ 'This menu option allows users to choose how the devices and sensors are laid out on the screen. '
@@ -4948,7 +4948,7 @@ function activate_setting(sid)
     			}
 			});
 
-			// Handle the content of the Backup/Restore screen
+			// Handle the content of the skin selection screen
 			$( "#gui_skin" ).on("click", ".dbuttons" ,function(e) 
 			{
 				var skin_val = this.value;
@@ -4998,6 +4998,10 @@ function activate_setting(sid)
 		// Backup and Restore
 		//
 		case "5": 
+			// We use another mehod to read a remote directory as found in skins (settings[4]).
+			// If the list of files is not yet found, we send a message to teh server asking for another list
+			// Upon receiving a directory list of config files the receiver program will re-start this function
+			// disadvantage .. if another directory entry is created we must re-ask the server for a config list.
 			$( "#gui_content" ).empty();
 			html_msg = '<div id="gui_backup"></div>';
 			$( "#gui_content" ).append (html_msg);
@@ -5006,10 +5010,7 @@ function activate_setting(sid)
 			$( "#gui_backup" ).append( html_msg );
 	
 			var table = $( "#gui_backup" ).children();		// to add to the table tree in DOM
-			//html_msg = '<div id="gui_backup"></div>';
-			//$( "#gui_content" ).append (html_msg);	
-			// Create a few buttons and call frontend_set.php directly!!
-			// Cosmetically not the most beutiful solution but it works great for the moment
+			// Cosmetically not the most beautiful solution but it works great for the moment
 			var but =  ''	
 					+ '<thead><tr class="switch">'
 					+ '<td colspan="2">'
@@ -5030,30 +5031,34 @@ function activate_setting(sid)
 					;
 			$(table).append('<tr><td colspan="2"><span>'+debug_help+'</span></td>');	
 
-			var list = [];
-			var str = '<fieldset><label for="load_config">Select File: </label>'
-						+ '<select id="load_config" value="load" class="dlabels" style="width:200px;">' ;   // onchange="choice()"
-						// XXX see skin settings
 			var files = {};
-			files = send2daemon("setting","list_config","*cfg");
-			str += '<option>' + '   ' + '</option>';
+			// XXX Have to add timing also, if not renewed for more than a minute for example, renew!
+			if (settings[5].list == undefined)	{
+				send2daemon("setting","list_config","*cfg");				// Ask for listing config
+			}
+			else  {
+				files = settings[5].list ;
+			}
+			var str = '<fieldset><label for="load_config">Select File: </label>'
+						+ '<select id="load_config" value="load" class="dlabels" style="width:200px;">' ;   // onchange="choice()"			
 			for (var i=0; i<files.length; i++) {
 					str += '<option>' + files[i] + '</option>';
 			}
-			str += '</select>';
-			str += '</fieldset>';
+			str += '</select></fieldset>';
 			
 			but = ''
 					+ '<tr><td>'
-					+ ''
+
 					+ '<input type="submit" name="store_button" id="d0" value="store" class="dbuttons buttonset">'
 					+ '<label for="d0">Backup the configuration</label>'
 					+ '</td><td><fieldset>To File &nbsp&nbsp:&nbsp&nbsp<input type="input" id="store_config" value="" class="dlabels" style="width:200px;"></fieldset>'
 					+ '</td></tr>'
 					+ '<tr><td>'
-					+ '<input type="submit" name="load_button" id="d1" value="load" class="dbuttons cc_button">'
+					+ '<input type="submit" name="load_button" id="d1" value="load" class="dbuttons cc_button">'					
 					+ '<label for="d1">Load Configuration</label>'
-					+ '<td><form action="">'
+					+ '</td>'
+					+ '<td>'
+					+ '<form action="">'
 					+ str
 					+ '</form>'
 					+ '</td></tr>'
@@ -5072,6 +5077,7 @@ function activate_setting(sid)
 						if (config_file.substr(-4) != ".cfg") config_file += ".cfg" ;
 						send2daemon("setting","store_config",config_file);
 						if (debug>0) myAlert("Backup: "+ config_file);
+						send2daemon("setting","list_config","*cfg");				// Ask for updated listing config
 					break;
 						
 					case "load":

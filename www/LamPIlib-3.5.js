@@ -576,12 +576,16 @@ function init_websockets() {
 					message("action: "+action+", tcnt: "+tcnt+", mes: "+msg+", type: "+type,1);
 				}
 			break;
-
+			case 'list_config':
+				settings[5].list = rcv.list;
+				logger("list_config msg received: "+ rcv.list, 1);
+				activate_setting("5");					// backup restore
+			break;
 			// List all users and "jump" (back) to the setting page
 			case 'list_user':
 				logger("list_user message received",1);
 				users = rcv.message;
-				activate_setting("2b");						// XXX Hardcoded setting!
+				activate_setting("2b");					// XXX Hardcoded setting! And setpping halfway in code
 			break;
 			case 'load_database':
 				logger("Receiving load_database message",2);

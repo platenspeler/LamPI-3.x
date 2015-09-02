@@ -21,6 +21,7 @@ Date: August 2015. The page will be under construction for a while    </h5>
   <li>UPC/Esic weather stations</li>
   <li>Auriol Temperature sensor</li>
 </ul>
+<p>&nbsp;</p>
 <h2>Kaku (Klik aan klik uit)</h2>
 <p>We mean the new auto select type of klik-aan-klik-uit equipment that has no wheel. As a result, the codes are longer particularly the adresses to avoid overlap and more or less guarantee that every remote sold has a unique value (so the neighbours have their own house codes).</p>
 <ul>
@@ -144,11 +145,69 @@ Sync:  | |___________ .. ___________| (T, 31T)</code></p>
 <h2>Livolo</h2>
 <p>Livolo makes wonderful switches and dimmers and some can be controlled by a remote. HOWEVER, their protocol is simple and pollutes the air and makes the receiver interrupt function works hard. So, this would be a protocol to delete from your system if not used.</p>
 <h4>timing</h4>
-<p>&nbsp;</p>
+<p><code> Livolo timing:<br />
+&nbsp;&nbsp; ___<br />
+&nbsp; | &nbsp; |___| T + T is a 0 bit<br />
+  <br />
+ &nbsp;&nbsp; _______<br />
+ &nbsp; |   &nbsp;&nbsp;&nbsp; &nbsp; | 2T is a 1 bit</code></p>
+<p><code> &nbsp;&nbsp; _____________</code><br />
+<code>&nbsp; |   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; | 3.5T is a Start bit</code></p>
+<p><code><br />
+  <br />
+  Every message starts with a start pulse of 520 uSec<br />
+  <br />
+  There are 16 bits address pulses: 150+150 for a 0-bit and 300 for 1-bit<br />
+  And there are 8 bits for Device id: 150+150 or 300 uSecs<br />
+  <br />
+  Each bit is approx 300 USec long, either 150+150 or 300</code></p>
+<p><code><br />
+  1 start pulse<br />
+  16 address pulses<br />
+  7 unit pulses</code></p>
 <h4>bit code</h4>
+<table width="546" border="0">
+  <tr>
+    <th width="167" scope="col">0-7</th>
+    <th width="185" scope="col">8-15</th>
+    <th width="180" scope="col">16-22</th>
+  </tr>
+  <tr>
+    <td>A A A A A A A A</td>
+    <td>A A A A A A A A</td>
+    <td>U U U U U U U</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
 <p>&nbsp;</p>
 <h4>legend</h4>
 <p></p>
+<table width="962" border="1">
+  <tr>
+    <th width="258" scope="col">Bits</th>
+    <th width="106" scope="col">#B</th>
+    <th width="100" scope="col">Legend</th>
+    <th width="470" scope="col">Comment</th>
+  </tr>
+  <tr>
+    <td>AAAA AAAA AAAA AAAA</td>
+    <td>16</td>
+    <td>Address</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>UUUU UUU</td>
+    <td>7</td>
+    <td>Unit</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p>The command toggles the state of the normal units. So if the unit s now switched on, another command with the same address+unti will switch it off again. The problem wih the Livolo system is therefore that unless you look at the switch or lamp and see what the current state is there is no way to switch a device on or off&nbsp;from a distance. It will just toggle the current value if received well by the wall switch.</p>
+<p>So there is no on or off code. By chosing a special unit code, all associated units are switched off.</p>
 <p>&nbsp;</p>
 <h2>Kopou</h2>
 <p>Same as Livolo. Kopou makes a set of devices that look the same, and their protocol is almost the same as well. So lots of (re)transmissions of codes and heavy load on the receiver to recognize these messages.</p>
@@ -164,12 +223,51 @@ Sync:  | |___________ .. ___________| (T, 31T)</code></p>
 <br />
 Every message starts with 2 periods start pulse: 140 + 600 uSec<br />
 There are 16 bits address pulses: 140+260 for a 0-bit and 260+140 for 1-bit<br />
-And there are 8 bits for Device is: 140+260 or 260+140 uSecs<br />
+And there are 8 bits for Unit: 140+260 or 260+140 uSecs<br />
 </p>
 <h4>bit code</h4>
+<table width="546" border="0">
+  <tr>
+    <th width="167" scope="col">0-7</th>
+    <th width="185" scope="col">8-15</th>
+    <th width="180" scope="col">16-23</th>
+  </tr>
+  <tr>
+    <td>A A A A A A A A</td>
+    <td>A A A A A A A A</td>
+    <td>U U U U U U U U</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 <h4>legend</h4>
+<p>&nbsp;</p>
+<table width="962" border="1">
+  <tr>
+    <th width="258" scope="col">Bits</th>
+    <th width="106" scope="col">#B</th>
+    <th width="100" scope="col">Legend</th>
+    <th width="470" scope="col">Comment</th>
+  </tr>
+  <tr>
+    <td height="31">AAAA AAAA AAAA AAAA</td>
+    <td>16</td>
+    <td>Address</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>UUUU UUUU</td>
+    <td>8</td>
+    <td>Unit</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
 <p>&nbsp;</p>
 <h2>UPM/Esic</h2>
 <p>Supported devices:</p>
@@ -290,8 +388,8 @@ And there are 8 bits for Device is: 140+260 or 260+140 uSecs<br />
   <li>wt440 receiver on http://github.com/platenspeler in Arduino Gateway library</li>
   <li>wt440 transmitter(!!) on http://github.com/platenspeler in Arduino Gateway library&nbsp;so it is possible for Arduino Gateway to emulate the protocol.</li>
 </ul>
-<h3>Updates version 3.5</h3>
-<p>The 3 bits 'Byy' are normally a constant with value 6 (0x110). However, although the first bit might(!) signal the battery condition the other 2 are unknown and considered a constant. </p>
+<h3>Updates LamPI version 3.5</h3>
+<p>The 3 'Byy' its described above are normally a constant with value 6 (0x110). However, although the first bit might(!) signal the battery condition the other 2 are unknown and considered a constant. </p>
 <p>Out of the box the WT440 protocol is not suited for sending any other info than temperature and humidity, be it that the Nethome page mentions some reserved addresses (address 10) be used for wind and rain reporting.</p>
 <p>If we would like to use the same trick for reporting airpressure, we can of course reserve another address. But it would also be possible to (mis-)use the constant yy bits in the protocol and use them for setting the information to airpressure. If we then would like to report the values of a BMP085 or BMP180 device (which are cheap) then we need room in the message for both the temperature and the airpressure. The 'HHHHHHH' 7 humidity bits to not offer much room to play, as their value is between 0 and 127 and therefore too small to encode airpressure. However, as we would be happy with airpressure readings in one(1) HpA accuracy to if we would use an&nbsp;offset of 930, we would be able to report airpressure readings between 930 and 1056 in these 7 bits. For the Netherlands that is sufficient as never we recorded values above 1050 Hpa and never lower than 950, but if you live in areas with storms etc. you might want to use a different scale.</p>
 <p>Of course this would ONLY work in my house if Arduino Sensors are used and if I modify the wt440Receiver function in the Arduino library.</p>
@@ -391,8 +489,12 @@ And there are 8 bits for Device is: 140+260 or 260+140 uSecs<br />
     <td>&nbsp;</td>
   </tr>
 </table>
-<p>It is not possible to set anything for the Auriol receiver. But its protocol is simple and reliable.</p>
-<p>Auriol is NOT supported in direct connected receivers, however it IS supported by the Arduino Gateway.</p>
+<p>It is not possible to set anytthing on the Auriol weather sensor itself. But its protocol is simple and reliable.</p>
+<p>Auriol is NOT supported in direct connected receivers, however it IS supported by the Arduino Gateway and the Arduino Repeater (but for the latter its protocol is converted to wt440 protocol).</p>
+<p>&nbsp;</p>
+<h2>LamPI specific</h2>
+<p>We might develop our own protocol that should enable sending and receiving all kind of messages between an Arduino and the Raspberry over 433 MHz transmission. Thinking about doing this, the protocol must be simple to understand and different from the other ones that we support by the Arduino Gateway.</p>
+<p>It is equally possible to use another carrier frequency such as 2.4 GHz for our communication, but that is dependent on the used transceiver  more than anything else.</p>
 <p>&nbsp;</p>
 </body>
 </html>
