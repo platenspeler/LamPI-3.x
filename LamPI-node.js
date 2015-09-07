@@ -1676,7 +1676,7 @@ function dbaseHandler(cmd, args, socket) {
 					//break;										// No update
 				}
 			}//alarm
-			// Generic:
+			// Generic: 
 			updInArray(config['settings'],args);
 			// Substitute complex object, make a physical copy first
 			var upd = {

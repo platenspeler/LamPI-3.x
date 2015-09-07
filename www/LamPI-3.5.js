@@ -4979,7 +4979,7 @@ function activate_setting(sid)
 						myConfirm('Do you want to set the '+skin+' Skin file as your default skin for users that start the application? press OK.<br> ' +
 									  'Otherwise the existing default skin '+current_skin+' will be used. ' +
 									  'Please note that if you press cancel this skin will still be used in your current browser sesssion until you load another skin',
-							// Confirm
+							// Confirm 
 							function () {
 								message('updating the database');
 								if (jqmobile == 1)	{ settings[4]['sett']['mobile']['val'] = skin; }
