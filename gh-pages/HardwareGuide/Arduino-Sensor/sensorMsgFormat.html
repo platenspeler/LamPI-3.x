@@ -1,0 +1,46 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Arduino Messaging</title>
+</head>
+
+<body>
+<h1>Arduino Sensor messaging</h1>
+<h5>Version 3.6 Alpha; Message format may (and will) probably change between LamPI releases</h5>
+<h2>Introduction</h2>
+<p>When using the Arduino as a sensor 'shield' for 433MHz messages,&nbsp;the board will transmit the values of on-board sensors  over the air in the well-known WT440 message format. Unless the Arduino Repeater, the Arduino Sensor does not need a receiver installed. Instead it will only use the on board sensors nd transmit their value over the air to another Arduino Gateway or Raspberry wih connected receiver device.</p>
+<p>The&nbsp;Address that will be used by the Arduino Sensor is configurable in the 433Sensor.h file at compile time. This way, every Arduino Sensor can use its own address to send sensor values and can be&nbsp;recognized uniquely by the LamPI-node daemon.</p>
+<p>Alternatively, you can send on an address that is shared with another Arduino Sensor in order to get more readings and the daemon will sort of average-out both values.</p>
+<h2>Message Format</h2>
+<ul>
+  <li>Temperature and Humidity -&gt; Us the standard WT440 message format</li>
+  <li>Temperature Only -&gt; Use the standard WT440 message format</li>
+  <li>Temperature and Airpressure -&gt; Use the special format of the WT440
+    <ul>
+      <li>special value of 0x7 used for  the constant value to code airpressure</li>
+      <li>Airpressure is coded as: sensor-value / 100 - 930</li>
+    </ul>
+  </li>
+</ul>
+<p>The channel settings are as follows:</p>
+<ul>
+  <li>Channel 0: HTU21d reading, the constant in the 433 message is coded standard as 0x6 (B110)</li>
+  <li>Channel 1: BMP085 reading, the constant in the 433message is coded as 0x7 (B111) and the&nbsp;airpressure is coded as<br />
+<code>value&nbsp;= sensorvalue/100 - 930;</code></li>
+  <li>Channel 2 and up: ds18b20 sensors reading (there might be more on that bus). Constant is coded 0x6, and humidity is 0 (not used).</li>
+</ul>
+<p>&nbsp;</p>
+<h2>Further reading</h2>
+<ul>
+  <li>For more information about Raspberry and Arduino Gateway, <a href="../hardware_guide.html">visit the dedicated page</a> on the Hardware Guide.</li>
+  <li>For more information on the 433 MHz messaging formats recognized by the Arduino receiver, visit the <a href="../../DeveloperGuide/433Transmitters/433messaging.html">433messaging</a> page</li>
+  <li>For&nbsp;more information on the Arduino sensor read its page</li>
+</ul>
+<h2>&nbsp;</h2>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p><br />
+</p>
+</body>
+</html>

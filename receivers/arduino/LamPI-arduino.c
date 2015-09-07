@@ -637,10 +637,10 @@ char * parse_sensor(char *tok, int cod)
 		tok = strtok(NULL, " ,"); address = atoi(tok);
 		tok = strtok(NULL, " ,"); channel  = atoi(tok);
 		tok = strtok(NULL, " ,"); temperature = atoi(tok);
-		tok = strtok(NULL, " ,"); humidity = atoi(tok);
+		tok = strtok(NULL, " ,"); humidity = atoi(tok);					// There is NO humidity, but maybe the Arduino sends it anyway (it is in msg format)
 		sprintf(snd_buf, 
-"{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"auriol\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%d.%d\",\"humidity\":\"%d\"}", 
-		socktcnt%1000,address,channel,temperature/10,temperature%10,humidity);
+"{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"auriol\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%d.%d\"}", 
+		socktcnt%1000,address,channel,temperature/10,temperature%10);
 	break;
 	
 	default:

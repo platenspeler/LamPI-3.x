@@ -279,9 +279,12 @@ function init() {
 	
 	logger("setting skin",1);
 	if (jqmobile != 1) { 
-		skin = '/'+settings[4]['val'];
+		skin = settings[4]['sett']['styles']['val'];
 		logger("init:: Skin selected: "+skin,1);
 		$("link[href^='/styles']").attr("href", skin);
+	}
+	else {
+		skin = settings[4]['sett']['mobile']['val'];
 	}
 
 	// Initial startup config

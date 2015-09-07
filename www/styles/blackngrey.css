@@ -16,36 +16,29 @@
 body {
   font-family: comic sans ms;
   background: #333;
-  color: #eee;
-}
+  color: #eee; }
 
 table {
   width: 100%;
-  height: auto;
-}
+  height: auto; }
 
 tr {
-  width: 600px;
-}
+  width: 600px; }
 
 td {
-  /*		height: 38px; */
-}
+  /*		height: 38px; */ }
 
 p {
   font-family: "Times New Roman";
-  font-size: 20px;
-}
+  font-size: 20px; }
 
 input#lbl {
-  width: 20px;
-}
+  width: 20px; }
 
 /* Prevent the field to get wider when hovering */
 .button:hover, input[type="submit"]:hover, .button:active, input[type="submit"]:active, input[type="input"]:hover {
   font-weight: normal;
-  text-decoration: underline;
-}
+  text-decoration: underline; }
 
 /* ------------------------------------------------------------------------	*/
 /* The DIV define the main sections of the LamPI application.				*/
@@ -61,8 +54,7 @@ input#lbl {
   padding: 5px;
   margin-top: 5px;
   border: 1px solid black;
-  background-color: #222;
-}
+  background-color: #222; }
 
 /* The header header section defined */
 #gui_header {
@@ -75,22 +67,19 @@ input#lbl {
   margin-top: 0px;
   border: 1px solid black;
   text-align: center;
-  background-color: #333;
-}
+  background-color: #333; }
 
 #gui_header_controls {
   position: inherit;
   top: 0px;
   left: 830px;
-  width: 105px;
-}
+  width: 105px; }
 
 #gui_header_content {
   position: inherit;
   top: 0px;
   left: 0px;
-  width: 820px;
-}
+  width: 820px; }
 
 /* This is the area where all the devices in the active room have their 
 	controls (switches and dimmers) defined
@@ -109,8 +98,7 @@ input#lbl {
   text-align: center;
   background-color: #333;
   color: #eee;
-  overflow: hidden;
-}
+  overflow: hidden; }
 
 #gui_menu {
   position: absolute;
@@ -122,8 +110,7 @@ input#lbl {
   height: 445px;
   border: 1px solid black;
   background-color: #333;
-  vertical-align: top;
-}
+  vertical-align: top; }
 
 /* This is the area on the bottom where the user/program messages are displayed */
 #gui_messages {
@@ -138,8 +125,7 @@ input#lbl {
   text-align: center;
   font-size: 14px;
   background-color: #333;
-  color: #eee;
-}
+  color: #eee; }
 
 #addRoomForm {
   background-color: #333;
@@ -150,21 +136,18 @@ input#lbl {
   border-radius: 10px;
   /* width: 500px; */
   width: auto;
-  box-shadow: 0 0 2px 2px #d9d9d9;
-}
+  box-shadow: 0 0 2px 2px #d9d9d9; }
 
 #addRoomForm label {
   padding-left: 20px;
   width: 150px;
   /* text-transform: uppercase; */
-  display: inline-block;
-}
+  display: inline-block; }
 
 #addRoomForm input[type=text],
 #addRoomForm input[type=file],
 #addRoomForm textarea {
-  width: auto;
-}
+  width: auto; }
 
 /* ------------------------------------------------------------------------	*/
 /* The CLASSES define the behaviour of buttons, fields, sliders in the 		*/
@@ -181,21 +164,18 @@ input#lbl {
   margin-top: 3px;
   margin-bottom: 2px;
   background-color: #222;
-  color: #fff;
-}
+  color: #fff; }
 
 /* Indicating a mouse over for a room button */
 .hr_button:hover {
   font-weight: bold;
   background-color: #FF9;
-  color: #111;
-}
+  color: #111; }
 
 /* XXX needs reviewing */
 .rroom {
   width: 300 px;
-  margin-bottom: 10px;
-}
+  margin-bottom: 10px; }
 
 /* Header Scene definition */
 .hs_button {
@@ -205,14 +185,12 @@ input#lbl {
   margin-top: 3px;
   margin-bottom: 2px;
   background-color: #222;
-  color: #fff;
-}
+  color: #fff; }
 
 .hs_button:hover {
   font-weight: bold;
   background-color: #FF9;
-  color: #111;
-}
+  color: #111; }
 
 /* Header Timer definitions */
 .ht_button {
@@ -222,14 +200,12 @@ input#lbl {
   margin-top: 3px;
   margin-bottom: 2px;
   background-color: #222;
-  color: #fff;
-}
+  color: #fff; }
 
 .ht_button:hover {
   font-weight: bold;
   background-color: #FF9;
-  color: #111;
-}
+  color: #111; }
 
 /* Header Handset definitions */
 .hh_button {
@@ -239,14 +215,12 @@ input#lbl {
   margin-top: 3px;
   margin-bottom: 2px;
   background-color: #222;
-  color: #fff;
-}
+  color: #fff; }
 
 .hh_button:hover {
   font-weight: bold;
   background-color: #FF9;
-  color: #111;
-}
+  color: #111; }
 
 /* Header Weather definitions */
 .hw_button {
@@ -256,14 +230,12 @@ input#lbl {
   margin-top: 3px;
   margin-bottom: 2px;
   background-color: #222;
-  color: #fff;
-}
+  color: #fff; }
 
 .hw_button:hover {
   font-weight: bold;
   background-color: #FF9;
-  color: #111;
-}
+  color: #111; }
 
 /* Header Menu area definitions */
 .hm_button {
@@ -273,14 +245,12 @@ input#lbl {
   border-radius: 6px;
   background-color: #222;
   color: #fff;
-  vertical-align: top;
-}
+  vertical-align: top; }
 
 .hm_button:hover {
   font-weight: bold;
   background-color: #FF9;
-  color: #111;
-}
+  color: #111; }
 
 /* Header Configuration definitions */
 .hc_button {
@@ -291,61 +261,52 @@ input#lbl {
   margin-bottom: 2px;
   background-color: #222;
   color: #fff;
-  align: center;
-}
+  align: center; }
 
 .hc_button:hover {
   font-weight: bold;
-  background-color: #FF9;
-}
+  background-color: #FF9; }
 
 /* Command Room button */
 .cr_button {
   height: 35px;
   width: 35px;
-  margin: 1px;
-}
+  margin: 1px; }
 
 /* Command Scene button */
 .cs_button {
   height: 35px;
   width: 35px;
-  margin: 1px;
-}
+  margin: 1px; }
 
 /* Command Timers button */
 .ct_button {
   height: 35px;
   width: 35px;
-  margin: 1px;
-}
+  margin: 1px; }
 
 /* Command Handset button */
 .ch_button {
   height: 35px;
   width: 35px;
-  margin: 1px;
-}
+  margin: 1px; }
 
 /* Command Help button */
 .ch_button:help_button {
   align: right;
-  margin: 1px;
-}
+  margin: 1px; }
 
 /* Command Weather button */
 .cw_button {
   height: 35px;
   width: 35px;
-  margin: 1px;
-}
+  margin: 1px; }
 
 /* Command Config button */
 .cc_button {
   height: 35px;
   width: 35px;
-  margin: 1px;
-}
+  margin: 1px; }
 
 /* Devices definitions */
 /* This dlabels descripts the text label left of a switch/dimmer device */
@@ -359,8 +320,7 @@ input#lbl {
   margin-top: 5px;
   margin-bottom: 5px;
   background-color: #AAA;
-  /* Grey */
-}
+  /* Grey */ }
 
 /* buttons used in a dimmer/slider element . dbuttons are shared with scenes too*/
 .dbuttons {
@@ -375,140 +335,116 @@ input#lbl {
   margin-top: 5px;
   margin-bottom: 5px;
   background-color: #AAA;
-  /* Light Grey */
-}
+  /* Light Grey */ }
 
 .dbuttons:hover {
   font-weight: bold;
-  background-color: #FF9;
-}
+  background-color: #FF9; }
 
 .dbuttons:active {
   color: yellow;
-  background-color: #000;
-}
+  background-color: #000; }
 
 .devrow {
   /* device row */
-  background-color: #333;
-}
+  background-color: #333; }
 
 .devrow:nth-child(odd) {
   background-color: #444;
-  /* Dark Grey */
-}
+  /* Dark Grey */ }
 
 /* This is the dimmer object consisting of dlabel, dbutton */
 .dimrow {
-  background-color: #444;
-}
+  background-color: #444; }
 
 /* A switch element, so just ON/OFF button */
 .switch {
-  background-color: #444;
-}
+  background-color: #444; }
 
 /* Scene definitions */
 .slabels {
-  margin_left: 10px;
-}
+  margin_left: 10px; }
 
 .sval {
-  width: 90px;
-}
+  width: 90px; }
 
 /* A row of scene */
 .scene {
   background-color: #333;
-  color: #fff;
-}
+  color: #fff; }
 
 .scene:nth-child(odd) {
-  background-color: #444;
-}
+  background-color: #444; }
 
 /* Handset Definitions */
 /* A row of handset */
 .handset {
-  background-color: #333;
-}
+  background-color: #333; }
 
 .handset:nth-child(odd) {
-  background-color: #444;
-}
+  background-color: #444; }
 
 /* Buttons for adding, removing and help */
 .new_button {
   background-color: #6F6;
   /* Green */
   min-height: 30px;
-  width: 30px;
-}
+  width: 30px; }
 
 .del_button {
   background-color: #F66;
   /* Red */
   min-height: 30px;
-  width: 30px;
-}
+  width: 30px; }
 
 .help_button {
   background-color: #09F;
   /* Dark Blue */
   min-height: 30px;
-  width: 30px;
-}
+  width: 30px; }
 
 .play_button {
   background-color: #0FF;
   /* Blue */
   min-height: 30px;
-  min-width: 60px;
-}
+  min-width: 60px; }
 
 .stop_button {
   background-color: #F66;
   /* Red */
   min-height: 30px;
-  min-width: 60px;
-}
+  min-width: 60px; }
 
 /* General Definitions */
 .filler {
   width: 300px;
-  /* Align this value with the slider widt below, must be larger */
-}
+  /* Align this value with the slider widt below, must be larger */ }
 
 /* This element in the slider button is used to mark the selected button once pressed */
 .hover {
   background-color: #FF9;
-  color: #111;
-}
+  color: #111; }
 
 .dragger {
   text-shadow: #C00;
-  background-color: #FF6;
-}
+  background-color: #FF6; }
 
 .ui_dialog {
   background-color: #222;
-  color: #eee;
-}
+  color: #eee; }
 
 /* The element making up the slider. The jQuery definition is even much more complex*/
 .slider {
   margin-left: 20px;
   margin-right: 20px;
   border-radius: 5px;
-  width: 300px;
-}
+  width: 300px; }
 
 /* The value of a slider in an input field */
 .slidval {
   width: 30px;
   height: 30px;
-  margin-left: 10%;
-}
+  margin-left: 10%; }
 
 /* Dimmer specific definitions */
 .slider-dimmer .ui-slider {
@@ -518,12 +454,10 @@ input#lbl {
   overflow: hidden;
   position: absolute;
   top: -10px;
-  border-style: none;
-}
+  border-style: none; }
 
 .slider-dimmer .ui-slider-range {
-  background: #d2abfc;
-}
+  background: #d2abfc; }
 
 .slider-dimmer .ui-slider-handle {
   width: 50px;
@@ -533,13 +467,11 @@ input#lbl {
   position: absolute;
   top: -10px;
   border-style: none;
-  border-color: #ef2929;
-}
+  border-color: #ef2929; }
 
 /* Slider Thermo: Specific thermo definitions */
 .slider-thermo {
-  /* float:left; */
-}
+  /* float:left; */ }
 
 .slider-thermo .ui-slider {
   width: 50px;
@@ -548,12 +480,10 @@ input#lbl {
   overflow: hidden;
   position: absolute;
   top: -10px;
-  border-style: none;
-}
+  border-style: none; }
 
 .slider-thermo .ui-slider-range {
-  background: #F66;
-}
+  background: #F66; }
 
 .slider-thermo .ui-slider-handle {
   width: 50px;
@@ -563,8 +493,7 @@ input#lbl {
   position: absolute;
   top: -10px;
   border-style: none;
-  border-color: #ef2929;
-}
+  border-color: #ef2929; }
 
 /* Slider Health: The Health counter indicator */
 .slider-health {
@@ -576,25 +505,21 @@ input#lbl {
   margin-left: 2px;
   padding-top: 5px;
   margin-right: 2px;
-  border-radius: 3px;
-}
+  border-radius: 3px; }
 
 .slider-health .ui-slider-range {
   background: #F66;
-  /* This is the right part from handle to max */
-}
+  /* This is the right part from handle to max */ }
 
 .slider-health .ui-slider-handle {
   background: none;
   overflow: hidden;
   position: absolute;
   border-style: none;
-  /* border-color: $dimmer_background;  */
-}
+  /* border-color: $dimmer_background;  */ }
 
 .slider-health .ui-widget-content {
-  /*      */
-}
+  /*      */ }
 
 /* Settings, various sich as files definitions etc. */
 .select-file {
@@ -606,5 +531,4 @@ input#lbl {
   margin-top: 5px;
   margin-bottom: 5px;
   color: black;
-  background-color: #eee;
-}
+  background-color: #eee; }

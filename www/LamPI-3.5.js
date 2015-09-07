@@ -1479,22 +1479,32 @@ function init() {
 	// The settings array must be there and initialized!
 	debug = settings[0]['val'];
 	use_energy = ( energy.length > 0 ? true : false );			// Will we use energy display, only when P1-sensor is working
-		
-	// Load Skin for the website
-	// XXX Why we would this only for non-jqmobile use is not clear.
+
 	if (jqmobile != 1) {
+	// Load Skin for jquery UI websites
 		// LocalStorage Use
-		if(typeof(Storage)!=="undefined") {
+		if(typeof(Storage)!== "undefined") {
   			// Code for localStorage/sessionStorage.
-			skin = localStorage.getItem('skin');				// Skin Setting
+			skin = localStorage.getItem('skin');
+			// Skin Setting
 			logger("init:: localStorage, skin: "+skin,1);
 		}
 		else {
 			logger("init:: No localStorage support for skin",1);
 		}
-		if (skin == null) skin = settings[4]['val'];
-		$("link[href^='styles']").attr("href", skin);
+
+		if ((skin == null) || (skin === undefined )) { 
+			skin = settings[4]['sett']['styles']['val']; 
+		}
+		logger("init: dbase skin value: "+settings[4]['sett']['styles']['val'], 1);	
 	}
+	else {
+	// Skin settings for mobile devices
+		skin = localStorage.getItem('mobile');
+		if (skin == null) skin = settings[4]['sett']['mobile']['val'];
+	}
+	$("link[href^='styles']").attr("href", skin);
+	logger("init:: skin set to: "+skin, 1);
 
 	// Set the interval so that every 10 seconds the system decreases the healthcount variable
 	setInterval( function() { 
@@ -1511,7 +1521,7 @@ function init() {
 				$("#health-slider").slider("option", "value", healthcount );
 			}
 	}, 10000);
-	
+
 	// XXX This type of init it not flexible.. Fortunately number and type of fields
 	// used for energy is fixed. All of these fields are present in a modern Energy P1 meter
 	energy['kw_hi_use'] = 0;
@@ -1524,7 +1534,7 @@ function init() {
 	energy['kw_ph1_use'] = 0;
 	energy['kw_ph2_use'] = 0;
 	energy['kw_ph3_use'] = 0;
-	
+
 	// Sort the devices array on the "id" field
 	//sort(devices);
 	// XYZ
@@ -4870,8 +4880,9 @@ function activate_setting(sid)
 			});
 			// Init the current value of the button
 		break; //3
-		
+		//
 		// 4 SKIN
+		//
 		case "4":
 			$( "#gui_content" ).empty();
 			html_msg = '<div id="gui_skin"></div>';
@@ -4880,9 +4891,9 @@ function activate_setting(sid)
 			html_msg = '<table border="0">';
 			$( "#gui_skin" ).append( html_msg );
 			
-			if(typeof(Storage)!=="undefined") {
-  				 var effe = localStorage.getItem('skin');				// Skin setting
- 			}
+			//if(typeof(Storage)!=="undefined") {
+  			//	 var effe = localStorage.getItem('skin');				// Skin setting
+ 			//}
 			
 			var table = $( "#gui_skin" ).children();		// to add to the table tree in DOM
 					
@@ -4903,26 +4914,33 @@ function activate_setting(sid)
 			
 			//var list = [];
 			var str = '<fieldset><label for="load_skin">Select File: </label>'
-						+ '<select id="load_skin" value="styles/classic-blue.css" style="width:300px;" class="select-file">'; 
+						+ '<select id="load_skin" value="styles/scale-grey.css" style="width:300px;" class="select-file">'; 
 			var files = [];
 			// files = send2daemon("setting","list_skin","*css");	// XXX Synchronous does not work for node and websockets
 			// The message reception takes place elsewhere, so we have to wait for the correct
-			// message to arrive. Name of the active skin is in settings[4]['val']
-			var dir = "styles";							// XXX This is a temporary fix since root directory of node is /home/pi and not /home/pi/wwww
+			// message to arrive. Name of the active skin is in settings[4]['val'
+			if (jqmobile != 1) {
+				var dir = "styles";
+			}
+			else {
+				var dir = "styles-mobile";
+			}
+			
 			var fileextension=".css";
 			logger("Calling dir read for: "+dir,0);
 			logger("Host: "+window.location.host,1);
-			var h = window.location.host.split(":");	// XXX Remove the special port and use standard Apache port nr. 80
-			
+			var h = window.location.host.split(":");	// Remove the special port and use standard Apache port nr. 80
+			// We use the fact that the server directory is readable to get a listing
 			$.ajax({
     			//This will retrieve the contents of the folder if the folder is configured as 'browsable'
 				url: "http://"+h[0] + "/" +dir,
     			success: function (data) {
-        		//List all jpg files on the page
+        		//List all css files on the page
             		$(data).find("a:contains(" + fileextension + ")").each(function () {
              			var filename = this.href.replace(window.location.host,"").replace(window.location.pathname, "").replace("http://","");
-            			var len = files.push(dir + "/"+filename);
-						logger("Filename: "+filename+", new files length: "+len);
+            			//var len = files.push(dir + "/"+ filename);
+						var len = files.push("/" + dir + filename);
+						logger("Filename: "+filename+", new files length: "+len,2);
 
         			});
 					logger("Skin selection #files: "+files.length);
@@ -4938,11 +4956,9 @@ function activate_setting(sid)
 					but = ''
 					+ '<tr><td>'
 					+ '<input type="submit" name="load_button" id="d1" value="load" class="dbuttons cc_button">'
-					+ '<label for="d1">Load Configuration</label>'
-					+ '<td><form action="">'
+					+ '<label for="d1">Load Configuration</label><td><form action="">'
 					+ str
-					+ '</form>'
-					+ '</td></tr>'
+					+ '</form></td></tr>'
 					;
 					$(table).append(but);
     			}
@@ -4951,6 +4967,7 @@ function activate_setting(sid)
 			// Handle the content of the skin selection screen
 			$( "#gui_skin" ).on("click", ".dbuttons" ,function(e) 
 			{
+				var current_skin = skin;
 				var skin_val = this.value;
 				message("Skin selected "+ skin_val);
 				switch ( skin_val ) {
@@ -4958,15 +4975,16 @@ function activate_setting(sid)
 					case "load":
 						skin = $( "#load_skin" ).val();
 						// Trick!! only replace hrefs that start with our styles directory!!!
-						$("link[href^='styles']").attr("href", skin);
-						myConfirm('Do you want to set the '+skin+' Skin file as your default skin for users that start the application? ' +
-									  'Otherwise the existing default skin '+settings[4]['val']+' will be used. ' +
+						$("link[href^='/styles']").attr("href", skin);
+						myConfirm('Do you want to set the '+skin+' Skin file as your default skin for users that start the application? press OK.<br> ' +
+									  'Otherwise the existing default skin '+current_skin+' will be used. ' +
 									  'Please note that if you press cancel this skin will still be used in your current browser sesssion until you load another skin',
 							// Confirm
 							function () {
-								// Update the database
 								message('updating the database');
-								settings[4]['val'] = skin;
+								if (jqmobile == 1)	{ settings[4]['sett']['mobile']['val'] = skin; }
+								else 				{ settings[4]['sett']['styles']['val'] = skin; }
+								logger("settings:: Set database to: "+JSON.stringify(settings[4],null,2) , 1);
 								send2daemon("dbase","store_setting", settings[4]);
   							}, 
 							// Cancel	
@@ -4978,8 +4996,8 @@ function activate_setting(sid)
 						);
 						if(typeof(Storage)!=="undefined") {
   							// Code for localStorage/sessionStorage.
-							// alert("Support for localstorage");
-							localStorage.setItem('skin', skin);				// Skin setting
+							if ( jqmobile == 1) localStorage.setItem('mobile', skin);
+							else localStorage.setItem('skin', skin);				// Skin setting
 							if (debug>=1) {
 								logger("Set localstorage skin: "+skin);
 							}
@@ -4991,8 +5009,6 @@ function activate_setting(sid)
 						myAlert("Unknown option for Skin/Styles Setting: "+bak);
 				}
 			})
-			// XXX make sure we write this to the mysql backend too!
-	
 		break; //4 skin
 		
 		// Backup and Restore

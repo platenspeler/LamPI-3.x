@@ -312,14 +312,17 @@ function start_TEMPI()
 // See function above, we will call from load_database !!!
 //
 function init() {
-	console.log("init started");
 	debug = settings[0]['val'];
 	cntrl = settings[1]['val'];
 	
 	if (jqmobile != 1) { 
-		skin = '/'+settings[4]['val'];
-		$("link[href^='/styles']").attr("href", skin);
+		skin = settings[4]['sett']['styles']['val'];
 	}
+	else {
+		skin = settings[4]['sett']['mobile']['val'];
+	}
+	$("link[href^='/styles']").attr("href", skin);		// /styles only if teh html file uses /styles too
+	logger("init:: debug: "+debug+", skin: "+skin, 1);
 	
 	graphType = "T";									// temperature, humidity, airpressure
 	graphPeriod = "1d"									// Init to 1 day
@@ -436,10 +439,10 @@ function init_sensors(type)
 					// alert("init_sensors:: found: "+sensors[i]['name']);
 					// Find out whether this button is in the list of graphsSensors['graphType']
 					if (jQuery.inArray(sensors[i]['name'],graphSensors['T']) != -1) {
-						console.log("init_sensors:: Found: "+sensors[i]['name']+" in graphSensors");
+						logger("init_sensors:: selected: "+sensors[i]['name']+" in graphSensors",2);
 						hover="hover";
 					} else {
-						console.log("init_sensors:: NOT Found: "+sensors[i]['name']+" in graphSensors");
+						logger("init_sensors:: NOT selected: "+sensors[i]['name']+" in graphSensors", 2);
 						hover = "";
 					}
 					but += '<input type="submit" id="T'+i+'" value= "'+sensors[i]['name']+'" style="max-width:60px; max-height:25px;" class="hs_button '+hover+'">';

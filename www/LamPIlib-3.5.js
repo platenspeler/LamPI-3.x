@@ -579,7 +579,7 @@ function init_websockets() {
 			case 'list_config':
 				settings[5].list = rcv.list;
 				logger("list_config msg received: "+ rcv.list, 1);
-				activate_setting("5");					// backup restore
+				activate_setting("5");					// backup restore call. We can do this as msg only received when making backups anyway.
 			break;
 			// List all users and "jump" (back) to the setting page
 			case 'list_user':
@@ -589,7 +589,7 @@ function init_websockets() {
 			break;
 			case 'load_database':
 				logger("Receiving load_database message",2);
-				lroot = rcv.response;						// LamPI Root object
+				lroot = rcv.response;					// LamPI Root object
 				rooms = rcv.response['rooms'];			// Array of rooms
 				devices = rcv.response['devices'];		// Array of devices			
 				scenes = rcv.response['scenes'];
@@ -719,7 +719,12 @@ function init_websockets() {
 				// if we found a match, j will be smaller than length of array
 				if (j<sensors.length) {
 					if (rcv.hasOwnProperty('temperature')) sensors[j]['sensor']['temperature']['val']=rcv.temperature;
-					if (rcv.hasOwnProperty('humidity')) sensors[j]['sensor']['humidity']['val']		 =rcv.humidity;
+					if (rcv.hasOwnProperty('humidity')) {
+						if (sensors[j]['sensor']['humidity'] == undefined ) {
+							logger("sensor "+rcv.address+":"+rcv.channel+" humidity undefined",1);
+						}
+						else sensors[j]['sensor']['humidity']['val']		 =rcv.humidity;
+					}
 					if (rcv.hasOwnProperty('airpressure')) sensors[j]['sensor']['airpressure']['val']=rcv.airpressure;
 					if (rcv.hasOwnProperty('windspeed')) sensors[j]['sensor']['windspeed']['val']=rcv.windspeed;
 					if (rcv.hasOwnProperty('winddirection')) sensors[j]['sensor']['winddirection']['val']=rcv.winddirection;

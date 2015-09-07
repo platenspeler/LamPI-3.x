@@ -358,11 +358,13 @@ function init() {
 	cntrl = settings[1]['val'];
 	
 	if (jqmobile != 1) { 
-		skin = '/'+settings[4]['val'];
-		$("link[href^='/styles']").attr("href", skin);
+		skin = settings[4]['sett']['styles']['val'];
 		console.log("init:: Old Skin:"+$("link[href^='/styles']").attr("href")+", Skin replace: "+skin);
 	}
-	
+	else {
+		skin = settings[4]['sett']['mobile']['val'];
+	}
+	$("link[href^='/styles']").attr("href", skin);
 	graphType = "E_ACT";									// temperature, humidity, airpressure
 	graphPeriod = "1d"									// Init to 1 day
 	

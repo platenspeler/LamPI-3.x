@@ -809,7 +809,7 @@ function createDbase(cb) {
   },
   function (callback) {
 	queryDbase('DROP TABLE IF EXISTS settings',function(err, ret) { 
-		queryDbase('CREATE TABLE settings(id INT, descr CHAR(128), val CHAR(128), name CHAR(20) )',function(err, ret) {
+		queryDbase('CREATE TABLE settings(id INT, descr CHAR(128), val CHAR(128), name CHAR(20), sett CHAR(255) )',function(err, ret) {
 			callback(null,'settings made');
 		});
 	});
@@ -881,6 +881,8 @@ function createDbase(cb) {
   },
   function (callback) { var r = [];
 	for (var i=0; i< config['settings'].length; i++) { 
+		var obj = config['settings'][i];
+		obj.sett = JSON.stringify(config['settings'][i]['sett']);
 		insertDb("settings", config['settings'][i], function(cb) { r.push("x") }); }
 	callback(null, 'settings: '+r);
   },
@@ -961,7 +963,9 @@ function loadDbase(db_callback) {
 	},
 	function(callback) {
 		queryDbase('SELECT * from settings',function(err, arg) { 
-			config['settings']=arg; callback(null,'settings '+arg.length); });
+			config['settings']=arg; 
+			for (var i=0; i<arg.length; i++) { arg[i]['sett'] = JSON.parse(arg[i]['sett'] ); }			// XXX Not always working
+			callback(null,'settings '+arg.length); });
 	},
 	function(callback) {
 		queryDbase('SELECT * from brands',function(err, arg) { 
@@ -1672,10 +1676,19 @@ function dbaseHandler(cmd, args, socket) {
 					//break;										// No update
 				}
 			}//alarm
-			// Generic update part
-			updateDb("settings", args, function(result) { 
-				logger("store_settings finished OK "+result,1); 
-				updInArray(config['settings'],args);
+			// Generic:
+			updInArray(config['settings'],args);
+			// Substitute complex object, make a physical copy first
+			var upd = {
+				descr: args.descr,
+            	id: args.id,
+            	val: args.val,
+            	name: args.name,
+				sett: JSON.stringify(args.sett)
+			}
+			// Update the database
+			updateDb("settings", upd, function(result) { 
+				logger("store_setting finished OK "+result,1); 
 				var lroot = {};
 				lroot.settings = config['settings'];
 				var msg = { tcnt: tcnt++ , type: "json", action: "upd_config", message: lroot }; 

@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Arduino Messaging</title>
+</head>
+
+<body>
+<h1>Arduino Repeater messaging</h1>
+<h5>Version 3.6 Alpha; Message format may (and will) probably change between LamPI releases</h5>
+<h2>Introduction</h2>
+<p>When using the Arduino as a repeater for 433MHz messages,&nbsp;the board will pick up ANY well-known 433MHz communication and when a sensor is recognized will retransmit it over the air. There are a few&nbsp;specials which make the Arduino Repeater even more attractive:</p>
+<h2>Message Format</h2>
+<ul>
+  <li>REPEAT: The WT440 and other well-known messages are repeated without handling, Other receiver types are not yet integrated</li>
+  <li>CONVERT: Auriol messages are handled differently, their protocol is &quot;translated&quot; to the well-known WT440 message format as described on the 433messaging page. (In fact we make the Auriol known as a WT440 device (no humidity).</li>
+  <li>TRANSMIT: On-board repeater sensors of type Dallas (ds18b20), HTU21, BMP085/BMP180 will be transmitted over the air AS-IF it were WT440 devices. Airpressure of BMP085 will be coded so that the receiving Arduino Gateway can correctly work with its values.</li>
+  <li>CONFIGURE: All sensors or receiver types can be enabled/disabled at compile time by editing the 433Repeater.h file.</li>
+</ul>
+<h2>Further reading</h2>
+<ul>
+  <li>For more information about Raspberry and Arduino Gateway, <a href="../hardware_guide.html">visit the dedicated page</a> on the Hardware Guide.</li>
+  <li>For more information on the 433 MHz messaging formats recognized by the Arduino receiver, visit the <a href="../../DeveloperGuide/433Transmitters/433messaging.html">433messaging</a> page</li>
+  <li>For&nbsp;more information on the Arduino sensor read its page</li>
+</ul>
+<h2>&nbsp;</h2>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p><br />
+</p>
+</body>
+</html>
