@@ -7,11 +7,16 @@
 <body>
 
 <h1>LamPI Message Format</h1>
+<h5>Version 3.5.6<br>
+  Date: Sep 8, 2015
+  <br>
+</h5>
 <p>This chapter describes the format of messages exchanged between the various LamPI components. In an asynchronous system like LamPI, sensors and users might generate messages all time and the system has to take action based upon these interrupts. </p>
 <h2>Introduction</h2>
-<p>Between the parts of the LamPI system, several components exchange messages to inform the other of device changes, temperature values, initializations etc etc. This call for a standard message format that we can use between all components. This section describes the messages that are exchanged between the LamPI components. In the middle of all communication is the LamPI-daemon, therefore we will discuss the messaging seen from the LamPI-daemon as it communicates with GUI's, sensors and other devices/programs.</p>
+<p>Between the parts of the LamPI system, several components exchange messages to inform the other of device changes, temperature values, initializations etc etc. This call for a standard message format that we can use between all components. This section describes the messages that are exchanged between the LamPI components. In the middle of all communication is the LamPI-node daemon, therefore we will discuss the messaging seen from the LamPI-daemon as it communicates with GUI's, sensors and other devices/programs.</p>
+<p>The function socketHandler() in the LamPI-node.js file handles ALL incoming communication over the sockets (port 5001) and websockets (port 5002). From this function all other functions are called that deal specifically with sensors, GUI, database or other components.</p>
 <p>The general message format in (semi-) JSON language is constructed as follows:</p>
-<p><code>var message = {<br>
+<p><code>var buf = {<br>
   'tcnt' : $tcnt.&quot;&quot;,<br>
   'type' : 'raw',<br>
   'action' : &quot;&lt;some msg action&gt;&quot;,<br>
@@ -19,26 +24,326 @@
 <p>...</p>
 <p><code>'field-n' =&gt; &quot;&lt;field-n string&gt;&quot;<br>
   };</code></p>
-<p>&lt;msg action&gt; is of type string and can be one of the following: </p>
-<ol>
-  <li><code>&quot;ack&quot;,</code></li>
-  <li>&quot;alarm&quot;,</li>
-  <li>&quot;alert&quot;,</li>
-  <li><code>&quot;ping&quot;,</code></li>
-  <li><code>&quot;gui&quot;,</code></li>
-  <li><code>&quot;handset&quot;,</code></li>
-  <li><code>&quot;weather&quot;,</code></li>
-  <li><code>&quot;sensor&quot;,</code></li>
-  <li><code>&quot;energy&quot;,</code></li>
-  <li><code>&quot;load-database&quot;,</code></li>
-  <li>&quot;upd_config&quot;,</li>
-  <li><code>&quot;login&quot;,</code></li>
-  <li><code>&quot;console&quot;</code></li>
-  <li>&quot;list_user&quot;</li>
-  <li>&quot;rules&quot;</li>
-</ol>
+<p>The following functions are recognized by socketHandler(). Some actions do not have additional arguments, some do have additional information in the 'buf' field that is sent with the message. The buf.cmd parameter contains details of such sub command.</p>
+<table width="90%" border="1">
+  <tr>
+    <th width="17%" scope="col">buf.action</th>
+    <th width="19%" scope="col">buf.cmd sub command</th>
+    <th width="64%" scope="col">description</th>
+  </tr>
+  <tr>
+    <td><strong><a href="#alarm">alarm</a></strong></td>
+    <td><em>&lt;none&gt;</em></td>
+    <td>Print Alarm message. No specific alarm actions defined yet.</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong><a href="#console">console</a></strong></td>
+    <td><a href="#logs">logs</a></td>
+    <td>Send back last xxxx lines in the PI-log file to the GUI</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#zlogs">zlogs</a></td>
+    <td>&lt;not yet used&gt;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#sunrisesunset">sunrisesunset</a></td>
+    <td>Send back message with todays sunrise and sunset times</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><p><a href="#clients">clients</a></p></td>
+    <td>Send back list of all clients connected (IP) and their port</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#rebootdaemon">rebootdaemon</a></td>
+    <td>Reboot the LamPI-node daemon</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#printConfig">printConfig</a></td>
+    <td>Send back the current configuration in the 'config' object</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong><a href="#dbase">dbase</a></strong></td>
+    <td><a href="#add_room">add_room</a></td>
+    <td>Add a room record to the config['rooms'] array and store in 'rooms' database</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#delete_room">delete_room</a></td>
+    <td>Delete a room from the 'config' object and from the mysql database</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#add_scene">add_scene</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#delete_scene">delete_scene</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#store_scene">store_scene</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#add_timer">add_timer</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#delete_timer">delete_timer</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#store_timer">store_timer</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#add_handset">add_handset</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#delete_handset">delete_handset</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#list_user">list_user</a></td>
+    <td>send back message with all known users in the database</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#add_user">add_user</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#delete_user">delete_user</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#store_user">store_user</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#add_sensor">add_sensor</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#delete_sensor">delete_sensor</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#add_rule">add_rule</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#store_rule">store_rule</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#delete_rule">delete_rule</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>store_setting</td>
+    <td>Store config['settings'][i] value</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#add_device">add_device</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#delete_device">delete_device</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#store_device">store_device</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>backup_db</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>restore_db</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong><a href="#energy">energy</a></strong></td>
+    <td><em>&lt;none&gt;</em></td>
+    <td>Only one smart meter device is defined at the moment. The buffer argument contains 10 parameters reported by the smart meter. If the meter is not yet present, we create it first.</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong><a href="#graphs">graphs</a></strong></td>
+    <td><a href="#energy_graphs">energy</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#sensor_graphs">sensors</a> OR weather</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong><a href="#gui">gui</a></strong></td>
+    <td>&lt;none&gt;</td>
+    <td>The guiHandler and icsHandler handle incoming device commands received from the user either through the GUI or through a&nbsp;handset message received.</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong><a href="#handset">handset</a></strong></td>
+    <td><a href="#gui">see gui handler</a></td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong><a href="#login">login</a></strong></td>
+    <td>&lt;none&gt;</td>
+    <td>When the connection is not trustued, the LamPI-node program asks for additional user credentials. Parameters are buf.login and buf.passwd. As part of the response to client the daemon sends the '<a href="#alert">alert</a>' command back as well</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong><a href="#load_database">load_database</a></strong></td>
+    <td>&lt;none&gt;</td>
+    <td>This command is VERY essential to the LamPI.js gui application. It sends the 'config' object to the requesting client upon starting the client page. </td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong><a href="#ping">ping</a></strong></td>
+    <td>&lt;none&gt;</td>
+    <td>This is a keep-alive message to make sure client and server both know that the otehr one is alive. In a mid-size configuration, ping messages are not necessary anymore since there will be multi commands per minute.</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong><a href="#scene">scene</a></strong></td>
+    <td><p><a href="#run_scene">run_scene</a></p></td>
+    <td>The buf.message argument contains the name of the scene to run</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#cancel_scene">cancel_scene</a></td>
+    <td>Not yet used/implemented. Reserved.</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong><a href="#sensor">sensor</a></strong></td>
+    <td>&lt;none&gt;</td>
+    <td>Handle incoming sensor messages. So update the config['sensors'] object.</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><p><strong><a href="#setting">setting</a></strong></p></td>
+    <td><a href="#store_config">store_config</a></td>
+    <td>Store the config database file. The buf.message parameter secifies the filename</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><a href="#load_config">load_config</a></td>
+    <td>Load the config database text file specified by the buf.name argument</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td><p><a href="#list_config">list_config</a></p></td>
+    <td>Make a list of all configuration files in the ~/config directory and send back to the requesting GUI socket</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>user</strong></td>
+    <td>&lt;none&gt;</td>
+    <td>Not used at the moment</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>weather</strong></td>
+    <td><a href="#sensor">see Sensor</a></td>
+    <td>Weather has migrated to sensor (will be obsolete in one of the next releases).</td>
+  </tr>
+</table>
 <p>In the sections below the messages are explained in more detail.</p>
-<h2>1. ack</h2>
+<h2>ack</h2>
 <p>Acknowledge message, telling connected clients that the LamPI-daemon as received its message OK.</p>
 <p><code>var message = {</code></p>
 <p><code>tcnt; 				// message transaction counter<br>
@@ -46,11 +351,11 @@
   action == &quot;ack&quot;; </code></p>
 <p><code>}</code></p>
 <p>&nbsp;</p>
-<h2>2. alarm</h2>
+<h2><a name="alarm"></a>alarm</h2>
 <p>Same as Alert message</p>
 <p></p>
 <p>&nbsp;</p>
-<h2>3. alert</h2>
+<h2><a name="alert"></a>alert</h2>
 <p><code>var message = {</code></p>
 <table width="766" height="71" border="0">
   <tr>
@@ -74,8 +379,87 @@
 </table>
 <p><code>}</code></p>
 <p>&nbsp;</p>
-<h2>&nbsp;</h2>
-<h2>4. ping</h2>
+<p></p>
+<h2><a name="console"></a>console</h2>
+<p>The console message is used to receive and send messages to the GUI client that contain console/management - like information about the system. Messages are a result of user actions taken in the console section (subsetion of the config menu) in the GUI. Examples are: List connected clients to the LamPI-deamon, last 20 lines of the log/LamPI_daemon.log file and restarting the daemon itself.</p>
+<p><code>var rcv = {<br>
+ &nbsp; rcv.tcnt, 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	// message transaction counter<br>
+ &nbsp; rcv.type	==	'raw'	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	// type of content part, eg raw or json<br>
+ &nbsp; rcv.action == 'console',<br>
+ &nbsp; rec.request == 'code'
+  &nbsp;	// One of the sub commands found below (logs, reboot etc.)<br>
+TBD </code></p>
+<p><code>}</code></p>
+<p>And the response to the requesting GUI is as follows:</p>
+<p><code>var buf = {<br>
+&nbsp; rcv.tcnt, 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	// message transaction counter<br>
+&nbsp; rcv.type	=	'raw',&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	// type of content part, eg raw or json<br>
+&nbsp; rcv.action = 'console',<br>
+&nbsp; rcv.request = '&lt;same as your rcv.request code&gt;', <br>
+&nbsp; rcv.list = &quot;whatever response is appropriate for the command&quot;<br>
+</code><code>}</code></p>
+<p>The subcommands used by the console action are as follows:</p>
+<h3><a name="logs"></a>logs</h3>
+<p>The log command gives webbrowser GUI users the possibility to see last 30 lines of the log file. Of course for debuggingit is better to log in on the master and use the 'tail -f ~/log/PI-node.log' command, but when logging on to the Raspberry&nbsp;LamPI master is no possible this command is the best alternative.</p>
+<p><code>var buf = {<br>
+&nbsp; rcv.tcnt, 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	// message transaction counter<br>
+&nbsp; rcv.type	=	'raw',&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	// type of content part, eg raw or json<br>
+&nbsp; rcv.action = 'console',<br>
+&nbsp; rcv.request = 'logs', <br>
+&nbsp; rcv.list = &quot;last 30 lines of log file in html format&quot;<br>
+</code><code>}</code></p>
+<h3><a name="zlogs"></a>zlogs</h3>
+<p>Not yet implmented because Z-Wave is more difficult in its interface. Alternatively one can inspect the log file with the webbrowser through 'http://&lt;Razberry IP&gt;:8083'&nbsp;and use the Razberry interface to look at device states and log files.</p>
+<h3><a name="sunrisesunset"></a>sunrisesunset</h3>
+<p>Sometimes we like to check what today's timers for sunrise and sunset are. Especially the latter is used in the timer interface to start the lighting at a certain time interval before or after sunset.</p>
+<p><code>var buf = {<br>
+ &nbsp; rcv.tcnt, 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	// message transaction counter<br>
+ &nbsp; rcv.type	=	'raw',&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	// type of content part, eg raw or json<br>
+ &nbsp; rcv.action = 'console',<br>
+&nbsp; rcv.request = 'sunrisesunset',
+ <br>
+&nbsp; rcv.list = &quot;&lt;br&gt;Sunrise: &quot;+sunriseStr+&quot; Hrs&lt;br&gt;Sunset: &quot;+sunsetStr+&quot; Hrs&lt;br&gt;&quot;<br>
+</code><code>}</code></p>
+<p><code>// sunriseStr and sunsetStr are the string formats used to send back to the client</code></p>
+<h3><a name="clients"></a>clients</h3>
+<p><code>var buf = {<br>
+&nbsp; rcv.tcnt, 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	// message transaction counter<br>
+&nbsp; rcv.type	=	'raw',&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	// type of content part, eg raw or json<br>
+&nbsp; rcv.action = 'console',<br>
+&nbsp; rcv.request = 'clients', <br>
+&nbsp; rcv.list = &quot;&lt;br&gt;&quot;+client.name+&quot;:&quot;+client.type+&quot;&lt;br&gt;&quot;<br>
+</code><code>}</code></p>
+<p><code>// rcv.list may contain multiple of these arguments contining client name/IP and type websocket or socket. <br>
+  // 
+Lines are separated by &quot;&lt;br&gt;&quot;</code></p>
+<h3><a name="rebootdaemon"></a>rebootdaemon</h3>
+<p>Reboot the LamPI-node.js daemon. </p>
+<h3><a name="printConfig"></a>printConfig</h3>
+<p>The configuration&nbsp;can be output using the webserver as follows: 'http://&lt;Your IP&gt;:8080/config'. This povides the best experience as the width of the outpu will scale as much as possible with the opn browser window. However, it is also quite good possible to to output back to the current LamPI session. However, take into accoun that sensor settings might be too much to fit in the window correctly.</p>
+<p>&nbsp;</p>
+<h2><a name="dbase"></a>dbase</h2>
+<p>The dbase command arranges load and store of objects to the config object and the database (for persistent storage). There are several sub commands involved, most are initiated by a client GUI by updating the value of a device by the user, or as a result of creating or deleting a new defnition in the GUI.</p>
+<h3><a name="add_room"></a>add_room, <a name="delete_room"></a>delete_room</h3>
+<p>&nbsp;</p>
+<h3><a name="add_device"></a>add_device, <a name="delete_device"></a>delete_device, <a name="store_device"></a>store_device</h3>
+<p>&nbsp;</p>
+<h3><a name="add_handset"></a>add_handset, <a name="delete_handset"></a>delete_handset</h3>
+<p>&nbsp;</p>
+<h3><a name="add_scene"></a>add_scene, <a name="delete_scene"></a>delete_scene, <a name="store_scene"></a>store_scene</h3>
+<p>These database commands handle scene object database&nbsp;for actions that are taken by the GUI user.</p>
+<p>&nbsp;</p>
+<h3><a name="add_timer"></a>add_timer, <a name="delete_timer"></a>delete_timer, <a name="store_timer"></a>store_timer</h3>
+<p>&nbsp;</p>
+<h3><a name="add_user"></a>add_user, <a name="delete_user"></a>delete_user, <a name="store_user"></a>store_user</h3>
+<p>&nbsp;</p>
+<h3><a name="add_sensor"></a>add_sensor, <a name="delete_sensor"></a>delete_sensor</h3>
+<p>&nbsp;</p>
+<h3><a name="add_rule"></a>add_rule, <a name="delete_rule"></a>delete_rule, <a name="store_rule"></a>store_rule</h3>
+<p>&nbsp;</p>
+<h3><a name="list_user"></a>list_user</h3>
+<p>This message is used to provide the GUI with a list of authorized user profiles. Used in the config -&gt; users option.</p>
+<p>&nbsp;</p>
+<h2><a name="ping"></a>ping</h2>
 <p>The LamPI-daemon received PING messages from some of its connected clients to tell that they are still alive. This messaging might disappear in future releases of the software as during normal operations it does not add value. It does however for maintenance and debugging purposes.</p>
 <p><code>var message = {</code></p>
 <table width="766" height="71" border="0">
@@ -99,8 +483,22 @@
   </tr>
 </table>
 <p><code>}</code></p>
+<h2><a name="energy"></a>energy</h2>
+<p>var rcv = {</p>
+<p> <code>rcv.tcnt; 				// message transaction counter<br>
+  rcv.type;				// type of content part, eg raw or json<br>
+  rcv.action = &quot;energy&quot;;</code></p>
+<p><br>
+  TBD </p>
+<p>}</p>
+<h2></h2>
+<h2><a name="graphs"></a>graphs</h2>
 <p>&nbsp;</p>
-<h2>5. gui (=upd)</h2>
+<h3><a name="energy_graphs"></a>energy</h3>
+<p>&nbsp;</p>
+<h3><a name="sensor_graphs"></a>sensor</h3>
+<p>&nbsp;</p>
+<h2><a name="gui"></a>gui</h2>
 <p>Let's start with the messages between the GUI and the LamPI daemon. The GUI connects to the LamPI-daemon either through Ajax calls (Old way) or over a websocket connection. Wesbockets use the jSon message format and therefore a range of messages is used to get messages accross to the LamPI-daemon. The content of these messages are in the standard ICS-1000 message format which is a simple ASCII coding. However, since the LamPI system supports more devices than the ICS-1000 some additional messages are defined.</p>
 <p><code>var message = {</code></p>
 <blockquote>
@@ -123,84 +521,59 @@
 </blockquote>
 <p><code>}</code></p>
 <p>&nbsp;</p>
-<h2>6. handset</h2>
+<h2><a name="handset"></a>handset</h2>
 <p>Handsets from klikaanklikuit, Action or other handsets that are defined and recognized can send information about buttons pressed to the LamPI-daemon process.</p>
 <p><code>var rcv = {</code></p>
-<blockquote>
-  <p><code> rcv.tcnt; 				// message transaction counter<br>
-    rcv.type;				// type of content part, eg raw or json<br>
-    rcv.action; </code></p>
-</blockquote>
-<p><code>}</code></p>
-<h2>7. sensor</h2>
+<p><code> &nbsp;	rcv.tcnt; 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	// message transaction counter<br>
+ &nbsp; rcv.type: raw			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	// type of content part, eg raw or json<br>
+ &nbsp; rcv.action;<br>
+</code><code>}</code></p>
+<p>&nbsp;</p>
+<h2><a name="login"></a>login</h2>
+<p>This message is used to tell the GUI that the LamPI-daemon does or does not trust the client, based on its IP address.</p>
+<p><code>var rcv = {<br>
+&nbsp;	</code><code>tcnt: &lt;integer	value&gt;,			// message transaction counter<br>
+ &nbsp; type: &quot;raw&quot;,				// type of content part, eg raw or json<br>
+ &nbsp; action : &quot;login&quot;,<br>
+ &nbsp; message : &quot;optional text message&quot;<br>
+</code><code>}</code></p>
+<p>&nbsp;</p>
+<h2><a name="sensor"></a>sensor</h2>
 <p>Messages received from the LamPI_receiver or any other sensor control program might contain the weather action, which will be interpreted by the LamPI_daemon and its values forwarded to the connected GUI clients.</p>
-<p>var rcv = {</p>
-<p><code>	tcnt: , 				// message transaction counter<br>
-type,				// type of content part, eg raw or json<br>
+<p><code>var rcv = {</code><br>
+  <code>	&nbsp;	tcnt: , 				// message transaction counter<br>
+  &nbsp;
+type: 'raw',				// type of content part, eg raw or json<br>
+&nbsp;
 action: 'sensor',
-</code><code><br>
-  address : ,<br>
-  channel : ,<br>
-  temperature: ,<br>
-  humidity : ,<br>
-  airpressure: ,<br> 
-  windspeed: ,
+<br>
+ &nbsp; address : ,<br>
+ &nbsp; channel : ,<br>
+ &nbsp; temperature: ,<br>
+ &nbsp; humidity : ,<br>
+ &nbsp; airpressure: ,<br> 
+ &nbsp; windspeed: ,
   <br>
-  winddirection: ,<br>
-  rainfall: </code><br>
-</p>
-<p>}</p>
+ &nbsp; winddirection: ,<br>
+ &nbsp; rainfall: <br>
+</code><code>}</code></p>
 <p>&nbsp;</p>
-<h2>8. Sensor-Daemon Message Format</h2>
-<p>The second important message format is between sensors and the LamPI-node.js daemon. Sensors connect to the LamPI-daemon through there own piece of code which will read the sensor value, open a socket connection to the daemon and send the value in a jSon encoded format.</p>
-<p><code>var sensor = {</code></p>
-<p><code> tcnt: &lt;integer value&gt; // transaction count for reference by transmitter and daemon</code></p>
-<p><code>}</code></p>
+<h2><a name="setting"></a>setting</h2>
+<p>The individual settings as in config['settings'] can be updated. Settings can be updated local to the GUI session in the browser, and some can be stored in persistent storage.</p>
+<h3><a name="store_config" id="store_config"></a>store_config</h3>
 <p>&nbsp;</p>
-<h2>9. energy</h2>
-<p>var rcv = {</p>
-<p> <code>rcv.tcnt; 				// message transaction counter<br>
-  rcv.type;				// type of content part, eg raw or json<br>
-rcv.action = &quot;energy&quot;;</code></p>
-<p><br>
-  TBD
+<h3><a name="load_config"></a>load_config</h3>
+<p>Load the config file requested by the user (in the socket) and make sure that the current 'config' object is replaced by the JSON object found in the file.</p>
+<h3><a name="list_config"></a>list_config</h3>
+<p>List all config files in the config directory and send them to the requesting GUI client.<br>
 </p>
-<p>}</p>
-<h2><br>
-</h2>
-<h2>10. load_database</h2>
+<h2><a name="load_database"></a>load_database</h2>
 <p>This is the message that will reset the Mysql database and re-load the <code>~/config/database.cfg</code> file into the system</p>
 <p>var rcv = {</p>
 <p> <code>tcnt: &lt;integer	value&gt;,			// message transaction counter<br>
   type: &quot;json&quot;,				// type of content part, eg raw or json<br>
   action : &quot;load_database&quot;</code></p>
 <p>}</p>
-<p>&nbsp;</p>
-<h2>11. upd_config</h2>
-<p>This message format is almost the same as the load_database message. However, we do not expect the init action. </p>
-<p>&nbsp;</p>
-<h2>12. login</h2>
-<p>This message is used to tell the GUI that the LamPI-daemon does or does not trust the client, based on its IP address.</p>
-<p>var rcv = {</p>
-<p> <code>tcnt: &lt;integer	value&gt;,			// message transaction counter<br>
-  type: &quot;raw&quot;,				// type of content part, eg raw or json<br>
-  action : &quot;login&quot;,<br>
-  message :
-</code>&quot;optional text message&quot;</p>
-<p>}</p>
-<p></p>
-<h2>13. console</h2>
-<p>The console message is used to receive and send messages to the GUI client that contain console/management - like information about the system. Examples are: Connected clients to the LamPI-deamon, last 20 lines of the log/LamPI_daemon.log file and restarting the daemon itself.</p>
-<p><code>var rcv = {</code></p>
-<p><code> rcv.tcnt; 				// message transaction counter<br>
-  rcv.type;				// type of content part, eg raw or json<br>
-  rcv.action == &quot;console&quot;; <br>
-  TBD </code></p>
-<p><code>}</code></p>
-<h2>14. list_user</h2>
-<p>This message is used to provide the GUI with a list of authorized user profiles. Used in the config -&gt; users option.</p>
-<h2>15. rules</h2>
-<p>The program in ~/www/rules will sen and receive message with the LamPI-node.js daemon.</p>
 <p>&nbsp;</p>
 <h1>Z-wave Connect</h1>
 <p>The Z-Wave messaging format is described on the separate Z-Wave page. Reason is that this is not so much a programming interface but communication takes place as a URL string that is executed by &quot;curl&quot; in the LamPI-daemon. At the moment the communication is therefore initiated by the LamPI-daemon only.</p>

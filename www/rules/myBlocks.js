@@ -179,6 +179,39 @@ Blockly.JavaScript['sensors_humidity'] = function(block) {
   return [code, Blockly.JavaScript.ORDER_FUNCTION_CALL];
 };
 
+// ------------------------------------------------------------
+// 3. luminescense value (screen side works)
+Blockly.Blocks['sensors_luminescense'] = {
+  init: function() {
+    this.setHelpUrl('http://www.westenberg.org/');
+    this.setColour(320);
+	var str = [];
+	for (var i=0; i<sensors.length;i++) {
+		if (sensors[i]['sensor'].hasOwnProperty('luminescense'))
+			str.push( [ sensors[i]['name'], sensors[i]['name']+"" ] );
+	}
+    this.appendDummyInput()
+        //.setCheck("String")			// Only if type is not appendDummyInput
+		.appendField('lumi')			// Make null if type is any
+		.appendField(new Blockly.FieldDropdown( str ), "drop3");
+    this.setOutput(true, "Number");
+    this.setTooltip('Returns the sensor luminescense value');
+  }
+};
+
+//
+Blockly.JavaScript['sensors_luminescense'] = function(block) {
+  var statements_lumi = Blockly.JavaScript.statementToCode(block, 'lumi');
+  var dropdown_drop3 = block.getFieldValue('drop3');
+  // TODO: Assemble JavaScript into code variable.
+  var code = '';
+  var i = lookupSensorByName(dropdown_drop3);
+  if (i>=0) {
+	 code="config['sensors']["+i+"]['sensor']['luminescense']['val']"; 
+  }
+  return [code, Blockly.JavaScript.ORDER_FUNCTION_CALL];
+};
+
 // ----------------------------------------------------------------------------
 // DEVICES
 // ----------------------------------------------------------------------------
@@ -219,7 +252,7 @@ Blockly.JavaScript['devices_switch'] = function(block) {
   return [code, Blockly.JavaScript.ORDER_FUNCTION_CALL];
 };
 
-// 1. Dimmers
+// 2. Dimmers
 Blockly.Blocks['devices_dimmer'] = {
   init: function() {
     this.setHelpUrl('http://www.westenberg.org/');
@@ -416,7 +449,7 @@ Blockly.JavaScript['text_console'] = function(block) {
 	return code;
 };
 
-// 1.
+// 2.
 Blockly.Blocks['text_alert'] = {
   init: function() {
     this.setHelpUrl('http://www.westenberg.org/');

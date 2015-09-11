@@ -11,6 +11,9 @@
 <p>Release 3.5 (August 2015)</p>
 <ul>
   <li>Make all I2C messages from sensors to the LamPI-nod.js daemon the same. The address contains the specific address for the sensor on the bus and the channel will contain the last byte of the IP&nbsp;address of the machine the sensor is on. Together they will make that sensors messages will always be unique.</li>
+  <li>Add a configuration reporting function</li>
+  <li>Make an init function for the LamPI-node daemon using either 'http://&lt;Your IP&gt;:8080/init' or start the daemon with '~/scripts/PI-node -i'</li>
+  <li>Statistics of devices last seen, etc etc when using: 'http://&lt;Your IP&gt;:8080/config'</li>
 </ul>
 <p>Release 3.4 (Juli 2015)</p>
 <ul>

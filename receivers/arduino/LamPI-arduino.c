@@ -586,6 +586,7 @@ char * parse_sensor(char *tok, int cod)
 		switch (address)
 		{	// Code for SHT21 or HTU21
 			case 40:
+				fprintf(stderr,"parse_sensor:: onboard HTU21\n");
 				tok = strtok(NULL, " ,"); temp = atof(tok);
 				tok = strtok(NULL, " ,"); humi = atof(tok);
 				sprintf(snd_buf, 	"{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"sht21\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%2.1f\",\"humidity\":\"%2.1f\"}", 
@@ -594,6 +595,7 @@ char * parse_sensor(char *tok, int cod)
 			
 			// Code for BMP085 and BMP180
 			case 77:
+				fprintf(stderr,"parse_sensor:: onboard BMP085\n");
 				tok = strtok(NULL, " ,"); temperature = atoi(tok);
 				tok = strtok(NULL, " ,"); airpressure = atoi(tok);
 				tok = strtok(NULL, " ,"); altitude = atoi(tok) / 100;
@@ -601,7 +603,16 @@ char * parse_sensor(char *tok, int cod)
 				socktcnt%1000,address,channel,temperature/10,temperature%10,airpressure/100);
 			break;
 			
+			// BH1750 Luminescense
+			case 23:
+				fprintf(stderr,"parse_sensor:: onboard BH1750\n");
+				sprintf(snd_buf, 	"{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"bh1750\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"luminescense\":\"%d\"}", 
+				socktcnt%1000,address,channel,atoi(strtok(NULL, " ,")) );
+			break;
+			
+			// 18dsb20
 			default:		// We could parse, but assume those long DALLAS addresses at this moment
+				fprintf(stderr,"parse_sensor:: default onboard 18ds20\n");
 				channel = 0;
 				tok = strtok(NULL, " ,"); temp = atof(tok);
 				tok = strtok(NULL, " ,"); humidity = atoi(tok);

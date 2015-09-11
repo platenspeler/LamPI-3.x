@@ -407,7 +407,8 @@ function init_blockly() {
 	
 	toolbox += "<category name='sensors'>";
 		toolbox += '<block type="sensors_temperature"></block>';
-		toolbox += '<block type="sensors_humidity"></block>'; 
+		toolbox += '<block type="sensors_humidity"></block>';
+		toolbox += '<block type="sensors_luminescense"></block>';
 	toolbox += '</category>';
 		
 	toolbox += "<category name='devices'>";

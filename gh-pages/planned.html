@@ -21,17 +21,17 @@
   <li>(1) We need a check function to check every device, scene and rule for data which is out of date etc.</li>
   <li>Receive alarms from the LamPI-gate Z-Wave gateway and deal with them. At the moment the gateway reports back changed device values to LamPI but we need to handle alarms and temperature sensors as well.</li>
   <li>Integrate an alarm system with rules and/or scenes</li>
-  <li>(2) See whether LamPI&nbsp;sensors can be made to work from a remote location over the internet. This omes in handy if you want to check another location from your home address</li>
+  <li>(2) See whether LamPI&nbsp;sensors can be made to work from a remote location over the internet. This comes in handy if you want to check another location from your home address</li>
   <li>(3) LamPI speech recognition. Some home automation systems have speech recognition to switch on/off devices. I'm not yet convinced of speach recognition to work well in a living room environment, but like to study the function.</li>
   <li>Add full support for Z-Wave (or Zigbee). As the LamPI-daemon is quite universal in its setup adding transmitter/receivers for these technologies is relatively easy. At the moment ZWave support is implemented through a Z-Way gateway running on a dedicated RaspberryPI</li>
   <li>Now that the PHP code has disappeared in favour of node.js, I like to see if Mongodb/Mongoose would be a better db solution than MySQL</li>
-  <li>Statistics of devices last seen, etc etc</li>
   <li>Internationalization; Probably not worth spending too much time on this, as most people that will use this projects do not mind English versions anyway. So probably just making an alternative startup file for ''database.cfg&quot; would be enough for international customers to get a good feel for the software.</li>
 </ul>
 <h3>Sensor/Transmitter/Reeiver Hardware</h3>
 <ul>
-  <li>Work on LamPI receiver efficiency. For example by working with a high-power tranceiver.</li>
-  <li>As the Raspberry is a Unix device and not quite capable of dealing with High speed interrupts, see whether using a separate Arduino connected over USB with its own transmitter and receiver offer better performance (it has better real-time possibilities)</li>
+  <li>Work on LamPI receiver and Arduino Gateway efficiency. For example by working with a high-power tranceiver.</li>
+  <li>Add to the Arduino Gateway support list. For example IR sensors/tansmitters are not yet supported</li>
+  <li>Work on support for 2.4GHz Zigbee and other devices</li>
 </ul>
 <h1><a name="KnownIssues"></a>Known Issues, Bugs etc.</h1>
 <p>Both architectual and GUI related</p>

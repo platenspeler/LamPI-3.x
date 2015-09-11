@@ -224,7 +224,7 @@
   </tr>
   <tr>
     <td><blockquote>
-      <p>onboard Sensor</p>
+      <p>onboard HTU21d Sensor</p>
     </blockquote></td>
     <td>&nbsp;</td>
     <td>&lt; {cnt} 3 0 40 0 26.5 50.1</td>
@@ -236,7 +236,7 @@
     </blockquote></td>
     <td>&nbsp;</td>
     <td>&lt; {cnt} 3 1 1 0 8984 85</td>
-    <td>Receive UPM weather message temp (20.1 Celcius encoded) and humi (85%)</td>
+    <td>Receive UPM weather message temp (20.1 Celcius encoded) and humi (85%) for address 1 and channel 0</td>
   </tr>
   <tr>
     <td><blockquote>
@@ -244,17 +244,17 @@
     </blockquote></td>
     <td>&nbsp;</td>
     <td>&lt; {cnt} 3 2 1 0 8984 85</td>
-    <td>Alsmost same message as above, but instead of humidity show airpressure value as 85 + 930 = 1015 Hpa</td>
+    <td>Almost same message as above, but instead of humidity show airpressure value as 85 + 930 = 1015 Hpa</td>
   </tr>
   <tr>
     <td><blockquote>
       <p>Auriol example:</p>
     </blockquote></td>
     <td>&nbsp;</td>
-    <td>&lt; 8 3 3 138 0 237 0 ! Auriol Cs: 0, N1: 1000, N2: 100<br /></td>
+    <td>&lt; 111 3 3 138 0 237 0 ! Auriol Cs: 0, N1: 1000, N2: 100<br /></td>
     <td>Receive Auriol weather for device id 138, message temp is 23.7 Celcius encoded and humi 0% (not supported). Optionally when debug is active&nbsp;(!), it will provide the N1 and N2 parameters (N1 1000 tells us the battery is still OK).<br />
     <br />
-    When Statistics is compilers, it will show timing info after the &quot;!&quot; as well.</td>
+    When Statistics is compiled, it will show timing info after the &quot;!&quot; as well.</td>
   </tr>
   <tr>
     <td>&nbsp;</td>
@@ -293,7 +293,16 @@
 <h3>Sensors</h3>
 <p>Some sensors may have their own manufacturer protocol and their own transmitter. But there may also be ones that are connected to an Arduino who will forward the sensor message to the LamPI-node daemon.</p>
 <ul>
-  <li>0: Reserved for on-board sensors of the connected Arduino (such as the HTU21D temperature and humidity sensor).</li>
+  <li>0: Reserved for on-board sensors of the connected Arduino (such as the HTU21D temperature and humidity sensor). The sensor is identified by its address on the I2C bus. The Raspberry where the Arduino Gateway is connected too will at the moment accept only ONE (1)&nbsp;Arduino Gateway.
+    <ul>
+      <li>40: The addres of HTU21D tempterature/huidity sensors</li>
+      <li>77: BMP085 or BMP180 temperature/airpressure sensors</li>
+      <li>23: BH1750 luminescense sensors (or 5C)</li>
+      <li>28-xxxxxxxxxxxx: ds18b20 temperature sensors<br />
+        <br />
+      </li>
+    </ul>
+  </li>
   <li>1: wt440h (&lt;); UPM (or Esic) weather sensor message. Range of reception not so good. The address is 1 to 15, and the Channel is 0-3</li>
   <li>2: Special wt440h message (mis-) used to&nbsp;transmit temperature and <strong>airpressure</strong> of a BMP085 device</li>
   <li>3: Auriol messages. </li>

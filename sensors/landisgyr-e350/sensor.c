@@ -92,17 +92,17 @@ char * print_meter(char *outbuf, struct meter mtr, int dflg)
 		sprintf(outbuf, 
 		"\"kw_hi_use\":\"%s\",\"kw_lo_use\":\"%s\",\"kw_hi_ret\":\"%s\",\"kw_lo_ret\":\"%s\",\"gas_use\":\"%s\",\"kw_act_use\":\"%s\",\"kw_act_ret\":\"%s\",\"kw_ph1_use\":\"%s\",\"kw_ph2_use\":\"%s\",\"kw_ph3_use\":\"%s\",\"kw_ph1_ret\":\"%s\",\"kw_ph2_ret\":\"%s\",\"kw_ph3_ret\":\"%s\""
 		
-		, mtr.kw_hi_use
+		, mtr.kw_hi_use					// Special meter for HI tariff usage
 		, mtr.kw_lo_use
-		, mtr.kw_hi_ret
+		, mtr.kw_hi_ret					// Hi rate return
 		, mtr.kw_lo_ret	
-		, mtr.gas_use			// Gas usage for heating
-		, mtr.kw_act_use				// Actual use
-		, mtr.kw_act_ret
-		, mtr.kw_ph1_use				// 3-Phase power
-		, mtr.kw_ph2_use
-		, mtr.kw_ph3_use
-		, mtr.kw_ph1_ret
+		, mtr.gas_use					// Gas usage for heating
+		, mtr.kw_act_use				// Actual total use os power from net
+		, mtr.kw_act_ret				// Actual total return power to net
+		, mtr.kw_ph1_use				// Phase 1 of 3-Phase power usage
+		, mtr.kw_ph2_use				// Phase 2
+		, mtr.kw_ph3_use				// Phase 3
+		, mtr.kw_ph1_ret				// Power return to net by phase
 		, mtr.kw_ph2_ret
 		, mtr.kw_ph3_ret );
 	}

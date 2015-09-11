@@ -59,7 +59,7 @@
 <h3>433MHz Receivers, Switches, Dimmers</h3>
 <ul>
   <li>Klikaanklikuit switches, the new type</li>
-  <li>Action or Impuls switches</li>
+  <li>Action or Impuls switches (and old klikaanklikuit stuff)</li>
   <li>Livolo switches</li>
   <li>Kopou switches</li>
   <li>Elro, Blokker, Old Klikaanklikuit (not tested, software is installed)</li>
@@ -69,12 +69,12 @@
   <li>Klikaanklikuit remotes</li>
   <li>Livolo 4-button keychain</li>
   <li>Kopou 4-button keychain</li>
-  <li>Pulse (= Action) Remotes</li>
+  <li>Impuls (= Action) Remotes</li>
 </ul>
 <h3>433MHz Temperature Sensors</h3>
 <ul>
   <li><a href="433-Sensors/wt440h/wt440h.html">WT-440H</a>, made by UPM/Esic (The weather menu button will only show if a weather sensor is defined in the ~/config/database.cfg file)</li>
-  <li>Auriol (cheap weather station sold by LIDL).</li>
+  <li><a href="433-Sensors/Auriol/auriol.html">Auriol</a> (cheap weather station sold by LIDL).</li>
 </ul>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
@@ -294,7 +294,8 @@
 <p><img src="Arduino-Gateway/images/board_01.jpg" width="400" height="300" hspace="5" vspace="5"></p>
 <p>The Nano is a good system for making an Arduino Gateway device. The little machine is VERY cheap (less than EUR 2.50&nbsp;including shipping) and can do all the things that the larger UNO can do as well. When it arrives at your mailbox, you just have to make a few connectors to the Arduino and it is ready for work. Its small footprint will make it difficult to&nbsp;give it a stable stand and therefore a small experiment board will provide that stability and offers place to connect sensors and transmitter/receiver devices as well.</p>
 <p> <a href="../Hardware/Gateway/images/nano_gateway_1.jpg"><img src="Arduino-Gateway/images/nano_gateway_1.jpg" width="376" height="500" hspace="10" vspace="10"></a> In the picture you see the Nano which is mounted on an experiment board using connectors. The transmitter is on the front, and the receiver is&nbsp;soldered on the rear end of the board. In the middle is a BPM085 board in the front (GY-65) and a LM75 (not connected) is found at the rear end. On the right front side is a DS18b20 device soldered (looks like a transistor), together with a 3-pin connector to attach a 1-meter water-proof sensor DS18b20.</p>
-<p>The board is used as the sensor/transmitter/received unit of one of the Raspberries in the home.</p>
+<p>UpdateSept 2015: I added a HTU21D sensor to the board so I am able to use this board as the main Arduino Gateway for transmit and receive but I'm also able to measu temperature, airpressure and humidity on the small footprint.</p>
+<p>The board is used as the standard sensor/transmitter/receiver unit of one of the Raspberries in the home.</p>
 <h3>Uno</h3>
 <p>I also made a version of the Arduino Gateway based on the Arduino Uno. The Uno is somewhat larger and in combination with the Arduino stick-up board Prototype Shield and a small block it is easy to make and change a setup. Functionally, the Nano and the Uno are equivalent and the code runs on both systems.So it is a matter of choice and preference.</p>
 <p><a href="../Hardware/Gateway/images/ArduinoGateway_1.jpg"><img src="Arduino-Gateway/images/ArduinoGateway_1.jpg" width="400" height="300" hspace="10" vspace="5"></a></p>

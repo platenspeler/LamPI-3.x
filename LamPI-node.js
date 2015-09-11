@@ -296,7 +296,7 @@ function printConfig() {
 							Object.keys(config[key][j]['sensor']).forEach(function(sens) {
 								sns += '<td style="border: 1px solid black;">';
 								lupdate = printTime(config[key][j]['sensor'][sens]['lastUpdate']);
-								sns += sens+": "+config[key][j]['sensor'][sens]['val']+"";
+								sns += sens+": "+parseFloat(config[key][j]['sensor'][sens]['val']).toFixed(1);
 								sns+= '</td>';
 							});
 							sns = '<td style="border: 1px solid black;">'+lupdate+'</td>'+sns;
@@ -948,6 +948,18 @@ function loadDbase(db_callback) {
 		}
 	  });
 	},
+	function(callback) {
+		queryDbase('SELECT * from sensors',function(err, arg) { 
+			if (arg === null) { 
+				logger("loadDbase:: select sensors returns 0",1);
+				callback("loadDbase sensors error",null); 
+			} else {
+				config['sensors']=arg; 
+				for (var i=0; i<arg.length; i++) { arg[i]['sensor'] = JSON.parse(arg[i]['sensor'] ); }
+				callback(null,'sensors '+arg.length); 
+			}
+		});
+	},
 	// Do the CURL request to Z-Wave to load the devices data
 	function(callback) {
 		queryDbase('SELECT * from rooms',function(err, arg) { 
@@ -999,18 +1011,6 @@ function loadDbase(db_callback) {
 			  callback(null,'rules '+arg.length); 
 			}
 		});	
-	},
-	function(callback) {
-		queryDbase('SELECT * from sensors',function(err, arg) { 
-			if (arg === null) { 
-				logger("loadDbase:: select sensors returns 0",1);
-				callback("loadDbase sensors error",null); 
-			} else {
-				config['sensors']=arg; 
-				for (var i=0; i<arg.length; i++) { arg[i]['sensor'] = JSON.parse(arg[i]['sensor'] ); }
-				callback(null,'sensors '+arg.length); 
-			}
-		});
 	},
 	function(callback) {
 		queryDbase('SELECT * from controllers',function cbk(err, arg) { 
@@ -1777,8 +1777,31 @@ function energyHandler(buf, socket) {
 	var db = rrdDir + "/db/" +"e350.rrd";
 	
 	var str=[];
-	logger("energyHandler:: action: "+ buf.action+", brand: "+buf.brand,0);
-
+	
+	var index = addrSensor(buf.address,buf.channel);
+	if (index <0) { 
+		logger("energyHandler:: ERROR index for energy: "+buf.address+":"+buf.channel,1);
+		return;
+	} else {
+		logger("energyHandler index: "+index+" name: "+config['sensors'][index]['name'],2);
+	}
+	var name = config['sensors'][index]['name'];
+	// for all sensors defined in database, keep value and last time (eg Gas, Electricity
+	Object.keys(config['sensors'][index]['sensor']).forEach(function(sensor) {								  
+		if ( buf.hasOwnProperty(sensor)) {
+			logger("sensorHandler:: found: "+sensor+" in config",2);
+			config['sensors'][index]['sensor'][sensor]['val'] = buf[sensor];
+			config['sensors'][index]['sensor'][sensor]['lastUpdate'] = getTicks();
+		}
+		else {
+			// skip tcnt and other message details, only look for existing sensor keywords
+			logger("energyHandler:: ERROR: "+sensor+" not found in config",1);
+		}
+	});
+	
+	logger("energyHandler:: action: "+ buf.action+", brand: "+buf.brand+", name: "+name,1);
+	
+	// One time creation action
 	if (!fs.existsSync(db)) {
 		logger("energyHandler:: rrdtool db "+db+" does not exist ... creating",1);
 		createEnergyDb(db,buf);
@@ -2105,7 +2128,7 @@ function sensorHandler(buf, socket) {
 		logger("sensorHandler:: ERROR unknown index for sensor: "+buf.address+":"+buf.channel,1);
 		return;
 	} else {
-		logger("sensorHandler index: "+index+" name: "+config['sensors'][index]['name'],2);
+		logger("sensorHandler index: "+index+" name: "+config['sensors'][index]['name'], 2);
 	}
 	var name = config['sensors'][index]['name'];
 	
@@ -2116,7 +2139,7 @@ function sensorHandler(buf, socket) {
 	//if ( config['sensors'][index]['sensor'].hasOwnProperty(sensor)) {
 		
 	Object.keys(config['sensors'][index]['sensor']).forEach(function(sensor) {								  
-		if ( buf.hasOwnProperty(sensor)) {
+		if ( buf.hasOwnProperty(sensor) ) {
 			logger("sensorHandler:: found: "+sensor+" in config",2);
 			config['sensors'][index]['sensor'][sensor]['val'] = buf[sensor];
 			config['sensors'][index]['sensor'][sensor]['lastUpdate'] = getTicks();
@@ -2465,7 +2488,7 @@ function queueHandler() {
 		if (debug>=2) console.log("queueHandler:: pop task: ",task);
 		for (var i=0; i< task.length; i++) {					// For every scene runnable after pop(), could be 0 or N
 			var cmds;
-			if (debug>=1) console.log("\t\tqueueHandler:: processing task: ",task[i]);
+			logger("queueHandler:: processing task: ",task[i].name,1);
 			switch (task[i].name) {
 				case "gui":										// We use this fake name for separate ICS commands
 					cmds = task[i].seq.split(",");				// Get all ICS commands in the scene, could be allOff
@@ -2481,17 +2504,16 @@ function queueHandler() {
 							val:   "",							// Optional
 							message: cmds[j]
 						};
-					//icsHandler(data);							// Fills out missing JSON fields. We do not specify socket as 2nd arguments
 					};	
 					socketHandler(JSON.stringify(data)); 		// generic handle function
 				break;
 				case "scene":									// If this is a scene, split all separate cmds and execute
 					// cmds = task[i].seq.split(",");
-					logger("queueHandler:: scene found",1);
-					
+					logger("queueHandler:: scene found",1);	
 				case "rule":
-					// seq contains the info we are looking for (I guess).
-					logger("queueHandler:: Exucuting rule: "+task[i].seq.id+", "+task[i].seq.cmd,2);
+					// seq contains the info we are looking for (I guess). 
+					// Not the rules itself is put on the queue, but its activation is.
+					logger("queueHandler:: Executing rule: "+task[i].seq.id+", "+task[i].seq.cmd,2);
 					switch ( task[i].seq.cmd ) {	
 						case "active":
 							config['rules'][task[i].seq.id].active = task[i].seq.val ;
@@ -2517,7 +2539,6 @@ function queueHandler() {
 							val:   "",							// Optional
 							message: cmds[j]
 						};
-					//icsHandler(data);							// Fills out missing JSON fields. We do not specify socket as 2nd arguments
 					}	
 					socketHandler(JSON.stringify(data)); 		// generic handle function
 				break;
@@ -2616,8 +2637,8 @@ function main(err,results) {
 // Logging loop with interval of around 30-60 seconds.
 // Prequisites:: The config['devices'] array must be present
 // 1. Re-init the Z-Wave data structure
-// 2. The Timer Array of LamPI will be read every xx seconds and when necessary timers
-// that are ready will be put on the run Queue.
+// 2. The Timer Array of LamPI will be read every xx seconds and when necessary timers activate scenes
+//    that are ready will be put on the run Queue.
 function timer_loop() {
   var i = 0;
   logger("Starting timer_loop",1);
@@ -2806,6 +2827,7 @@ function zwave_loop() {
 							logger("\tCl: "+cl+" Temp             , val "+val,1);
 							var index = addrSensor(key,0);
 							config['sensors'][index]['sensor']['temperature']['val'] = val;
+							config['sensors'][index]['sensor']['temperature']['lastUpdate'] = classes[cl].data[1].val.updateTime;
 							buf.temperature = val;
 						}
 						if( 3 in classes[cl].data) {			// Luminescense
@@ -2813,6 +2835,7 @@ function zwave_loop() {
 							logger("\tCl: "+cl+" Lumi             , val "+val,1);
 							var index = addrSensor(key,0);
 							config['sensors'][index]['sensor']['luminescense']['val'] = val;
+							config['sensors'][index]['sensor']['luminescense']['lastUpdate'] = classes[cl].data[3].val.updateTime;
 							buf.luminescense = val;
 						}
 						if( 5 in classes[cl].data) {			// Humidity
@@ -2820,6 +2843,7 @@ function zwave_loop() {
 							logger("\tCl: "+cl+" Humi             , val "+val,1);
 							var index = addrSensor(key,0);
 							config['sensors'][index]['sensor']['humidity']['val'] = val;
+							config['sensors'][index]['sensor']['humidity']['lastUpdate'] = classes[cl].data[5].val.updateTime;
 							buf.humidity = val;
 						}
 						logger("zwave_loop:: starting sensor handler for device: "+key,2);

@@ -6,5 +6,14 @@
 </head>
 
 <body>
+<h1>LamPI Receiver</h1>
+<p>The LamPI-receiver process is a C program handles the 433MHz receiver and transmitter communication on a RaspberryPI. The LamPI-receiver&nbsp;program is for direct connected receiver&nbsp;and/or transmitter hardware cards.</p>
+<p>The LamPI-receiver is running on a RaspberryPI slave or master node and it connects to the LamPI-node daemon over a socket connection on port 5002. The LamPI-receiver program runs as a daemon on the Raspberry and after opening a connection to the master over a socket connection it waits for packages to send over the air using one of the transmitter programs, and it waits for incoming 433MHz messages received by the receiver.</p>
+<p>For&nbsp;transmitter/receiver hardware on an Arduino communcating with the RaspberryPI hardware over an USB connection, please visit the <a href="LamPI-arduino.html">dedicated page on USB connected Arduino Gateways</a>.</p>
+<h2>Transmitter</h2>
+<p>Messages for 433MHz remote devices are received from the socket on port 5002 and then based on the type of device (klikaanklikuit, Impuls, livolo etc.) the appropriate exeicutable program is called that will</p>
+<h2>Receiver</h2>
+<p>As soon as a message arrives on the received it is decoded and transferred to the master using the open 5002 socket. The sniffer.c program that handles the receiving part of the LamPI-receiver program contains a separate handler program for eachof the protocols supported. The central intterrupt handler program fills a central and circular buffer with bit-timing values and so it enables these handling programs to look&nbsp;for messages that conform to one of the supported protocol descriptions.</p>
+<p>&nbsp;</p>
 </body>
 </html>

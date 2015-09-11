@@ -44,14 +44,14 @@
   <li>The LamPI-node.js process
     <ul>
       <li>The mySql database</li>
-      <li>The configuration fil e(database.cfg)</li>
+      <li>The configuration file (database.cfg)</li>
     </ul>
   </li>
-  <li>The device handling, with transmitters (send 2 device) and receivers (from sensors)</li>
+  <li>The device handling, with transmitters (send to device) and receivers (from sensors)</li>
   <li>The Z-Wave gateway (not in picture)</li>
   <li>The Arduino 433MHz gateway</li>
 </ul>
-<p>When you have a lot of devices, or sensors around the house you might duplicate functions for more reach, or duplicate to spread the load on the system more evenly. In this case the described modules can be put on separate systems. These do not have to be Raspberry systems per-se but can also be your fileserver or NAS or your router.</p>
+<p>When you have a lot of devices, or sensors around the house you might duplicate functions for more range, or duplicate to spread the load on the system more evenly. In this case the described modules can be put on separate systems. These do not have to be Raspberry systems per-se but can also be your fileserver or NAS or your router.</p>
 <p>You have to keep in mind though that these systems have dependencies and need other packages to be available in order to work. For example the LamPI-gui probably needs apache and webserver availability including websocket support, the database function needs MySQL support and the LamPI-node.js needs a node.js system in place. Communication between modules takes place with regular sockets or websockets (with exception of the database where we use the mysql function). There are advantages and disadvantages wrt to the approach chosen for the communication between GUI frontend and LamPI-node backend.</p>
 <p>The disadvantage is that with the old plain socket communication and supporting ajax PHP scripts such as backend_rasp.php all looked much easier and developer is in control. Only you think you are, as most of the ajax calls are asynchronous in nature, and the backend PHP scripts run only once so information that is not directly available from the LamPI-daemon will not be received and results in a time-out.</p>
 <p>Webserver transmission is rather simple, once the socket is open you're good to go. Incoming messages are more complicated, they arrive asynchronously to the LamPI-x.y.js client and so we must make sure that these messages are delivered to the correct handler of the program. Also, it is good to define a standard message format between GUI &lt;-&gt; LamPI-node &lt;-&gt; Transmitter/Receiver/Sensors.</p>
