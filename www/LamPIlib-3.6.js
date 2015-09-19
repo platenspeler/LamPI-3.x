@@ -124,6 +124,10 @@ function message(txt,lvl,tim)
 	return(0);
 }
 
+function getURLParameter(name) {
+  return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||null
+}
+
 function isFunction(possibleFunction) {
   return typeof(possibleFunction) === typeof(Function);
 }

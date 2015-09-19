@@ -1431,8 +1431,6 @@ function start_LAMP(){
 		init_websockets();			// For regular web based operations we start websockets here
 	}
 	//
-	// The solution is to start init_lamps, init_rooms and init_menu 
-	// in the result function of the AJAX call in load_database
 	// Upon success, we know that we have read the whole database, and have all buttons etc.
 	// without the database being present, nothing will be displayed
 	//
@@ -5121,8 +5119,7 @@ function activate_setting(sid)
 			$( "#gui_console" ).append( html_msg );
 			var table = $( "#gui_console" ).children();		// to add to the table tree in DOM
 
-			// Create a few buttons and call frontend_set.php directly!!
-			// Cosmetically not the most beutiful solution but it works great for the moment
+			// Cosmetically not the most beautiful solution but it works great for the moment
 			var but =  ''	
 					+ '<thead><tr class="switch">'
 					+ '<td colspan="2">'
@@ -5158,8 +5155,6 @@ function activate_setting(sid)
 		//		e.stopPropagation();
 				value=$(this).val();									// Value of the button pressed (eg its label)
 				var but_id = $(e.target).attr('id');					// id of button
-
-				//alert ("s_setting_id: " + s_handset_id + ", but_id: " + but_id + ", cmd_id: " + cmd_id);
 		
 				// id="Fx2u3v1"
 				// First chars of the button id contain the action to perform
@@ -5188,7 +5183,6 @@ function activate_setting(sid)
 							request: 'zlogs'
 						}
 						logger(client_msg);
-						// Send the zwave log request back to the daemon
 						message("Console ZLog request sent to server",1);
 						w_sock.send(JSON.stringify(client_msg));	
 					break;

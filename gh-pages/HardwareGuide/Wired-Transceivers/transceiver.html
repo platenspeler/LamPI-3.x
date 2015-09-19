@@ -31,7 +31,7 @@
 <p>This is different for the transmit or receiver function, and it also differs whether you just want to send messages using the commandline or whether you want some sort of daemon function that watches a well-known socket and based on incoming messages for a certain brand of equipment will use the correct transmitter command.</p>
 <p>So let me explain.</p>
 <ul>
-  <li>LamPI-receiver daemon; read 433MHz handsets and transmits device commands over sockets on default port 5000 (socket TCP)</li>
+  <li>LamPI-receiver daemon; reads 433MHz handsets and transmits device commands over sockets on default port 5000 (socket TCP)</li>
   <li>Use LamPI-receiver as a stand-alone shell function to see incoming messages, timing and see statistics</li>
   <li>Use the shell transmitter executables to send single command to your connected devices</li>
 </ul>
@@ -39,7 +39,7 @@
 <p>The command to use to have LamPI-receiver behave as a daemon is:</p>
 <p><code><strong>&gt; cd ~/exe ; ./LamPI-receiver -d &amp;</strong></code></p>
 <p>which will start LamPI-receiver as a background process. If you like to start LamPI-receiver and get more information in log files:</p>
-<p><code><strong>&gt; cd ~/exe; sh ./LamPI-receiver -d -s &gt; LamPI-receiver.log 2&gt;&amp;1 &amp;</strong></code></p>
+<p><code><strong>&gt; cd ~/exe; sh ./LamPI-receiver -d -s &gt; ~/log/LamPI-receiver.log 2&gt;&amp;1 &amp;</strong></code></p>
 <h1><a name="sniffer"></a>LamPI-receiver as a sniffer</h1>
 <p>LamPI-receiver actually should have been called LamPI-transceiver as the executable contains both transmitter and receiver functions. If you run LamPI-receiver as a command in a shell, it behaves as a receiver for incoming messages. Using the appropriate flags to the command it will behave as a sniffer for incoming wireless traffic and it will show brand, address, unit and status (On/OFF/dimlevel) information for every incoing 433MHz message that is recognized.</p>
 <p>At the time of writing, the LamPI-receiver supports the following handsets, remotes and sensors:</p>

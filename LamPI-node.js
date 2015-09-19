@@ -7,6 +7,7 @@ LamPI Version:
 	3.0.2; May 10, 2015; Rewriting LamPI-daemon for node
 	3.0.3; May 26, 2015; Adding support for Woonveilig Alarm system
 	3.5; Jul 29, 2015
+	3.6; Sep 1, 2015
 
 ***********************************************************************************	*/
 // Configuration
@@ -1432,7 +1433,7 @@ function allOff(room, socket) {
 				setTimeout( function(){ 
 					var msg = str.shift();
 					logger("allOff:: timeout str: "+msg); 
-					broadcast(msg, socket); 
+					socketHandler(msg, socket);				// Better than boradcast only. Handle the database update too
 					callback(null, "yes"); 
 				}, 2000); 
 			});
@@ -1441,8 +1442,8 @@ function allOff(room, socket) {
 	}
 	// Now call the execution
 	async.series(series, function(err, results) {
-		if (err) logger("allOFF:: ERROR ERROR: "+err,1);
-		else logger("allOff:: OKE OKE  finished, results: "+results,2);
+		if (err) logger("allOFF:: ERROR: "+err,1);
+		else logger("allOff:: OKE finished, results: "+results,2);
 	});
 	return;
 }

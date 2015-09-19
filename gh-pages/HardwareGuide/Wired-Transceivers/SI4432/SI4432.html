@@ -7,57 +7,125 @@
 
 <body>
  <h1>SI4432 Transceiver </h1>
- <p>I bought this transceiver some time ago on eBay. It supports FSK and OOK transmission, and as transmitter and received are together in one package I expected some advantages compared to the traditional 433MHz transmitters and receivers that I used until now.</p>
+ <p>I bought this transceiver some time ago on eBay. It supports FSK and OOK transmission, and having transmitter and receiver together in one package I expected some advantages compared to the traditional 433MHz transmitters and receivers that in use until now. Of course extended range being the first one, but also making use of the &quot;RadionHead&quot; libraries it is possibel to create mesh networks and reliable communication. Using better 433MHz protocols (FSK) it is possible to send larger data packages in a reliable fashion.</p>
+<p>&nbsp;</p>
  <p><img src="SI4432_1.JPG" width="385" height="294" /></p>
- <p><strong>Specifications provided on Ebay:</strong><br />
- </p>
+ <p>&nbsp;</p>
+ <h2>&nbsp;</h2>
+ <h2>Specifications (Ebay)<br />
+ </h2>
  <ul>
- </ul>
- <div>
-   <div>
-     <li><span id="result_box">Ultra-thin small</span></li>
-     <li><span id="result_box">Harmonic notes passed  FCC/CE certification</span></li>
-     <li><span id="result_box">Strong ability to penetrate</span></li>
-     <li><span id="result_box">Ses the American SI4432 the latest version of  IC, stable performance</span></li>
-     <li><span id="result_box">Frequency range: 433.92M</span></li>
-     <li><span id="result_box">High sensitivity up to -121dBm</span></li>
-     <li><span id="result_box">Maximum output power: 20dBm</span></li>
-     <li><span id="result_box">Data transfer rate: 0.123-256kbps</span></li>
-     <li><span id="result_box">FSK, GFSK and OOK modulation mode</span></li>
-     <li><span id="result_box">1.8-3.6 V power supply</span></li>
-     <li><span id="result_box">Ultra low power off mode</span></li>
-     <li><span id="result_box">The digital received signal strength indicator (RSSI)</span></li>
-     <li><span id="result_box">Timing wake-up function</span></li>
-     <li><span id="result_box">Automatic antenna matching and bidirectional switch control</span></li>
-     <li><span id="result_box">Configurable data packet structure</span></li>
-     <li><span id="result_box">Before the synchronization signal detection</span></li>
-     <li><span id="result_box">64 bytes RX data register (FIFO)</span></li>
-     <li><span id="result_box">Low power testing</span></li>
-     <li><span id="result_box">Temperature sensing and 8 bit analog to digital converter</span></li>
-     <li><span id="result_box">Operating temperature range: -20 ~ +60 C</span></li>
-     <li><span id="result_box">Integrated voltage regulator</span></li>
-     <li><span id="result_box">Frequency hopping</span></li>
-     <li><span id="result_box">Power on reset function</span></li>
-     <li><span id="result_box">Built in lens adjustment function</span></li>
-     <li><span id="result_box">Pin definitions:<br />
+</ul>
+     <li> Ultra-thin small </li>
+     <li> Harmonic notes passed  FCC/CE certification </li>
+     <li> Strong ability to penetrate </li>
+     <li> Ses the American SI4432 the latest version of  IC, stable performance </li>
+     <li> Frequency range: 433.92M </li>
+     <li> High sensitivity up to -121dBm </li>
+     <li> Maximum output power: 20dBm </li>
+     <li> Data transfer rate: 0.123-256kbps </li>
+     <li> FSK, GFSK and OOK modulation mode </li>
+     <li> 1.8-3.6 V power supply </li>
+     <li> Ultra low power off mode </li>
+     <li> The digital received signal strength indicator (RSSI) </li>
+     <li> Timing wake-up function </li>
+     <li> Automatic antenna matching and bidirectional switch control </li>
+     <li> Configurable data packet structure </li>
+     <li> Before the synchronization signal detection </li>
+     <li> 64 bytes RX data register (FIFO) </li>
+     <li> Low power testing </li>
+     <li> Temperature sensing and 8 bit analog to digital converter </li>
+     <li> Operating temperature range: -20 ~ +60 C </li>
+     <li> Integrated voltage regulator </li>
+     <li> Frequency hopping </li>
+<li> Power on reset function </li>
+<li> Built in lens adjustment function </li>
+<p>&nbsp;</p>
+     <h2>Package</h2>
+     <p>The SI-4432 transceiver is the same as the RFM22 transceiver&nbsp;from HopeRF sold by Sparkfun and others.     </p>
+     <p> Pin definitions:<br />
        <br />
        <img src="http://imgs.inkfrog.com/pix/smoothdealer/26480-6.jpg" alt="" /><br />
-       <br />
-       1 CND power supply<br />
-       2 GPIO0 internal module, launch control foot<br />
-       3 GPI01 internal access module to accept control foot<br />
-       4 GPIO2 directly connected to the chip GIIO2 pin<br />
-       5 VCC positive supply 3.3V<br />
-       6 SDO 0-VDD V digital output provides a serial readback function of the internal  control register<br />
-       7 SDI serial data input. 0-VDD V digital input, this pin for 4-wire serial data  clock function<br />
-       8 SCLK serial clock input. 0-VDDV last month set of inputs. This pin provides a  4-wire serial data clock function<br />
-       9 NSEL serial interface select input pin,0-VDDV digital input. This pin to  4-wire serial data bus select / enable function, this signal is also used, said  the burst read / write mode.<br />
-       10 NIRQ interrupt output pin<br />
-       11 SDN Close the input pin. Input 0-VDDV digital. SDN = 0 in shutdown mode, so  mode<br />
-       12 GND access power ground<br />
-       13 ANT 50 ohm coaxial antenna<br />
-       <a href="ftp://tools@winddeal.net:qq684024@ftp.winddeal.net/26480%20si4432.rar"> Download</a></span></li>
-   </div>
- </div>
+       </p>
+<ol>
+  <li> CND power supply</li>
+  <li> GPIO0 internal module, to control tranmitter antenna</li>
+  <li> GPI01 internal access module to control receiver antenna</li>
+  <li> GPIO2 directly connected to the chip GPIO2 pin</li>
+  <li> VCC positive supply 3.3V</li>
+  <li> SDO SPI data out</li>
+  <li> SDI serial data input. 0-VDD V digital input, this pin for 4-wire serial data  clock function</li>
+  <li> SCLK SPI clock in</li>
+  <li> NSEL Chip select in</li>
+  <li> NIRQ interrupt output pin</li>
+  <li> SDN Shutdown pin, should be connected to GND or the module goes to deep sleep.</li>
+  <li>GND access power ground</li>
+  <li> ANT 50 ohm coaxial antenna</li>
+       <li>GND</li>
+  </ol>
+<p>&nbsp;</p>
+<h2>Connecting SI4432 to Arduino</h2>
+ <p>The following pin connections need be made in order to make the SI-4432 a happy and cooperating board for RadioHead:</p>
+ <table width="90%" border="1">
+   <tr>
+     <th scope="col">RFM-22</th>
+     <th scope="col">Arduino</th>
+     <th scope="col">Description</th>
+   </tr>
+   <tr>
+     <td>(pin 1 to 4 not connected)</td>
+     <td>&nbsp;</td>
+     <td>&nbsp;</td>
+   </tr>
+   <tr>
+     <td>VCC (pin 5)</td>
+     <td>3V3</td>
+     <td>3.3 V Power Supply of Arduino</td>
+   </tr>
+   <tr>
+     <td><p>SDO(pin 6)</p></td>
+     <td>D12</td>
+     <td>&nbsp;</td>
+   </tr>
+   <tr>
+     <td>SDI pin(7)</td>
+     <td>D11</td>
+     <td>&nbsp;</td>
+   </tr>
+   <tr>
+     <td>SCLK (pin 8)</td>
+     <td>D13</td>
+     <td>SPI Clock IN</td>
+   </tr>
+   <tr>
+     <td>NSEL (pin 9)</td>
+     <td>D10</td>
+     <td>&nbsp;</td>
+   </tr>
+   <tr>
+     <td>NIRQ (pin 10)</td>
+     <td>D2</td>
+     <td>&nbsp;</td>
+   </tr>
+   <tr>
+     <td>SDN (pin 11)</td>
+     <td>GND</td>
+     <td>&nbsp;</td>
+   </tr>
+   <tr>
+     <td>GND (pin 12)</td>
+     <td>GND</td>
+     <td>Ground of Arduino</td>
+   </tr>
+   <tr>
+     <td>&nbsp;</td>
+     <td>&nbsp;</td>
+     <td>&nbsp;</td>
+   </tr>
+ </table>
+ <p>&nbsp;</p>
+ <h2>Experience so far</h2>
+ <p>I used the RadioHead library to get server and client working. The range was not fantastic, transmitter and receiver were only&nbsp; 2 meters apart. And even then the Arduino Nano does not work very reliably (3 packages roundtrip loss on the 140)</p>
+ <p>&nbsp;</p>
 </body>
 </html>
