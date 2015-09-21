@@ -28,11 +28,11 @@ chmod 664 $LOGDIR/*.log
 sudo chgrp www-data $LOGDIR/*.log
 
 #
-# Restart the daemons
+# Restart the daemons by their crontab
 #
 cd $SCRIPTDIR
 
-./PI-node -r
+#./PI-node -r
 #./PI-rcv -r
 
 # echo "PI-log:: All log files moved"
