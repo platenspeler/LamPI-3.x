@@ -8,7 +8,7 @@
 <body>
  <h1>SI4432 Transceiver </h1>
  <p>I bought this transceiver some time ago on eBay. It supports FSK and OOK transmission, and having transmitter and receiver together in one package I expected some advantages compared to the traditional 433MHz transmitters and receivers that in use until now. Of course extended range being the first one, but also making use of the &quot;RadionHead&quot; libraries it is possibel to create mesh networks and reliable communication. Using better 433MHz protocols (FSK) it is possible to send larger data packages in a reliable fashion over a longer distance.</p>
-<p><a href="Node/images/arduino_node_1a.jpg"><img src="../../Arduino-Node/images/arduino_node_1a.jpg" width="600" height="450" /></a></p>
+<p><a href="../../Wired-Transceivers/SI4432/Node/images/arduino_node_1a.jpg"><img src="../images/arduino_node_1a.jpg" width="600" height="450" /></a></p>
  <p>&nbsp;</p>
  <p>The SI4432 is available in several packages. Most of them have 1.27mm pin spacing, which is less than perfect. With a small 2.54 DIP to 1.27 pin spacing converter board it is possible to use the transceiver without problems. The converter board is for 16 pins, so we have to cut 2 empty pins on either side.</p>
 <p>&nbsp;</p>
@@ -117,8 +117,10 @@
  </table>
  <p>The RF22 pins 7,8 and 9 are 3.3 V pins and may need to be connected to the Arduino (which is a 5V device) trough a level converter BD4050 or a resistor voltage divider. Using the latter, connect the pin of the Arduino and the SI4432 by a 470 Ohms resistor instead of a wire and connect the pin of the RF22 with a 1KOhms resistor to ground as well.</p>
  <p>Warning: Although the transceivers on both ends seemed to be working fine without the level conversion, after a while their performance collapsed and it even stopped working.</p>
- <p><a href="Node/images/arduino_node_1b.jpg"><img src="../../Arduino-Node/images/arduino_node_1b.jpg" width="600" height="450" /></a></p>
- <h2>Experience so far</h2>
+ <p><a href="../../Wired-Transceivers/SI4432/Node/images/arduino_node_1b.jpg"><img src="../images/arduino_node_1b.jpg" width="600" height="450" /></a></p>
+ <p>&nbsp;</p>
+ <p>&nbsp;</p>
+<h2>Experience so far</h2>
  <p>I used the RadioHead library to get server and client working. Without level converter in place the range was not fantastic, transmitter and receiver were only&nbsp; 2 meters apart. And even then the Arduino Nano does not work very reliably (3 packages roundtrip loss on the 140)</p>
  <p>With a voltage devider (resistors) the performance was  bit better, roundtrip 24 packets lost on 1600 packages sent</p>
  <p>So a level conversion might be the best way to assure reliable transmissions.</p>

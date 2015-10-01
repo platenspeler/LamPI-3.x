@@ -63,11 +63,17 @@
 <p><a href="images/arduino_sensor_3c.jpg"><img src="images/arduino_sensor_3c.jpg" width="600" height="450" /></a></p>
 <p></p>
 <p>The&nbsp;transmitter and the sensor are soldered between the headers and the perf board. The Arduino is removed from its headers for the picture. The green wire is the 16.8 cm antenna which is curled to fit in any type of housing.</p>
-<h2>Message Format</h2>
-<p>The message format of messages exchanged between the Raspberry and the Arduino is defined <a href="gatewayMsgFormat.html">on the following page(s)</a>. Because the Arduino is very limited in memory, the messages exchanged are integer encoded  and separated by spaces. This makes them  short and simple.</p>
-<p>If there is any more descriptive messaging needed, we do it on the host side and can make an interface like the Serial Monitor to interface the Arduino especially for LamPI.</p>
 <p>&nbsp;</p>
-<h2>Alternative Versions</h2>
+<h2>Version 4.0</h2>
+<p>&nbsp;</p>
+<p>Version 4 was designed to b a low-power version. The Arduino Sensor node will only power one or two sensor devices and once every minute report these values to the central gateway. For such purposes we should NOT need a high-power device. So I chose the Arduino Mini Pro node on 3.3V, which would because of its lower power and lower clockspeed work on batteries for an extended amount of time.</p>
+<p>As an option: We could use NRF24L01 transceivers which operate on 3.3V and use the 2.4GHz band. But only if the combination works and uses less power that any ordinary combination on 433MHz.</p>
+<p>&nbsp;</p>
+<h2>Sensor Message Format</h2>
+<p>The message format of messages exchanged between the Raspberry and the Arduino is defined <a href="sensorMsgFormat.html">on the following page(s)</a>. As sensors only have an active transmitter to send sensor values to the host, the messae format is very simple. For the moment we use the WT440h protocol (and the variant to code airpressure) as the basis message format. </p>
+<p>We do no checking or further processing on the Arduino Sensor side, just transfer the measured values back to the server.</p>
+<p>&nbsp;</p>
+<h2>Alternative Solutions</h2>
 <p>The new green BMP180 and the HTU21D board do have the same pin lay-out. Therefore in principle it ispossibel to stack the two boards with a little header space in between. This would mean simple wiring and two sensors on one board. The softwware would be able to deal with this and send two sensor readings with the same address (specified in the .h file at compile time) but with 2 </p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>

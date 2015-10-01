@@ -531,11 +531,11 @@ int parse_admin(char *tok, int cod)
 //
 char * parse_remote(char *tok, int cod)
 {
-  int group;
+  unsigned long group;
   int unit;
   int level;
 
-  tok = strtok(NULL, " ,"); group = atoi(tok);
+  tok = strtok(NULL, " ,"); group = atol(tok);
   tok = strtok(NULL, " ,"); unit  = atoi(tok);
   tok = strtok(NULL, " ,"); level = atoi(tok);
   

@@ -386,13 +386,21 @@ function zwave_init (cb) {
 		});
 		response.on('end', function () {
     		if (debug>=3) console.log(str);
-			zroot = JSON.parse(str);
-			devices = zroot.devices;
+			// Gebruik try here XXXXX
+			try {
+				zroot = JSON.parse(str);
+			} catch(e){
+				logger("socketHandler:: JSON parse error: "+e,1);
+				zroot=null;
+			}
+			if (zroot != null) devices = zroot.devices;
 			logger("Successfully read Z-Wave Data, #devices: "+Object.keys(devices).length,1);
 			cb(null,"zwave_init done");
   		});
 	}
+	
 	var req = http.request(zwave_init_options, zwave_init_cb);
+	
 	req.on('error', function(e) {
 		logger("zwave_init:: ERROR opening connection to zwave host, "+e.message,1);
 		cb("zwave no connection",null);

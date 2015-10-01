@@ -211,6 +211,14 @@
     <td>Level not used but for compatibility with other codecs is always 1</td>
   </tr>
   <tr>
+    <td><blockquote>
+      <p>Quhwa doorbell</p>
+    </blockquote></td>
+    <td>&nbsp;</td>
+    <td>&lt; {tcnt&gt; 2 7 93756057&nbsp;85 1</td>
+    <td>pressed</td>
+  </tr>
+  <tr>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
@@ -276,11 +284,11 @@
   <li>Switch debug on and off&nbsp;(This is fixed already&nbsp;for USB connections but could be set over wireless reception also)</li>
 </ul>
 <p>3. Finally, as the wireless protocols WT440h and Auriol are fairly limited and do not support other sensors than temperature and&nbsp;humidity, we need a homegrown protocol that enables us to define messages (like the ones we send over USB) and send them over the air. </p>
+<p>&nbsp;</p>
 <h2>Codecs</h2>
 <p>The codec is different for different type of commands. So the codec for handsets and sensors is different.</p>
-<p>&nbsp;</p>
 <h3>Handsets</h3>
-<p>Please keep in mind that for the current version not all protocols are supported. Legend: &lt; means receive, &gt; means transmit is supported</p>
+<p>Please keep in mind that for the current version not all protocols are supported. Legend: &lt; means receive, &gt; means transmit is supported. (*) Means being worked on and reserve the code</p>
 <ul>
   <li>0 kaku (&lt; &gt;), klikaanklikuit new remotes</li>
   <li>1 action (&lt;&gt;)</li>
@@ -289,6 +297,8 @@
   <li>4 Elro (&lt;), not tested</li>
   <li>5 Livolo (&lt;&gt;), Livolo switches are supported by the receiver</li>
   <li>6 Kopou (&lt;), many will be received as many are sent by the transmitter ( :-) )</li>
+  <li>7 Quhwa doorbell&nbsp; (&lt;&gt;). Type QH-832AC
+  </li>
 </ul>
 <h3>Sensors</h3>
 <p>Some sensors may have their own manufacturer protocol and their own transmitter. But there may also be ones that are connected to an Arduino who will forward the sensor message to the LamPI-node daemon.</p>

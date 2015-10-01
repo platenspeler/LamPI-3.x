@@ -7,20 +7,21 @@
 
 <body>
 <h1>Arduino Node</h1>
-<p>Ever since the&nbsp;first Arduino Gateway, there was the idea to build a &quot;network&quot; of wireless nodes so that the Arduino could communicate on a higher level with the Raspberry master and its slaves and send sensor information etc. to the host.</p>
-<p>The RadioHead library provides reliable, addressed but also unreliable communication over the air on a number of frequencies depending on the transceiver used. This means that we can use more or less teh same code regardless of the underlying hardware transceiver technology used.</p>
+<p>Ever since the&nbsp;first Arduino Gateway, there was the idea to build a &quot;network&quot; of wireless nodes so that the Arduino could communicate on a higher level with the Raspberry master and its slaves and send sensor information etc. to the server host.</p>
+<p>The RadioHead library provides reliable, addressed but also unreliable communication over the air on a number of frequencies depending on the transceiver used. This means that we can use more or less the same code regardless of the underlying hardware transceiver technology used.</p>
 <p>So what would be the purposed of having such a network in the house</p>
 <ul>
   <li>Send sensor data in a reliable and standard way over the air to the LamPI-node daemon</li>
   <li>Act as an intermediate &quot;node&quot; in the network and extensing its range in the mesh topology</li>
 </ul>
-<p>Experimenting </p>
-<h2>RF22</h2>
+<p>Experimenting with several of these transceivers shown that it is not at all sure that we meet our objectives. The Arduino does not deliver too much power, which means that power-hungry transceiver modules will drain the Arduino and cause errors in in the packet communication.</p>
+<h2>RF22 / SI4432</h2>
+<p>The SI4432 is a very powerful transceiver on the 433MHz band. It has a range of about 1500 meters (outside or free line of sight), and therefore it does deliver much more power than&nbsp;the&nbsp; conventional sets of 433MHz transmitter and receiver that are on the market.</p>
 <p>&nbsp;</p>
-<p>&nbsp;</p>
+<p>There is a dedicated page on the SI4432 node </p>
 <p>&nbsp;</p>
 <h2>NRF24L01</h2>
 <p>&nbsp;</p>
-<p>&nbsp;</p>
+<p>There is a <a href="NRF24L01/arduino_NRF24L01.html">separate page</a> on the NRF24L01 node.</p>
 </body>
 </html>

@@ -322,13 +322,15 @@
 <p>The WT440 protocol seems to be limited by temperature and humidity sensors, and as these weather stations are not in use so much anymore we must be looking at a better protocol, modern and supporting more devices. Alternatively we might have to build our own protocol or extend another one so that we can send any message we want over the air.</p>
 <p>Fortunately, the solution built can easily be adapted as soon as we have another suitable transmission protocol for over-the-air messages.</p>
 <p>Also, such a small Arduino&nbsp;with connectors for a few DS18B20 devices would be an excellent sensor station for temperature sensing for example for the Central Heating installation. At this moment we use a&nbsp;Raspberry for his purpose which is a waste of power (of the Raspberry) and energy usage as well.</p>
+<p>&nbsp;</p>
 <h3>Arduino Sensor Message Format</h3>
 <p>The message format that is used to code&nbsp;on-board sensors over the air to a receiving Arduino Gateway is described on the page <a href="Arduino-Sensor/sensorMsgFormat.html">sensorMsgFormat</a></p>
 <h2><a name="arduino_repeater"></a>Arduino Repeater</h2>
 <p>Wen adding a received and antenna to an existing Arduino Sensor it should also be possible to use the Arduino to build a 433MHz range extender or a repeater. Also it is possible to make a protocol conversion using this solution by building a solution with a 868MHz receiver and a 433MHz transmitter. This way, several devices in my house that are operated wirelessly using a proprietary communication protocol (not Z-Wave) can be integrated in the LamPI environment as well.</p>
 <p>Go to the examples directory of the Arduino code and select repeater433 directory. In the Repeater433.h file it is possible to set compile-time switches that determine which protocols will be compiler into the code and recognized once the Arduino is operating.</p>
 <p>Arduino Repeater Message Format</p>
-<p>The message format the the repeater uses to send on-board messages and received 433MHz messages to a receiving Arduino Gateway is described on the page <a href="Arduino-Repeater/repeaterMsgFormat.html">repeaterMsgFormat</a></p>
+<p>The message format the the repeater uses to send on-board messages and received 433MHz messages to a receiving Arduino Gateway is described on the page <a href="Arduino-Repeater/repeaterMsgFormat.html">repeaterMsgFormat</a>. </p>
+<p>&nbsp;</p>
 <h2>Connecting Sensors to Arduino</h2>
 <ul>
   <li>Wired sensors: DHT11, DHT22 Temperature/Humidity Sensor (* Not yet supported)</li>
@@ -339,7 +341,7 @@
 <p>&nbsp;</p>
 <h2>Arduino Gateway Message Format</h2>
 <p>The message format exchanged between the Arduino Gateway and the Raspberry Host over USB is found on a <a href="Arduino-Gateway/gatewayMsgFormat.html">separate page</a>.</p>
-<p>The 433Messages that go over the ai are explained on <a href="../DeveloperGuide/433Transmitters/433messaging.html">this 433messaging page</a></p>
+<p>The 433Messages that go over the air are explained on <a href="../DeveloperGuide/433Transmitters/433messaging.html">this 433messaging page</a></p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 <h1><a name="zwave_guide" id="zwave_guide"></a>Z-Wave Guide</h1>
@@ -370,6 +372,9 @@
   <li>TBD (None supported yet)</li>
 </ul>
 <p></p>
+<p>&nbsp;</p>
+<h2>2.4GHz Guide</h2>
+<p>Apart from the Zigbee protocol, there are other possibilities to use the free 2.4GHz band for home automation use.</p>
 <p><br>
 </p>
 </body>
