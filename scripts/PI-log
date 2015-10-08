@@ -16,7 +16,7 @@ do
 	mv $LOGDIR/$i.3.log $LOGDIR/$i.4.log
 	mv $LOGDIR/$i.2.log $LOGDIR/$i.3.log
 	mv $LOGDIR/$i.1.log $LOGDIR/$i.2.log
-	mv $LOGDIR/$i.log   $LOGDIR/$i.1.log
+	cp $LOGDIR/$i.log   $LOGDIR/$i.1.log
     cp /dev/null $LOGDIR/$i.log
 done
 
@@ -26,13 +26,5 @@ done
 #
 chmod 664 $LOGDIR/*.log
 sudo chgrp www-data $LOGDIR/*.log
-
-#
-# Restart the daemons by their crontab
-#
-cd $SCRIPTDIR
-
-#./PI-node -r
-#./PI-rcv -r
 
 # echo "PI-log:: All log files moved"

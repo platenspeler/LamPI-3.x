@@ -290,19 +290,19 @@ function printConfig() {
 					var sns="";
 					Object.keys(config[key][j]).forEach(function(item) {
 						switch(item) {
-						case 'lastUpdate':
+						case 'lastUpdate': // Devices, Sensors
 							str += '<td style="border: 1px solid black;">&nbsp'+printTime(config[key][j][item])+'</td>';
 						break;
-						case 'sensor': 
+						case 'sensor': // Part of Sensors, for each sensor with name sens
 							Object.keys(config[key][j]['sensor']).forEach(function(sens) {
-								sns += '<td style="border: 1px solid black;">';
 								lupdate = printTime(config[key][j]['sensor'][sens]['lastUpdate']);
+								sns += '<td style="border: 1px solid black;">';
 								sns += sens+": "+parseFloat(config[key][j]['sensor'][sens]['val']).toFixed(1);
-								sns+= '</td>';
+								sns += '</td>';
 							});
 							sns = '<td style="border: 1px solid black;">'+lupdate+'</td>'+sns;
 						break;
-						case "seq":
+						case "seq": // Part of Scenes
 							//str += '<td style="border: 1px solid black;">&nbsp'+config[key][j][item]+'</td>';
 							str += '<tr><td style="min-width=100px;">';
 							var strips = config[key][j]['seq'].split(",");

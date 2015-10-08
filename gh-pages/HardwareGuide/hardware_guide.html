@@ -7,13 +7,13 @@
 <body>
 
 <h1>Hardware Guide</h1>
-<h4>Version: 3.5 (Raspberry) and 1.5 (Arduino)<br>
-  Date: August 2015
+<h4>Version: 3.6 (Raspberry) and 1.7 (Arduino)<br>
+  Date: September 2015
 </h4>
-<p>This page deals with the hardware that we need to connect to the Raspberry PI in order to communicate with 433MHz receivers or Handsets and turn your RPI into a full functioning control center. LamPI can support receiver devices (making transmitter modules for various brands is often easy). Also, several brand share almost the same protocol or work or can be made to work with minor modifications, Therefore, the list below is probably just a snapshot of a much larger list...</p>
+<p>This page deals with the hardware that we need to connect to the Raspberry PI in order to communicate with wireless receivers or Handsets and turn your RPI into a full functioning control center. LamPI can support several types of receiver devices for 433MHz, 868MHz or 2.4GHz which are the free bands for wireless communication in Europe. Also, several brand share almost the same protocol or work or can be made to work with minor modifications, Therefore, the list below is probably just a snapshot of a much larger list...</p>
 <h2>Structure of this document</h2>
 <p>It is difficult to categorize devices or protocols or any other in such a way that it is easy to understand how you can interface with devices and sensors as this can be done by a direct (wired) connection to the Raspberry, over Wifi, 433MHz, Z-Wave or Zigbee. In principle every type of switch and dimmer or every type of device should be able to talk to the LamPI daemon some way or another.</p>
-<p>The remainder of this document will be structured so that we will discuss wired connections to the Raspberry first, followed by devices/sensors that connect over 433MHz (keep in mind that these devices use some sort of transceiver or gateway connected to the Raspberry too).</p>
+<p>The remainder of this document will be structured so that we will discuss wired connections to the Raspberry first, followed by devices/sensors that connect over 433MHz (keep in mind that these devices use some sort of transceiver or gateway connected to the Raspberry too). 868MHz and 2.4GHz follow later.</p>
 <h2>Table of contents</h2>
 <ul>
   <li><a href="#supported_devices">Support Guide</a></li>
@@ -30,12 +30,12 @@
       <li><a href="#arduino_repeater">Arduino Repeater</a></li>
     </ul>
   </li>
-  <li><a href="#zwave_guide">Z-Wave Guide</a>
-<ul>
+  <li><a href="#zwave_guide">868MHz Z-Wave Guide</a>
+    <ul>
       <li><a href="#razberry_gateway">Razberry Gateway</a></li>
     </ul>
   </li>
-  <li><a href="#zigbee_guide">Zigbee Guide</a></li>
+  <li><a href="#zigbee_guide">2.4GHz Zigbee Guide</a></li>
 </ul>
 <p>&nbsp;</p>
 <h2><a name="supported_devices"></a>Supported Devices</h2>
@@ -50,7 +50,7 @@
       <li>Use 433MHz wireless communication. This protocol is on a frequency band which is free to use in a domestic area. Many home automation products use 433 MHz communication as hardware is cheap. Unfortunately there are not so many </li>
     </ol>
   </li>
-  <li>Use more than one Raspberry to connect sensors to, and have that other Raspberry do the forward to the LamPI daemon</li>
+  <li>Use more than one Raspberry or Arduino to connect sensors to, and have this gateway do the forward to the LamPI daemon.</li>
 </ol>
 <p>All combinations are valid and can work.</p>
 <p><br>
@@ -152,7 +152,7 @@
   <br>
   <img src="images/gpio1.png" alt="" width="600" height="295"></p>
 <p>&nbsp;</p>
-<h2>Raspberry B 1+ and B2 pinot</h2>
+<h2>Raspberry B 1+ and B2 pin-out</h2>
 <p>The pin-out for the new Raspberry devices is different from the older ones. The new connector is 40-pin instead of 26-pin. Fortunately the first 26-pins are equal between all the B versions of the RaspberryPI.</p>
 <p><br>
   <a href="images/p1header-large.png"><img src="images/p1header-large.png" width="419" height="550" hspace="5" vspace="5"></a><a href="images/j8header-b-plus.png"><img src="images/j8header-b-plus.png" width="375" height="676" hspace="5" vspace="5"></a><br>
@@ -167,6 +167,7 @@
   <li><a href="Wired-Sensors/i2c_sensors.html">I2C buts Sensors</a></li>
   <li><a href="Wired-Sensors/no_bus_sensors.html">No Bus (direct Connect)</a></li>
   <li>Infra Red</li>
+  <li>PIR</li>
   <li><a href="Wired-Sensors/energy_sensors.html">Energy</a></li>
 </ul>
 <p></p>
@@ -211,7 +212,8 @@
 </ul>
 <p>&nbsp;</p>
 <h2><a name="energy_sensors" id="energy_sensors"></a>Connecting Energy Sensors</h2>
-<p>There is a separate chapter on connecting Energy Sensors to your Raspberry. Please read <a href="Wired-Sensors/energy_sensors.html">&lt;HERE&gt;</a>. </p>
+<p>There is a separate chapter on connecting Energy Sensors with their P1 port to your Raspberry. </p>
+<p>Please read <a href="Wired-Sensors/energy_sensors.html">&lt;HERE&gt;</a>. </p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 <h1></h1>
@@ -252,7 +254,7 @@
   </tr>
   <tr>
     <td>Many devices supported</td>
-    <td>What if your device is not supported?</td>
+    <td>What if your specific device is not supported?</td>
   </tr>
   <tr>
     <td>Works very well (hear say)</td>
@@ -280,14 +282,17 @@
     <td>&nbsp;</td>
   </tr>
 </table>
-<p>Also, when we did all the groundwork to make such a USB-connected gateway we have the ingredients to make a standalone sensor</p>
+<p>Also, when we did all the groundwork to make such a USB-connected gateway we have the ingredients to make a standalone sensor. Every Arduino that is connected to the host with an USB connection can be a Gateway device. However, memory usage and number of pin's available to onnect to play a role here and dictate whether such Arduino is the best device to use.</p>
+<p>For example: If you want the gateway to support every kind of sensor, detect all 433 messages and send out messages in several codecs as well, an Arduino Nano or Uno might not have enough memory and it is better to use an Arduino Mega.<br>
+  But for almost every other application where the Arduino controls a few sensors and forwards their values to the gateway, Arduino Nano or Arduino Pro Mini might be very good solutions.
+</p>
 <h3>LamPI Choice</h3>
 <p>In its first releases, LamPI supports the first approach mainly, with support for an Arduino gateway now as a second option. The Arduino gateway does support all sensors or devices at the moment, and we will work to get more devices and sensors supported. On the other hand, some protocols are supported by Arduino Gateway or Arduino Repeater only&nbsp;such as the Auriol outdoor temperature sensor.</p>
 <p> The Rfxcomm solution would probably work (after some work) quite well too, but is not tested because of the cost.</p>
 <p>There seems to be another community project started RFlink with the same intentions as my Arduino project. <a href="http://www.nemcon.nl/blog2/2015/07/devlist">http://www.nemcon.nl/blog2/2015/07/devlist</a>. <br>
   Hardware needed to make such a node can be bought in <a href="http://www.nodo-shop.nl/nl/home/116-rflink-bouwpakket.html">the Nodo shop</a>. Main disadvantage at the moment of using RFLink is that it requires an Arduino Mega. Not a big deal, but unnecessary for my use as Gateway and overkill when making an Arduino Sensor node.</p>
-<p>&nbsp;</p>
-<h2><a name="gateway"></a>Arduino 433MHz Gateway</h2>
+<p><em>Sep 2015 update: We begin to reach the end of the Nano memory capacity. The memory usage is more than 85%. So I might have to switch to the Arduino Mega type of device for the Gateway only. All sensors and repeaters will be based on Nano or Pro-Mini Arduinos which are a lot smaller. There&nbsp;is a Pro version of the Arduino Mega available, which is smaller and easier to use in projects, so that is where we want to look at coming period of time.</em></p>
+<h2><a name="gateway"></a>Arduino Gateway</h2>
 <p><img src="Arduino-Gateway/images/family_2.jpg" width="1196" height="422"></p>
 <p>Instead of connecting a transmitter and receiver directly to the Raspberry, it is equally possible to use an Arduino gateway. In this case, the Arduino will take care of all the 433 MHz wireless communication and it will connect to the Raspberry through a USB cable and port for power and host communication. For first version of the Arduino Gateway the UNO (larger footprint) and the Nano were the best candidates. In a later states we might have a look at other Arduino variants such as Nanodes, Teensy, Arduino RFu etc. should there be important advantages in using them. </p>
 <h3>Nano</h3>
@@ -295,7 +300,7 @@
 <p>The Nano is a good system for making an Arduino Gateway device. The little machine is VERY cheap (less than EUR 2.50&nbsp;including shipping) and can do all the things that the larger UNO can do as well. When it arrives at your mailbox, you just have to make a few connectors to the Arduino and it is ready for work. Its small footprint will make it difficult to&nbsp;give it a stable stand and therefore a small experiment board will provide that stability and offers place to connect sensors and transmitter/receiver devices as well.</p>
 <p> <a href="../Hardware/Gateway/images/nano_gateway_1.jpg"><img src="Arduino-Gateway/images/nano_gateway_1.jpg" width="376" height="500" hspace="10" vspace="10"></a> In the picture you see the Nano which is mounted on an experiment board using connectors. The transmitter is on the front, and the receiver is&nbsp;soldered on the rear end of the board. In the middle is a BPM085 board in the front (GY-65) and a LM75 (not connected) is found at the rear end. On the right front side is a DS18b20 device soldered (looks like a transistor), together with a 3-pin connector to attach a 1-meter water-proof sensor DS18b20.</p>
 <p>UpdateSept 2015: I added a HTU21D sensor to the board so I am able to use this board as the main Arduino Gateway for transmit and receive but I'm also able to measu temperature, airpressure and humidity on the small footprint.</p>
-<p>The board is used as the standard sensor/transmitter/receiver unit of one of the Raspberries in the home.</p>
+<p>The board is used as the standard sensor/transmitter/receiver unit of one of the Raspberries in my home.</p>
 <h3>Uno</h3>
 <p>I also made a version of the Arduino Gateway based on the Arduino Uno. The Uno is somewhat larger and in combination with the Arduino stick-up board Prototype Shield and a small block it is easy to make and change a setup. Functionally, the Nano and the Uno are equivalent and the code runs on both systems.So it is a matter of choice and preference.</p>
 <p><a href="../Hardware/Gateway/images/ArduinoGateway_1.jpg"><img src="Arduino-Gateway/images/ArduinoGateway_1.jpg" width="400" height="300" hspace="10" vspace="5"></a></p>
@@ -307,10 +312,11 @@
 <ul>
   <li>For handset (receiver) and transmitter support of kaku, Action and other well-known devices</li>
   <li>On-board sensors such as Dallas, BMP085 and HTU21d</li>
-  <li>For sensor support of WT-440h and Auriol weather sensors</li>
+  <li>For wireless sensor support of WT-440h and Auriol weather sensors</li>
 </ul>
 <p>&nbsp;</p>
-<h2><a name="arduino_sensor"></a>Arduino Sensor (sketch)</h2>
+<p>&nbsp;</p>
+<h2><a name="arduino_sensor"></a>Arduino Sensor</h2>
 <p>A variant on the Arduino gateway is the Arduino Sensor. This is an Arduino with a temperature and/or humidity or any other sensor(s) that will forward these sensor readings over the air using a 433MHz transmitter to a Raspberry  receiver.</p>
 <p><a href="Arduino-Gateway/images/arduinoSensor_1.jpg"><img src="Arduino-Gateway/images/arduinoSensor_1.jpg" width="450" height="600" hspace="10" vspace="5" align="left"></a>Earlier, when using the Raspberry to receive 433MHz messages, we would every now and then have problems with the reception of messages. The Arduino however is a much better device to receive (interrupt driven) device messages than the Raspberry itself is. Also it's form factor is smaller, its price is lower and power usage is only a fraction.</p>
 <p>The code is in a separate branch on <a href="http://github.com/platenspeler">http://github.com/platenspeler</a> and the Arduino must be loaded with one of the &quot;Example&quot; programs to make sure it behaves like an Arduino Sensor. Also, it is possible to change the address/channel combination (in the example code) so that you can build an Arduino Sensor (=WT440h device) exactly matching your home setup. </p>
@@ -325,10 +331,11 @@
 <p>&nbsp;</p>
 <h3>Arduino Sensor Message Format</h3>
 <p>The message format that is used to code&nbsp;on-board sensors over the air to a receiving Arduino Gateway is described on the page <a href="Arduino-Sensor/sensorMsgFormat.html">sensorMsgFormat</a></p>
+<p>&nbsp;</p>
 <h2><a name="arduino_repeater"></a>Arduino Repeater</h2>
 <p>Wen adding a received and antenna to an existing Arduino Sensor it should also be possible to use the Arduino to build a 433MHz range extender or a repeater. Also it is possible to make a protocol conversion using this solution by building a solution with a 868MHz receiver and a 433MHz transmitter. This way, several devices in my house that are operated wirelessly using a proprietary communication protocol (not Z-Wave) can be integrated in the LamPI environment as well.</p>
-<p>Go to the examples directory of the Arduino code and select repeater433 directory. In the Repeater433.h file it is possible to set compile-time switches that determine which protocols will be compiler into the code and recognized once the Arduino is operating.</p>
-<p>Arduino Repeater Message Format</p>
+<p>Go to the examples directory of the Arduino code and select repeater433 directory. In the Repeater433.h file it is possible to set compile-time switches that determine which protocols will be compiled into the code and recognized once the Arduino is operating.</p>
+<h3>Arduino Repeater Message Format</h3>
 <p>The message format the the repeater uses to send on-board messages and received 433MHz messages to a receiving Arduino Gateway is described on the page <a href="Arduino-Repeater/repeaterMsgFormat.html">repeaterMsgFormat</a>. </p>
 <p>&nbsp;</p>
 <h2>Connecting Sensors to Arduino</h2>
@@ -339,14 +346,14 @@
 </ul>
 <p>Since there is very limited support for wired solutions, we have chosen to use the i2c protocol for LamPI when possible, and to connect several temperature sensors (waterproof) choose the 1-Wire protocol..</p>
 <p>&nbsp;</p>
-<h2>Arduino Gateway Message Format</h2>
+<h2>Arduino Message Format</h2>
 <p>The message format exchanged between the Arduino Gateway and the Raspberry Host over USB is found on a <a href="Arduino-Gateway/gatewayMsgFormat.html">separate page</a>.</p>
 <p>The 433Messages that go over the air are explained on <a href="../DeveloperGuide/433Transmitters/433messaging.html">this 433messaging page</a></p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 <h1><a name="zwave_guide" id="zwave_guide"></a>Z-Wave Guide</h1>
 <p>&nbsp;</p>
-<h2><a name="razberry_gateway"></a>868 MHz Zwave Gateway (Razberry)</h2>
+<h2><a name="razberry_gateway"></a>868MHz: Z-wave Gateway (Razberry)</h2>
 <p>If you like to get your home automation working with more sophisticated technology which enables you to query the status&nbsp;of your connected devices: Z-Wave is your way to go.</p>
 <p><img src="Zwave-Gateway/RazBerry/razberry2.jpg" alt="" width="400" height="400"><br>
   The Razberry is a small stick-on device that connect to the P1 connector of the Raspberry. It contains the firmware needed to interface with the 868MHz Z-Wave software (which the company calls ZWay). It's a little bit difficult to see in the picture above, but the Razberry is the stick-up board that is attached to the GPIO connector of the RaspberryPI model B. It uses only a few pins of the Raspberry connector, but unfortunately these are shared by most other board solutions. Therefore it is hard to make the Razberry work with traditional direct connected transmitter/receiver hardware of 2.4 GHz (Zigbee) equipment.</p>
@@ -358,8 +365,12 @@
   <li>etc. etc.</li>
 </ul>
 <p>&nbsp;</p>
-<p><a href="../Hardware/Razberry/razberry3.jpg"><img src="Zwave-Gateway/RazBerry/razberry1.jpg" alt="Razberry/razberry2.jpg" width="400" height="267"></a> <img src="Zwave-Gateway/RazBerry/razberry3.png" width="408" height="345"></p>
+<p><a href="../Hardware/Razberry/razberry3.jpg"><img src="Zwave-Gateway/RazBerry/razberry1.jpg" alt="Razberry/razberry2.jpg" width="400" height="267"></a><img src="Zwave-Gateway/RazBerry/razberry3.png" width="408" height="345"></p>
 <p>If you like to read more on the software for the Razberry and how LamPI interfaces with the hardware, please read further &lt;<a href="Zwave-Gateway/RazBerry/zwave_gateway.html">HERE</a>&gt;</p>
+<p>The Razberry Gateway is a real gateway for LamPI, that means that while LamPI can change values of the Z-Wave network devices it does not have the controlling possibilities that&nbsp;are needed to manage the network itself. Including (or excluding) devices in the Z-Wave network, restarting the daemon, doing firmware upgrades etc. all need to be performed by the Razberry software itself.</p>
+<p>Once in a while the interface between LamPI and the Z-Wave computer needs resetting as some or all the functions doe not seems to work anymore. Some releases of the Razberry firmware seem to suffer more from this than others, and some even seem to randomly change values of vetwork devices. Z-wave.me, the maker of the Razberry has more focus on new features than on quality so it seems.&nbsp;</p>
+<h3>Reset API</h3>
+<p>You can reset the gateway on the Razberry with &quot;http://&lt;Razberry-IP&gt;:8083/expert&quot; . Go to the &quot;network&quot; section, choose the &quot;control&quot; submenu and reset the API with the button.</p>
 <p>&nbsp;</p>
 <h1><a name="zigbee_guide"></a>Zigbee Guide</h1>
 <p>The third protocol that is used in Home Automation environments is Zigbee. It was invented by Philips and used for its lumination solutions. However, as the protocol is difficult and is a closed and proprietary solution, not that many other vendors are using Zigbee at the moment, but their numbers increase.</p>

@@ -30,7 +30,12 @@
 </ul>
 <p>&nbsp;</p>
 <h2>Schema</h2>
-<p>to be provided</p>
+<p>&lt;to be provided&gt;</p>
+<ul>
+  <li>For temperature sensor DS18b20  the version 4 schematics can be used (For Aduino Nano the pin layout is different):</li>
+</ul>
+<p><img src="images/LamPI Battery Sensor.jpg" width="640" height="360" /></p>
+<p>&nbsp;</p>
 <p>&nbsp;</p>
 <h2>Version 1.0</h2>
 <p>This is the version 1 of the Arduino sensor. As you can see on the picture below, the HTU21D sensor use is the big one, and the board has more space than necessary.</p>
@@ -64,17 +69,36 @@
 <p></p>
 <p>The&nbsp;transmitter and the sensor are soldered between the headers and the perf board. The Arduino is removed from its headers for the picture. The green wire is the 16.8 cm antenna which is curled to fit in any type of housing.</p>
 <p>&nbsp;</p>
-<h2>Version 4.0</h2>
+<h2>Version 4.0, Pro-Mini Low Power</h2>
+<h3>Schematics</h3>
+<p>The picture below shows how to connect your sensor, transmitter and Arduino Pro Mini together.</p>
 <p>&nbsp;</p>
-<p>Version 4 was designed to b a low-power version. The Arduino Sensor node will only power one or two sensor devices and once every minute report these values to the central gateway. For such purposes we should NOT need a high-power device. So I chose the Arduino Mini Pro node on 3.3V, which would because of its lower power and lower clockspeed work on batteries for an extended amount of time.</p>
+<p><img src="images/LamPI Battery Sensor.jpg" width="640" height="360" /></p>
+<p>be carefyul, the pin out for the transmitter might differ for your transmitter. Please look careful&nbsp;to the transmitter PCBwhich will indiate which connections should be made. Also, the datasheet for that particular transmitter will shed some light on this subject.</p>
+<h3>Prototyping</h3>
+<p><a href="images/sensor_4_a.JPG"><img src="images/sensor_4_a.JPG" width="600" height="450" hspace="10" vspace="10" /></a></p>
+<p>The battery shown in the back is a 2000 mA version used for mobile phones.</p>
+<p>Version 4 was designed to be a low-power version. The Arduino Sensor node will only power one or two sensor devices and once every minute report these values to the central gateway. For such purposes we should NOT need a high-power device. So I chose the Arduino Pro Mini node on 3.3V, which would because of its lower power and lower clockspeed work on batteries for an extended amount of time.</p>
 <p>As an option: We could use NRF24L01 transceivers which operate on 3.3V and use the 2.4GHz band. But only if the combination works and uses less power that any ordinary combination on 433MHz.</p>
+<h3>Low Power</h3>
+<p>The Arduino Pro Mini operating at 3.3V and 8MHz has capabilities to operate on batteries as it is possible to put it to sleep/standby between sensor readings. A normal Arduino Pro Mini running continuously together with a NRF24L01 sensor consumes about 2800 uA.</p>
+<table width="620" border="1">
+  <tr>
+    <th scope="col"><a href="images/sensor_4_d.JPG"><img src="images/sensor_4_d.JPG" width="600" height="450" hspace="10" vspace="10" /></a></th>
+  </tr>
+  <tr>
+    <td><h6>The Arduino Pro Mini working on Battery power. The 6-pin FTDI connector left is connected to the board but not to the FTDI interface.</h6></td>
+  </tr>
+</table>
 <p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>The combination should be able to consume much less power. </p>
 <h2>Sensor Message Format</h2>
 <p>The message format of messages exchanged between the Raspberry and the Arduino is defined <a href="sensorMsgFormat.html">on the following page(s)</a>. As sensors only have an active transmitter to send sensor values to the host, the messae format is very simple. For the moment we use the WT440h protocol (and the variant to code airpressure) as the basis message format. </p>
 <p>We do no checking or further processing on the Arduino Sensor side, just transfer the measured values back to the server.</p>
 <p>&nbsp;</p>
 <h2>Alternative Solutions</h2>
-<p>The new green BMP180 and the HTU21D board do have the same pin lay-out. Therefore in principle it ispossibel to stack the two boards with a little header space in between. This would mean simple wiring and two sensors on one board. The softwware would be able to deal with this and send two sensor readings with the same address (specified in the .h file at compile time) but with 2 </p>
+<p>The new green BMP180 and the HTU21D board do have the same pin lay-out. Therefore in principle it is possible to stack the two boards with a little header space in between. This would mean simple wiring and two sensors on one board. The software would be able to deal with this and send two sensor readings with the same address (specified in the .h file at compile time) but with 2 </p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
