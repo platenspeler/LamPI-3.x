@@ -21,7 +21,7 @@
 /* ------------------------------------------------------------------------------------ */
 /* SCSS Document for making generic LamPI .css files 									*/
 /* Author: M. Westenberg (mw12554@hotmail.com) 											*/
-/* This file contains a template for (most) if not all "classic_xxxxx.css" files		*/
+/* This file contains a template for (most) if not all "scale-xxxxxxxx.css" files		*/
 /* ------------------------------------------------------------------------------------ */
 /* CORE HTML CSS */
 body {
@@ -455,6 +455,10 @@ input#lbl {
 
 .all_off_button {
   min-width: 100px;
+  /* this button should be twice as wide as the off an on button together */ }
+
+.push_button {
+  min-width: 95px;
   /* this button should be twice as wide as the off an on button together */ }
 
 /* General Definitions */

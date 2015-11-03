@@ -8,8 +8,15 @@
 
 <h1>Change History</h1>
 <p>This document describes the main changes made for a certain release</p>
-<p>Release 3.6 (September 2015)</p>
+<p>Release 3.6 (October 2015)</p>
 <ul>
+  <li>Solve critical bug in Action/Puls switch support for Arduino Gateway</li>
+  <li>Solve bug to prevent error in LamPI-node.js when Z-Wave devices report values for a device not present in the config database</li>
+  <li>Update Arduino Software LamPI-arduino.c to support several WT440 message types</li>
+  <li>Update Arduino software, when BH1750 sensor not present the software will not output nonsense values</li>
+  <li>Update LamPI-receiver.c to NOT support non-standard WT440 messages</li>
+  <li>Update LamPI-node.js several bug fixes for sensors and reporting.</li>
+  <li>Add support for DS3231 RTC (real time clock).</li>
   <li>Add support for the Quhwa / SelectPlus doorbell </li>
   <li>Added BH1750FVI sensor for Luminescense</li>
   <li>Changed the ~/scripts/PI-log script to work better without requiring restart of servers</li>

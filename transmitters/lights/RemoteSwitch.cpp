@@ -295,15 +295,16 @@ void ActionSwitch::sendSignal(unsigned short systemCode, char device, bool on) {
 unsigned long ActionSwitch::getTelegram(unsigned short systemCode, char device, bool on) {
 	unsigned short trits[12];
 	
-	// device id ranges from 0 to 4 (dial A to E)
-	// device-=65;										// The character value of 'A'									
+	// Do not correct for Characters AtoE or devices from 1. Just use address 0-31 and device 0-4
+	// Nor do Endian bit shifting
+	
+	// device-=65;										// The character value of 'A'		
+	// device --;										// The commands start with unit 1, so correct							
 	// printf("ActionSwitch:: system: %d, device: %d",systemCode, device);
-	
-	device --;											// The commands start with unit 1, so correct
-	
+		
 	for (unsigned short i=0; i<5; i++) {
 		//bits 0-4 contain address (2^5=32 addresses)
-		trits[i]=(systemCode & 1)?1:2;          
+		trits[4-i]=(systemCode & 1)?1:2;          
 		systemCode>>=1;
 		
 		//bits 5-9 contain device. Only one trit has value 0, others have 2 (float)!

@@ -131,16 +131,62 @@ Stop:  | |_________ .. _____| (T,40T)</code><br />
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ___  &nbsp; ___<br />
  '1':   |  &nbsp; |_|  &nbsp; |_&nbsp;&nbsp; (3T,T,3T,T)<br />
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _    &nbsp;&nbsp;&nbsp; ___<br />
- float: | |___|  &nbsp; |_ (T,3T,3T,T) used in addresses<br />
+ float: | |___|  &nbsp; |_ (T,3T,3T,T) used in addresses. Coded as &quot;2&quot;<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _<br />
 Sync:  | |___________ .. ___________| (T, 31T)</code></p>
 <p><code><br />
 </code></p>
 <h4>bit code</h4>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
+<p>Every message consists of 12 bits. The first 5 bits are address, the next&nbsp;5 bits contin the device coding and the last 2 bits contain the value&nbsp;(on or off). Actually, bit values is not quite the correct way of saying: Every &quot;bit&quot; can in fact have 3 values.</p>
+<table width="362" border="0">
+  <tr>
+    <th width="167" scope="col">0-7</th>
+    <th width="185" scope="col">8-11</th>
+  </tr>
+  <tr>
+    <td>A A A A A U U U</td>
+    <td>U U&nbsp;V V</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
 <h4>legend</h4>
 <p></p>
+<table width="962" border="1">
+  <tr>
+    <th width="158" scope="col">Bits</th>
+    <th width="32" scope="col">#B</th>
+    <th width="152" scope="col">Legend</th>
+    <th width="592" scope="col">Comment</th>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>AAAAA</td>
+    <td>5</td>
+    <td>Address</td>
+    <td>The address is coded between 0 from 31</td>
+  </tr>
+  <tr>
+    <td>UUUUU</td>
+    <td>5</td>
+    <td>Unit code</td>
+    <td>For the action brand of transmitter and receivers, 5 devices can be selected, with their bit position having value &quot;1&quot; and the others having value &quot;2&quot;</td>
+  </tr>
+  <tr>
+    <td>VV</td>
+    <td>2</td>
+    <td>Value</td>
+    <td>02 is &quot;0&quot;, and 20 is a &quot;1&quot; value</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
 <p>&nbsp;</p>
 <h2>Livolo</h2>
 <p>Livolo makes wonderful switches and dimmers and some can be controlled by a remote. HOWEVER, their protocol is simple and pollutes the air and makes the receiver interrupt function works hard. So, this would be a protocol to delete from your system if not used.</p>

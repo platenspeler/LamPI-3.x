@@ -480,7 +480,11 @@ int wt440h(int p_length)
 				// if leader != 10 (1100)
 				// Then break off
 				
-				// if constant != 6 return(0);
+				// Although LamPI supports new coding of this constant to code
+				// airpressure or battery life, we do not support this for sniffer at the moment.
+				// Only ArduinoGateway does support this
+				if (constant != 6)
+					return(0);
 				// then break off
 				
 				// Gather statistics, but no skipping of bits
@@ -1052,10 +1056,10 @@ int action(int p_length)
 					 "{\"tcnt\":\"%d\",\"action\":\"handset\",\"type\":\"raw\",\"message\":\"!A%dD%dF%d\"}", 
 							socktcnt%1000,address,unit,onoff);
 							
-				//sprintf(snd_buf, "%d,!A%dD%dF%d", socktcnt%1000, address, unit, onoff);
 				
 				if (dflg) {
 					check_n_write_socket(binary, chk_buf, binary_count);
+					if (verbose) printf("Send Buffer: %s\n",snd_buf);
 				}
 				else {
 					if (verbose) printf("Send Buffer: %s\n",snd_buf);

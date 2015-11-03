@@ -13,6 +13,7 @@
 <p>The&nbsp;Address that will be used by the Arduino Sensor is configurable in the 433Sensor.h file at compile time. This way, every Arduino Sensor can use its own address to send sensor values and can be&nbsp;recognized uniquely by the LamPI-node daemon.</p>
 <p>Alternatively, you can send on an address that is shared with another Arduino Sensor in order to get more readings and the daemon will sort of average-out both values.</p>
 <h2>Message Format</h2>
+<p>The standard WT440 only supports temperature reading, the WT440h also reports humidity. And by using some unused bits we can also report airpressure and use BMP180 sensors for example.</p>
 <ul>
   <li>Temperature and Humidity -&gt; Use the standard WT440 message format</li>
   <li>Temperature Only -&gt; Use the standard WT440 message format</li>
@@ -22,6 +23,7 @@
       <li>Airpressure is coded as: sensor-value / 100 - 930</li>
     </ul>
   </li>
+  <li>Battery Status (%), xx.y % format is sent over the air as xxy (so divide by 10)</li>
 </ul>
 <p>The channel settings are as follows:</p>
 <ul>

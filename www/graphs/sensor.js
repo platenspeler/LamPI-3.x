@@ -151,10 +151,16 @@ function start_TEMPI()
 				sensor_type = 'T';
 			break;
 			case "H":
-				sensor_type = 'H';
+				sensor_type = 'H';				// Humidity
 			break;
 			case "P":
 				sensor_type = 'P';
+			break;
+			case "B":
+				sensor_type = 'B';				// Battery Sensor
+			break;
+			case "L":
+				sensor_type = 'L';				// Luminescense
 			break;
 			default:
 		}
@@ -244,6 +250,12 @@ function start_TEMPI()
 					logger("Windspeed not yet implemented",1);
 					return;
 			break;
+			case "T7":						// Luminescense
+					graphType="L";
+			break;
+			case "T8":						// Battery
+					graphType="B";
+			break;
 			case "T5":
 				init_settings();
 			break;
@@ -321,7 +333,7 @@ function init() {
 	else {
 		skin = settings[4]['sett']['mobile']['val'];
 	}
-	$("link[href^='/styles']").attr("href", skin);		// /styles only if teh html file uses /styles too
+	$("link[href^='/styles']").attr("href", skin);		// /styles only if the html file uses /styles too
 	logger("init:: debug: "+debug+", skin: "+skin, 1);
 	
 	graphType = "T";									// temperature, humidity, airpressure
@@ -355,6 +367,12 @@ function init_graph(type, period) {
 		break;
 		case "P":
 			but += '<div><img id="graph" src="all_press_'+period+'.png" width="750" height="400"></div>';
+		break;
+		case "L":
+			but += '<div><img id="graph" src="all_lumi_'+period+'.png" width="750" height="400"></div>';
+		break;
+		case "B":
+			but += '<div><img id="graph" src="all_battery_'+period+'.png" width="750" height="400"></div>';
 		break;
 		case "S":
 			alert("Error Windspeed sensor not yet implemented");
@@ -390,6 +408,8 @@ function init_menu(type)
 		+ '<input type="submit" id="T2" value= "Humidity" class="hm_button">'
 		+ '<input type="submit" id="T3" value= "Airpress" class="hm_button">'
 		+ '<input type="submit" id="T4" value= "Windspeed" class="hm_button">'
+		+ '<input type="submit" id="T7" value= "Luminescense" class="hm_button">'
+		+ '<input type="submit" id="T8" value= "Battery" class="hm_button">'
 		+ '<input type="submit" id="T5" value= "Settings" class="hm_button">'
 		+ '</td></tr>'
 		;
@@ -401,6 +421,8 @@ function init_menu(type)
 		+ '<tr class="switch"><td><input type="submit" id="T2" value= "Humidity" class="hm_button"></td>'
 		+ '<tr class="switch"><td><input type="submit" id="T3" value= "Airpressure" class="hm_button"></td>'
 		+ '<tr class="switch"><td><input type="submit" id="T4" value= "Windspeed" class="hm_button"></td>'
+		+ '<tr class="switch"><td><input type="submit" id="T7" value= "Luminescense" class="hm_button"></td>'
+		+ '<tr class="switch"><td><input type="submit" id="T8" value= "Battery" class="hm_button"></td>'
 		+ '<tr class="switch"><td><input type="submit" id="T5" value= "Settings" class="hm_button"></td>'
 		;
 
@@ -476,6 +498,34 @@ function init_sensors(type)
 					but += '<input type="submit" id="P'+i+'" value= "'+sensors[i]['name']+'" style="max-width:60px; max-height:25px;" class="hs_button '+hover+'">';
 				}
 			break;
+			case "L":
+				if ((type=="L") && ('luminescense' in sensors[i]['sensor']) ) {
+					// Find out whether this button is in the list of graphsSensors['graphType']
+					if (jQuery.inArray(sensors[i]['name'],graphSensors['L']) != -1) {
+						console.log("init_sensors:: Found: "+sensors[i]['name']+" in graphSensors");
+						hover="hover";
+					} else {
+						console.log("init_sensors:: NOT Found: "+sensors[i]['name']+" in graphSensors");
+						hover = "";
+					}
+					// alert("init_sensors:: found: "+sensors[i]['name']);
+					but += '<input type="submit" id="L'+i+'" value= "'+sensors[i]['name']+'" style="max-width:60px; max-height:25px;" class="hs_button '+hover+'">';
+				}
+			break;
+			case "B":
+				if ((type=="B") && ('battery' in sensors[i]['sensor']) ) {
+					// Find out whether this button is in the list of graphsSensors['graphType']
+					if (jQuery.inArray(sensors[i]['name'],graphSensors['B']) != -1) {
+						console.log("init_sensors:: Found: "+sensors[i]['name']+" in graphSensors");
+						hover="hover";
+					} else {
+						console.log("init_sensors:: NOT Found: "+sensors[i]['name']+" in graphSensors");
+						hover = "";
+					}
+					// alert("init_sensors:: found: "+sensors[i]['name']);
+					but += '<input type="submit" id="B'+i+'" value= "'+sensors[i]['name']+'" style="max-width:60px; max-height:25px;" class="hs_button '+hover+'">';
+				}
+			break;
 			default:
 				alert("Sensor Type "+type+" not yet supported");
 		}
@@ -549,6 +599,17 @@ function display_graph(type, period) {
 		case "S":
 			alert("Error Windspeed sensor not yet implemented");
 			return(0);
+		break;
+		case "L":
+			document.getElementById("graph").src='all_lumi_'+period+'.png';
+			image = document.getElementById("graph");
+			image.src = image.src.split("?")[0] + "?" + new Date().getTime();
+		break;
+		case "B":
+			document.getElementById("graph").src='all_battery_'+period+'.png';
+			image = document.getElementById("graph");
+			image.src = image.src.split("?")[0] + "?" + new Date().getTime();
+		break;
 		default:
 			console.log("display_graph:: Unknown graph type: "+type);
 			return(0);

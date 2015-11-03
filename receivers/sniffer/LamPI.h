@@ -32,7 +32,7 @@ extern "C"
 
 // Default port setting
 //
-#define PORT "5000" 							// the port client will be connecting to 
+#define PORT "5002" 							// the port client will be connecting to 
 
 // Define Pulse /timing for devices
 //

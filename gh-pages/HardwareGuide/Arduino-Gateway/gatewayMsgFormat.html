@@ -154,7 +154,13 @@
     <td>&nbsp;</td>
     <td>&nbsp;</td>
     <td>&lt; {cnt} 0 3 {debug reply}</td>
+    <td>Dbug mode is toggled</td>
+  </tr>
+  <tr>
     <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&lt; {cnt} 0 4</td>
+    <td>Print the version number to the serial output</td>
   </tr>
   <tr>
     <td>&nbsp;</td>
@@ -200,7 +206,8 @@
     </blockquote></td>
     <td>&nbsp;</td>
     <td>&lt; {cnt} 2 1 31 2 1</td>
-    <td>action switch group 31, unit 2 is set on</td>
+    <td>action switch group 31, unit 2 is set on. <br />
+    Group is between 0 and 31, device is between 0 and 4 (5 bits, bit coded 1 when device active)</td>
   </tr>
   <tr>
     <td><blockquote>
@@ -215,7 +222,7 @@
       <p>Quhwa doorbell</p>
     </blockquote></td>
     <td>&nbsp;</td>
-    <td>&lt; {tcnt&gt; 2 7 93756057&nbsp;85 1</td>
+    <td>&lt; {cnt} 2 7 93756057&nbsp;85 1</td>
     <td>pressed</td>
   </tr>
   <tr>
@@ -236,7 +243,7 @@
     </blockquote></td>
     <td>&nbsp;</td>
     <td>&lt; {cnt} 3 0 40 0 26.5 50.1</td>
-    <td>Arduino on-board I2C sensor message. The code 40 tells us it is a HTU21 SHT21 device on the I2C bus</td>
+    <td>Arduino on-board I2C sensor message. The code 40 tells us it is a HTU21 SHT21 device on the I2C bus. All on-board sensors have code 0</td>
   </tr>
   <tr>
     <td><blockquote>
@@ -256,10 +263,24 @@
   </tr>
   <tr>
     <td><blockquote>
+      <p>WT440 battery</p>
+    </blockquote></td>
+    <td>&nbsp;</td>
+    <td>&lt; {cnt} 3 3 1 0 885</td>
+    <td>Battery percentage is 88.5%</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><blockquote>
       <p>Auriol example:</p>
     </blockquote></td>
     <td>&nbsp;</td>
-    <td>&lt; 111 3 3 138 0 237 0 ! Auriol Cs: 0, N1: 1000, N2: 100<br /></td>
+    <td>&lt; 111 3 8 138 0 237 0 ! Auriol Cs: 0, N1: 1000, N2: 100<br /></td>
     <td>Receive Auriol weather for device id 138, message temp is 23.7 Celcius encoded and humi 0% (not supported). Optionally when debug is active&nbsp;(!), it will provide the N1 and N2 parameters (N1 1000 tells us the battery is still OK).<br />
     <br />
     When Statistics is compiled, it will show timing info after the &quot;!&quot; as well.</td>

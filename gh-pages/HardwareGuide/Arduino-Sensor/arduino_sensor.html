@@ -2,37 +2,36 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>Untitled Document</title>
+<title>Arduino Sensor</title>
 </head>
 
 <body>
-<h1>Nano Sensor</h1>
-<p>This page describes how to make a LamPI sensor node with just a few basic components: An Arduino Nano, a 433MHz transmitter and a sensor (and a soldering ion, a board and some other small stuff). The following connections need be made:<br />
+<h1>Arduino Sensor</h1>
+<p>This page describes how to make a LamPI sensor node with just a few basic components: An Arduino Nano, a 433MHz transmitter and a sensor (and a soldering ion, a board and some other small stuff). The following connections must be made:<br />
 </p>
 <ul>
   <li>The Arduino Nano needs to be connected to a host or to a a power adapter through a mini-USB connector (5V)</li>
-  <li>The (4-pi) transmitter needs to be connected a follows:
+  <li>The (4-pin) transmitter needs to be connected as follows:
     <ul>
-      <li>The VCC pin neecds to be connected to the Nano5.0 V pin of the Ardiono</li>
-      <li>The GND pin needs to be connetced to one of the two GND pins</li>
+      <li>The VCC pin needs to be connected to the Nano5.0 V pin of the Arduino</li>
+      <li>The GND pin needs to be connected to one of the two GND pins</li>
       <li>The Antenna needs to be connected to 16.8 cm of wire (or a dedicated antenna)</li>
-      <li>The data pin of teh Transmitter needs to be connecte dto pin D08 f teh Arduino</li>
+      <li>The data pin of the Transmitter needs to be connected to pin D08 of the Arduino</li>
     </ul>
   </li>
   <li>The sensor needs to be connected as follows (assuming either&nbsp;BMP180 or HTU21D sensor:
     <ul>
       <li>The VCC pin needs to be connected to the 3.3V pin of the Arduino</li>
       <li>The GND pin of the sensor need to be connect to one of the two GND pins of the Arduino Nano</li>
-      <li>The SCL pin of the sensor nees to be connected to pin A5 of the Arduino</li>
+      <li>The SCL pin of the sensor needs to be connected to pin A5 of the Arduino</li>
       <li>The SDA pin of the sensor be connected to pin A4 of the Arduino Nano</li>
     </ul>
   </li>
 </ul>
 <p>&nbsp;</p>
 <h2>Schema</h2>
-<p>&lt;to be provided&gt;</p>
 <ul>
-  <li>For temperature sensor DS18b20  the version 4 schematics can be used (For Aduino Nano the pin layout is different):</li>
+  <li>For temperature sensor DS18b20  the version 4 schematics can be used (For Arduino Nano the pin layout is different):</li>
 </ul>
 <p><img src="images/LamPI Battery Sensor.jpg" width="640" height="360" /></p>
 <p>&nbsp;</p>
@@ -40,28 +39,31 @@
 <h2>Version 1.0</h2>
 <p>This is the version 1 of the Arduino sensor. As you can see on the picture below, the HTU21D sensor use is the big one, and the board has more space than necessary.</p>
 <p><img src="images/arduinoSensor_1.jpg" alt="" width="450" height="600" /></p>
-<p>Above you see the first version of the Arduino sensor that I made. It contains the Arduinom the sender on the top rigth and a HTU21D temperature and humidity sensor. As it was possible to make the sensor a lot smaller I made version 2 which is found on the top of the page.</p>
+<p>Above you see the first version of the Arduino sensor that I made. It contains the Arduino, the sender on the top right and a HTU21D temperature and humidity sensor. As it was possible to make the sensor a lot smaller I made version 2 which is found on the top of the page.</p>
 <p>As you can see there is room for another sensor, o remove some board space.</p>
 <p>&nbsp;</p>
 <h2>&nbsp;</h2>
 <h2>Version 2.0</h2>
 <p><a href="images/arduino_sensor_2c.jpg"><img src="images/arduino_sensor_2c.jpg" width="900" height="349" /></a></p>
-<p>The Arduino Nano board is small enough to make a nice 433MHz sensor device&nbsp;to capture on-board temperature, humidity or&nbsp; airpressure for example and send it over the air to one of the Raspberry slaves or the master.</p>
+<p>The Arduino Nano board is small enough to make a nice 433MHz sensor device&nbsp;to capture on-board temperature, humidity or&nbsp; air pressure for example and send it over the air to one of the Raspberry slaves or the master.</p>
 <p><img src="images/arduino_sensor_2a.jpg" width="640" height="480" /></p>
 <h2>What do you need:</h2>
 <ul>
-  <li>Arduino Nano (about $ 2.00 on ebay including shipping)</li>
+  <li>Arduino Nano (about $ 2.00 on eBay including shipping)</li>
   <li>small piece of perf-board  </li>
   <li>Sensor (for example BMP180 device is $ 1.30 including shipping)</li>
   <li>433MHz Transmitter (from $ 1.00)</li>
   <li>Some small wires (I use  an old Ethernet CAT-5 cable)</li>
   <li>soldering iron, knive, etc etc</li>
+  <li>A USB wall charger and cable to power the sensor</li>
 </ul>
 <p><img src="images/arduino_sensor_2b.jpg" width="600" height="450" /></p>
 <p>&nbsp;</p>
 <h2>Version 3.0</h2>
 <p>Version 3 is almost the same as version 2. Only the Arduino is not soldered but instead it is mounted on headers. In principle this allows the transmitter and sensor to be placed inside the space between the Arduino, the headers and a piece of board.</p>
 <p><a href="images/arduino_sensor_3b.jpg"><img src="images/arduino_sensor_3b.jpg" width="600" height="450" /></a></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
 <p>I made another version of the Arduino Sensor</p>
 <p><a href="images/arduino_sensor_3a.jpg"><img src="images/arduino_sensor_3a.jpg" width="600" height="450" /></a></p>
 <p>&nbsp;</p>
@@ -69,32 +71,10 @@
 <p></p>
 <p>The&nbsp;transmitter and the sensor are soldered between the headers and the perf board. The Arduino is removed from its headers for the picture. The green wire is the 16.8 cm antenna which is curled to fit in any type of housing.</p>
 <p>&nbsp;</p>
-<h2>Version 4.0, Pro-Mini Low Power</h2>
-<h3>Schematics</h3>
-<p>The picture below shows how to connect your sensor, transmitter and Arduino Pro Mini together.</p>
+<h2>&nbsp;</h2>
 <p>&nbsp;</p>
-<p><img src="images/LamPI Battery Sensor.jpg" width="640" height="360" /></p>
-<p>be carefyul, the pin out for the transmitter might differ for your transmitter. Please look careful&nbsp;to the transmitter PCBwhich will indiate which connections should be made. Also, the datasheet for that particular transmitter will shed some light on this subject.</p>
-<h3>Prototyping</h3>
-<p><a href="images/sensor_4_a.JPG"><img src="images/sensor_4_a.JPG" width="600" height="450" hspace="10" vspace="10" /></a></p>
-<p>The battery shown in the back is a 2000 mA version used for mobile phones.</p>
-<p>Version 4 was designed to be a low-power version. The Arduino Sensor node will only power one or two sensor devices and once every minute report these values to the central gateway. For such purposes we should NOT need a high-power device. So I chose the Arduino Pro Mini node on 3.3V, which would because of its lower power and lower clockspeed work on batteries for an extended amount of time.</p>
-<p>As an option: We could use NRF24L01 transceivers which operate on 3.3V and use the 2.4GHz band. But only if the combination works and uses less power that any ordinary combination on 433MHz.</p>
-<h3>Low Power</h3>
-<p>The Arduino Pro Mini operating at 3.3V and 8MHz has capabilities to operate on batteries as it is possible to put it to sleep/standby between sensor readings. A normal Arduino Pro Mini running continuously together with a NRF24L01 sensor consumes about 2800 uA.</p>
-<table width="620" border="1">
-  <tr>
-    <th scope="col"><a href="images/sensor_4_d.JPG"><img src="images/sensor_4_d.JPG" width="600" height="450" hspace="10" vspace="10" /></a></th>
-  </tr>
-  <tr>
-    <td><h6>The Arduino Pro Mini working on Battery power. The 6-pin FTDI connector left is connected to the board but not to the FTDI interface.</h6></td>
-  </tr>
-</table>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>The combination should be able to consume much less power. </p>
 <h2>Sensor Message Format</h2>
-<p>The message format of messages exchanged between the Raspberry and the Arduino is defined <a href="sensorMsgFormat.html">on the following page(s)</a>. As sensors only have an active transmitter to send sensor values to the host, the messae format is very simple. For the moment we use the WT440h protocol (and the variant to code airpressure) as the basis message format. </p>
+<p>The message format of messages exchanged between the Raspberry and the Arduino is defined <a href="sensorMsgFormat.html">on the following page(s)</a>. As sensors only have an active transmitter to send sensor values to the host, the message format is very simple. For the moment we use the WT440h protocol (and the variant to code airpressure) as the basis message format. </p>
 <p>We do no checking or further processing on the Arduino Sensor side, just transfer the measured values back to the server.</p>
 <p>&nbsp;</p>
 <h2>Alternative Solutions</h2>

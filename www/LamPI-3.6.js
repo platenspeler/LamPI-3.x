@@ -1007,7 +1007,6 @@ function start_LAMP(){
 							addr: sensors_addr,
 							unit: "0",
 							val: "0",
-							type: "switch",
 							scene: ""						// we should start with empty Scene
 						}
 						sensors.push(newsensors);			// Add record newdev to devices array
@@ -1630,7 +1629,7 @@ function helpForm(dialogTitle, dialogText, moreFunc, doneFunc ) {
 				var ret = [ $("#val_1").val(), $("#val_2").val(), $("#val_3").val(), $("#val_4").val() ];
 				setTimeout(function(){ moreFunc(ret) }, 50);
         	}
-			var s="http://platenspeler.github.io/LamPI-3.0/UserGuide/";
+			var s="http://platenspeler.github.io/UserGuide/";
 			switch (s_screen) {
 				case 'room': var win=window.open(s+'rooms.html', '_blank'); win.focus(); break;
 				case 'scene': var win=window.open(s+'scenes.html', '_blank'); win.focus(); break;
@@ -1679,27 +1678,27 @@ function helpForm(dialogTitle, dialogText, moreFunc, doneFunc ) {
         	}
 			switch (s_screen) {
 				case 'room':
-					var win=window.open('http://platenspeler.github.io/LamPI-3.0/UserGuide/rooms.html', '_blank');
+					var win=window.open('http://platenspeler.github.io/UserGuide/rooms.html', '_blank');
 					win.focus();
 				break;
 				case 'scene':
-					var win=window.open('http://platenspeler.github.io/LamPI-3.0/UserGuide/scenes.html', '_blank');
+					var win=window.open('http://platenspeler.github.io/UserGuide/scenes.html', '_blank');
 					win.focus();
 				break;
 				case 'timer':
-					var win=window.open('http://platenspeler.github.io/LamPI-3.0/UserGuide/timers.html', '_blank');
+					var win=window.open('http://platenspeler.github.io/UserGuide/timers.html', '_blank');
 					win.focus();
 				break;
 				case 'handset':
-					var win=window.open('http://platenspeler.github.io/LamPI-3.0/UserGuide/handsets.html', '_blank');
+					var win=window.open('http://platenspeler.github.io/UserGuide/handsets.html', '_blank');
 					win.focus();
 				break;
 				case 'sensor':
-					var win=window.open('http://platenspeler.github.io/LamPI-3.0/UserGuide/weather.html', '_blank');
+					var win=window.open('http://platenspeler.github.io/UserGuide/weather.html', '_blank');
 					win.focus();
 				break;
 				case 'energy':
-					var win=window.open('http://platenspeler.github.io/LamPI-3.0/UserGuide/energy.html', '_blank');
+					var win=window.open('http://platenspeler.github.io/UserGuide/energy.html', '_blank');
 					win.focus();
 				break;
 				default:			
@@ -2234,7 +2233,31 @@ function activate_room(new_room_id, selectable)
 				$(table).append(but);
 				// Set the value read from load_device in the corresponding button
 			  break;
-			
+			  
+			  case "push": 
+				// Below is the pushbutton device. Some code double, but better readable
+				// For jqmobile the layout, but also slider difinitions are different
+				if (jqmobile == 1) {
+					var but =  '<tr class="devrow switch">' ;
+					if (selectable == "Del") 
+						but+= '<td><input type="checkbox" id="'+device_id+'c" name="cb'+device_id+'" value="yes" class="dbuttons"></td>';
+					but += '<td colspan="2"><input type="text" id="'+device_id+'" value="'+device_name+'" class="dlabels"></td>';
+					but += '<td>';
+					but += '<input type="submit" id="'+device_id+'F1'+'" value="PUSH" class="dbuttons on_button'+onbut+'"></td>';
+				}		
+				// NOT jqmobile
+				else {
+					var but =  '<tr class="devrow switch">' ;
+					if (selectable == "Del") 
+						but+= '<td><input type="checkbox" id="'+device_id+'c" name="cb'+device_id+'" value="yes" class="dbuttons"></td>';
+					but += '<td colspan="2"><input type="submit" id="'+device_id+'" value= "'+device_name+'" class="dlabels"></td>';
+					but += '<td></td>';	
+					but += '<td><input type="submit" id="'+device_id+'F1'+'" value= "'+"PUSH" +'" class="dbuttons push_button'+onbut+'"></td>';
+				}
+				$(table).append(but);
+				// Set the value read from load_device in the corresponding button
+			  break;
+			  
 			  case "dimmer":	
 					// Unfortunately, code for jqmobile and Web jQuery UI is not the same
 				if (jqmobile == 1) {	
@@ -2486,7 +2509,7 @@ function activate_room(new_room_id, selectable)
 			  break;
 			
 			  default:
-					alert("lamp_button, type: "+device_type+" unknown");
+					alert("lamp_button, type <"+device_type+"> unknown");
 			}// switch	
 				
 		}// room

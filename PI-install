@@ -39,16 +39,11 @@ install_linux()
 	sudo apt-get -q update
 	sudo apt-get -q upgrade
 
-	#sudo apt-get -qy install php5
 	sudo apt-get -qy install mysql-server
 	sudo apt-get -y install mysql-client
-	#sudo apt-get -y install php5-mysql
-	#sudo apt-get -qy install php5-dev
-	#sudo apt-get -qy install php5-pear
-	#sudo apt-get -qy install php5-curl
 	sudo apt-get -qy install apache2
     sudo apt-get -qy install lm-sensors
-	sudo apt-get -y install rrdtool				# We might want the latest version, this is not but it works!
+	sudo apt-get -qy install rrdtool				# We might want the latest version, this is not but it works!
 	sudo apt-get -qy install i2c-tools
 	sudo apt-get -qy install libpango1.0-dev libxml2-dev
 	sudo apt-get -y install phpmyadmin
@@ -66,7 +61,7 @@ install_linux()
 install_zway()
 {
 	echo "Starting installation of Z-Way Razberry"
-	wget -q -O - http://razberry.zwave.me/install/v2.0.1-rc25 | sudo bash 
+	wget -q -O - http://razberry.zwave.me/install/v2.1.1 | sudo bash 
 }
 
 # -----------------------------------------------------------------------------------------------------
@@ -151,6 +146,7 @@ install_lampi()
 	# Fix the .exe directory And build the executables from source directories
     #
 	cd $HOMEDIR/receivers/sniffer; make; sudo make install
+    cd $HOMEDIR/receivers/arduino; make; sudo make install
 	cd $HOMEDIR/transmitters/livolo; make ; sudo make install
 	cd $HOMEDIR/transmitters/kaku; make; sudo make install
 	cd $HOMEDIR/transmitters/lights; make; sudo make install

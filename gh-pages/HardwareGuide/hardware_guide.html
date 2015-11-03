@@ -7,8 +7,8 @@
 <body>
 
 <h1>Hardware Guide</h1>
-<h4>Version: 3.6 (Raspberry) and 1.7 (Arduino)<br>
-  Date: September 2015
+<h4>Version: 3.6.3 (Raspberry) and 1.7.3 (Arduino)<br>
+  Date: October 2015
 </h4>
 <p>This page deals with the hardware that we need to connect to the Raspberry PI in order to communicate with wireless receivers or Handsets and turn your RPI into a full functioning control center. LamPI can support several types of receiver devices for 433MHz, 868MHz or 2.4GHz which are the free bands for wireless communication in Europe. Also, several brand share almost the same protocol or work or can be made to work with minor modifications, Therefore, the list below is probably just a snapshot of a much larger list...</p>
 <h2>Structure of this document</h2>
@@ -16,41 +16,55 @@
 <p>The remainder of this document will be structured so that we will discuss wired connections to the Raspberry first, followed by devices/sensors that connect over 433MHz (keep in mind that these devices use some sort of transceiver or gateway connected to the Raspberry too). 868MHz and 2.4GHz follow later.</p>
 <h2>Table of contents</h2>
 <ul>
-  <li><a href="#supported_devices">Support Guide</a></li>
+  <li><a href="#supported_devices">Support Guide</a><br>
+  <br>
+  </li>
   <li><a href="#wired_devices">Wired Guide (direct connect)</a>
     <ul>
       <li><a href="#connector">P1 Connector</a></li>
       <li><a href="#energy_sensors">Energy Sensors</a></li>
     </ul>
+  <br>
   </li>
   <li><a href="#wireless_guide">433MHz Guide</a>
 <ul>
+      <li><a href="#arduino_unboxing">Arduino Unboxing and installation</a></li>
       <li><a href="#gateway">Arduino Gateway</a></li>
       <li><a href="#arduino_sensor">Arduino Sensor</a></li>
+      <li><a href="#battery_sensor">Battery Sensor</a></li>
       <li><a href="#arduino_repeater">Arduino Repeater</a></li>
+      <br>
     </ul>
   </li>
   <li><a href="#zwave_guide">868MHz Z-Wave Guide</a>
     <ul>
       <li><a href="#razberry_gateway">Razberry Gateway</a></li>
     </ul>
+    <br>
   </li>
   <li><a href="#zigbee_guide">2.4GHz Zigbee Guide</a></li>
 </ul>
-<p>&nbsp;</p>
 <h2><a name="supported_devices"></a>Supported Devices</h2>
 <p>By connecting transmitter, receiver and/or sensors directly to the Raspberry, it is possible to control a great deal of devices and/or sensors. The Raspberry has 26 or 40 pins and a lot of these pins are GPIO pins and can be used to transmit or receive pulses. If connections were the only important thing here, than the Raspberry could be extended to talk to almost every device you like it to connect with.</p>
 <p>The most simple configuration is the transmitter on the picture: It uses only 3 pins: Vcc (black), Gnd (red) and a data line (yellow). Yes, I know red would be the better color for Vcc, but unfortunately the connector had its wires fixed in the wrong order :-) Later versions of the Raspberry gpio devices I made use more pin's and can receive over-the-air messages and measure temperature etc. There are all explained in separate sections.</p>
 <p>So how can the Raspberry &quot;talk&quot; to all these devices:</p>
 <ol>
-  <li>Connect sensors and/or switches directly to the GPIO pins of the Raspberry. This seems  a simple and elegant solution. However, even though it is possible to connect all sensors to the Raspberry, distance to the switches or sensor and esthetic considerations make it impossible to connect everything by wire.</li>
-  <li>Use a wireless protocol. If switches and dimmers and sensors &quot;speak&quot; the same wireless language, it is possible to connect one Raspberry with a transmitter/receiver pair and have them talk to your devices.
+  <li>
+    <p>Connect sensors and/or switches directly to the GPIO pins of the Raspberry. This seems  a simple and elegant solution. However, even though it is possible to connect all sensors to the Raspberry, distance to the switches or sensor and esthetic considerations make it impossible to connect everything by wire.</p>
+  </li>
+  <li>
+    <p>Use a wireless protocol. If switches and dimmers and sensors &quot;speak&quot; the same wireless language, it is possible to connect one Raspberry with a transmitter/receiver pair and have them talk to your devices.
+    </p>
     <ol>
-      <li>Wifi. Intelligent devices like the RaspberryPI itself can easily be connected over Wifi. However wifi may be too expensive o require too much work for simple devices. For LamPI we do not connect devices over Wifi (we could be do not at the moment).</li>
-      <li>Use 433MHz wireless communication. This protocol is on a frequency band which is free to use in a domestic area. Many home automation products use 433 MHz communication as hardware is cheap. Unfortunately there are not so many </li>
+      <li>
+        <p>Wifi. Intelligent devices like the RaspberryPI itself can easily be connected over Wifi. However wifi may be too expensive o require too much work for simple devices. For LamPI we do not connect devices over Wifi (we could be do not at the moment).</p>
+      </li>
+      <li>
+        <p>Use 433MHz wireless communication. This protocol is on a frequency band which is free to use in a domestic area. Many home automation products use 433 MHz communication as hardware is cheap. Unfortunately there are not so many </p>
+      </li>
     </ol>
   </li>
-  <li>Use more than one Raspberry or Arduino to connect sensors to, and have this gateway do the forward to the LamPI daemon.</li>
+  <li>Use more than one Raspberry or Arduino to connect sensors to, and have this gateway do the forward to the LamPI daemon. </li>
 </ol>
 <p>All combinations are valid and can work.</p>
 <p><br>
@@ -292,19 +306,27 @@
 <p>There seems to be another community project started RFlink with the same intentions as my Arduino project. <a href="http://www.nemcon.nl/blog2/2015/07/devlist">http://www.nemcon.nl/blog2/2015/07/devlist</a>. <br>
   Hardware needed to make such a node can be bought in <a href="http://www.nodo-shop.nl/nl/home/116-rflink-bouwpakket.html">the Nodo shop</a>. Main disadvantage at the moment of using RFLink is that it requires an Arduino Mega. Not a big deal, but unnecessary for my use as Gateway and overkill when making an Arduino Sensor node.</p>
 <p><em>Sep 2015 update: We begin to reach the end of the Nano memory capacity. The memory usage is more than 85%. So I might have to switch to the Arduino Mega type of device for the Gateway only. All sensors and repeaters will be based on Nano or Pro-Mini Arduinos which are a lot smaller. There&nbsp;is a Pro version of the Arduino Mega available, which is smaller and easier to use in projects, so that is where we want to look at coming period of time.</em></p>
+<p>&nbsp;</p>
+<h2><a name="arduino_unboxing"></a>Arduino Unboxing</h2>
+<p>The process of unboxing the Arduino, installing the IDE and loading the first program is described <a href="Arduino-Gateway/arduino_unboxing.html">HERE</a></p>
 <h2><a name="gateway"></a>Arduino Gateway</h2>
 <p><img src="Arduino-Gateway/images/family_2.jpg" width="1196" height="422"></p>
 <p>Instead of connecting a transmitter and receiver directly to the Raspberry, it is equally possible to use an Arduino gateway. In this case, the Arduino will take care of all the 433 MHz wireless communication and it will connect to the Raspberry through a USB cable and port for power and host communication. For first version of the Arduino Gateway the UNO (larger footprint) and the Nano were the best candidates. In a later states we might have a look at other Arduino variants such as Nanodes, Teensy, Arduino RFu etc. should there be important advantages in using them. </p>
+<h3>Uno</h3>
+<p>I also made a version of the Arduino Gateway based on the Arduino Uno. The Uno is somewhat larger and in combination with the Arduino stick-up board Prototype Shield and a small block it is easy to make and change a setup. Functionally, the Nano and the Uno are equivalent and the code runs on both systems.So it is a matter of choice and preference.</p>
+<p>In general, the Arduino Uno is a good starting point for your Arduino projects. Its larger size makes it easy to connect devices and sensors. However, when converting your prototypes into working production sensors in your home, the Nano might be the better choice.</p>
+<p><a href="../Hardware/Gateway/images/ArduinoGateway_1.jpg"><img src="Arduino-Gateway/images/ArduinoGateway_1.jpg" alt="" width="400" height="300" hspace="10" vspace="5"></a></p>
+<p>In the picture above you see the Arduino gateway (Arduin UNO with prototype board) with a transmitter and receiver (the one with the orange antenna wire). My general feeling when building this gateway was that it is too large for its purpose. The Arduino Uno has a large footprint and lots of space for experiments. But I do not need it.</p>
+<p>&nbsp;</p>
 <h3>Nano</h3>
+<p>That's better!</p>
 <p><img src="Arduino-Gateway/images/board_01.jpg" width="400" height="300" hspace="5" vspace="5"></p>
 <p>The Nano is a good system for making an Arduino Gateway device. The little machine is VERY cheap (less than EUR 2.50&nbsp;including shipping) and can do all the things that the larger UNO can do as well. When it arrives at your mailbox, you just have to make a few connectors to the Arduino and it is ready for work. Its small footprint will make it difficult to&nbsp;give it a stable stand and therefore a small experiment board will provide that stability and offers place to connect sensors and transmitter/receiver devices as well.</p>
 <p> <a href="../Hardware/Gateway/images/nano_gateway_1.jpg"><img src="Arduino-Gateway/images/nano_gateway_1.jpg" width="376" height="500" hspace="10" vspace="10"></a> In the picture you see the Nano which is mounted on an experiment board using connectors. The transmitter is on the front, and the receiver is&nbsp;soldered on the rear end of the board. In the middle is a BPM085 board in the front (GY-65) and a LM75 (not connected) is found at the rear end. On the right front side is a DS18b20 device soldered (looks like a transistor), together with a 3-pin connector to attach a 1-meter water-proof sensor DS18b20.</p>
 <p>UpdateSept 2015: I added a HTU21D sensor to the board so I am able to use this board as the main Arduino Gateway for transmit and receive but I'm also able to measu temperature, airpressure and humidity on the small footprint.</p>
 <p>The board is used as the standard sensor/transmitter/receiver unit of one of the Raspberries in my home.</p>
-<h3>Uno</h3>
-<p>I also made a version of the Arduino Gateway based on the Arduino Uno. The Uno is somewhat larger and in combination with the Arduino stick-up board Prototype Shield and a small block it is easy to make and change a setup. Functionally, the Nano and the Uno are equivalent and the code runs on both systems.So it is a matter of choice and preference.</p>
-<p><a href="../Hardware/Gateway/images/ArduinoGateway_1.jpg"><img src="Arduino-Gateway/images/ArduinoGateway_1.jpg" width="400" height="300" hspace="10" vspace="5"></a></p>
-<p>In the picture above you see the Arduino gateway (Arduin UNO with prototype board) with a transmitter and receiver (the one with the orange antenna wire). </p>
+<p><a href="Arduino-Gateway/arduino_gateway.html">Please read more on the dedicated Arduino Gateway page</a></p>
+<p>&nbsp;</p>
 <h3>Arduino Gateway Message Format</h3>
 <p>The message format exchanged between the Arduino and the Raspberry over USB is described in detail in <a href="Arduino-Gateway/gatewayMsgFormat.html">gatewayMsgFormat</a></p>
 <h3>Applications</h3>
@@ -327,7 +349,11 @@
 <h3>Todo:</h3>
 <p>The WT440 protocol seems to be limited by temperature and humidity sensors, and as these weather stations are not in use so much anymore we must be looking at a better protocol, modern and supporting more devices. Alternatively we might have to build our own protocol or extend another one so that we can send any message we want over the air.</p>
 <p>Fortunately, the solution built can easily be adapted as soon as we have another suitable transmission protocol for over-the-air messages.</p>
-<p>Also, such a small Arduino&nbsp;with connectors for a few DS18B20 devices would be an excellent sensor station for temperature sensing for example for the Central Heating installation. At this moment we use a&nbsp;Raspberry for his purpose which is a waste of power (of the Raspberry) and energy usage as well.</p>
+<p>Also, such a small Arduino&nbsp;with connectors for a few DS18B20 devices would be an excellent sensor station for temperature sensing for example for the Central Heating installation. At this moment we use a&nbsp;Raspberry for his purpose which is a waste of power (of the Raspberry) and energy usage as well. </p>
+<p>&nbsp;</p>
+<h2><a name="battery_sensor"></a>Battery Sensor</h2>
+<p>For those (like me) that do not always want to power the Arduino Sensor over and USB cable, or just do not have a wall power outlet nearby, there is an alternative sensor powerd by batteries. Please have a look on the page <a href="Arduino-Sensor/battery_sensor.html">HERE</a></p>
+<p><img src="Arduino-Sensor/images/sensor_4_d.JPG" width="600" height="450"></p>
 <p>&nbsp;</p>
 <h3>Arduino Sensor Message Format</h3>
 <p>The message format that is used to code&nbsp;on-board sensors over the air to a receiving Arduino Gateway is described on the page <a href="Arduino-Sensor/sensorMsgFormat.html">sensorMsgFormat</a></p>

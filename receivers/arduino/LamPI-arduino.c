@@ -199,23 +199,26 @@ int send2device(int ttyfd, int dev, char *gaddr, char *uaddr, char *val)
 	char arduinoBuf[255];
 	
 	// Match the GUI values 1-32 for the dimmer to the device
-	// values of 0-15
+	
 	if (strcmp(val,"on")==0)  
-		sprintf(arduinoBuf,"> %d 1 %d %s %s on\n", socktcnt, dev, gaddr,uaddr);
-	else if (strcmp(val,"off") ==0 ) 
-		sprintf(arduinoBuf,"> %d 1 %d %s %s 0\n", socktcnt, dev, gaddr,uaddr);
+		// on is translated to code 1 (switches only)
+		sprintf(arduinoBuf,"> %d 1 %d %s %s 1\n", socktcnt, dev, gaddr, uaddr);
+	else if (strcmp(val,"off") ==0 )
+		// off means value 0
+		sprintf(arduinoBuf,"> %d 1 %d %s %s 0\n", socktcnt, dev, gaddr, uaddr);
 	else if (strcmp(val,"0") == 0) 
-		sprintf(arduinoBuf,"> %d 1 %d %s %s 0\n", socktcnt, dev, gaddr,uaddr);
+		sprintf(arduinoBuf,"> %d 1 %d %s %s 0\n", socktcnt, dev, gaddr ,uaddr);
+	// values of 1-15
 	else {
 		int ivalue= (int) ( (atoi(val)-1)/2 );
 		sprintf(arduinoBuf,"> %d 1 %d %s %s %d\n", socktcnt, dev, gaddr, uaddr, ivalue);
 	}
-	if (debug >=1) {
-		fprintf(stderr,"send2device:: %d: \(%s\)\n",strlen(arduinoBuf), arduinoBuf);
+	if (debug >= 1) {
+		fprintf(stderr,"send2device %s:%s :: %d: \(%s\)\n", gaddr, uaddr, strlen(arduinoBuf), arduinoBuf);
 	}
 	ret = write(ttyfd, arduinoBuf, strlen(arduinoBuf));
 	if (ret == -1) {
-		fprintf(stderr,"dkaku:: ERROR transmit failed\n");
+		fprintf(stderr,"dkaku:: ERROR transmit %ul failed\n", socktcnt);
 		return(-1);
 	}
 	socktcnt++;
@@ -236,6 +239,9 @@ int arduinoXmit(int ttyfd, char *brand, char *gaddr, char *uaddr, char *val)
 	// The device specific executable uses unit addresses starting from 1 to n
 	// And for Blokker that starts with 0, is corrected in the exe code.
 	//
+	// At the moment, we keep the id in the database.cfg file the same as the
+	// device id used in the send2device function below.
+	//
 	if (strcmp(brand,"kaku") ==0)     		{ send2device(ttyfd, 0, gaddr, uaddr, val); return(0); }
 	else if (strcmp(brand,"action") ==0)	{ send2device(ttyfd, 1, gaddr, uaddr, val); return(0); }
 	else if (strcmp(brand,"livolo") ==0)	{ send2device(ttyfd, 2, gaddr, uaddr, val); return(0); }
@@ -243,6 +249,7 @@ int arduinoXmit(int ttyfd, char *brand, char *gaddr, char *uaddr, char *val)
 	else if (strcmp(brand,"blokker") ==0)	{ send2device(ttyfd, 4, gaddr, uaddr, val); return(0); }
 	else if (strcmp(brand,"kiku") ==0)		{ send2device(ttyfd, 5, gaddr, uaddr, val); return(0); }
 	else if (strcmp(brand,"kopou") ==0)		{ send2device(ttyfd, 6, gaddr, uaddr, val); return(0); }
+	else if (strcmp(brand,"quhwa") ==0)		{ send2device(ttyfd, 7, gaddr, uaddr, val); return(0); }
 	
 	// Exception for 868 devices. Arranged through different ZWave gateway
 	else if (strcmp(brand,"zwave") ==0)    { 
@@ -503,12 +510,17 @@ int parse_admin(char *tok, int cod)
 					case 4: fprintf (stderr,"Elro \n"); break;
 					case 5: fprintf (stderr,"Livolo \n"); break;
 					case 6: fprintf (stderr,"Kopou \n"); break;
+					case 7: fprintf (stderr,"Quhwa \n"); break;
+					
+					
 					// Sensors
 					case 16: fprintf (stderr,"Onboard \n"); break;
+						// This includes BMP085, HTU21D, DS18B20, BH1750FVI  wired sensors connected to the Arduino
 					case 17: fprintf (stderr,"WT440 \n"); break;
 					case 18: fprintf (stderr,"Oregon \n"); break;
 					case 19: fprintf (stderr,"Auriol \n"); break;
 					case 20: fprintf (stderr,"Cresta \n"); break;
+					
 				  }
 				}
 			}
@@ -542,14 +554,14 @@ char * parse_remote(char *tok, int cod)
   // Remotes do not do dimlevel, but if necessary we can ...
   // XXX Trick: if there is no integer function atoi() returns 0
   if (level > 0) {
-	if (verbose) printf("parse_remote:: Address: %d, Unit: %d, Level: %d\n", group, unit, level);
-	sprintf(snd_buf, "{\"tcnt\":\"%d\",\"action\":\"handset\",\"type\":\"raw\",\"message\":\"!A%dD%dFdP%d\"}", 
+	if (verbose) printf("parse_remote:: Address: %lu, Unit: %d, Level: %d\n", group, unit, level);
+	sprintf(snd_buf, "{\"tcnt\":\"%d\",\"action\":\"handset\",\"type\":\"raw\",\"message\":\"!A%luD%dFdP%d\"}", 
 			socktcnt%1000,group,unit,level);
   }
   else {
   	if (strncmp(tok,"on",2) == 0) { level = 1; };		// third char will be "\r"
-	if (verbose) printf("parse_remote:: Address: %d, Unit: %d, Level: %d\n",group,unit,level);
-		sprintf(snd_buf, "{\"tcnt\":\"%d\",\"action\":\"handset\",\"type\":\"raw\",\"message\":\"!A%dD%dF%d\"}", 
+	if (verbose) printf("parse_remote:: Address: %lu, Unit: %d, Level: %d\n",group,unit,level);
+		sprintf(snd_buf, "{\"tcnt\":\"%d\",\"action\":\"handset\",\"type\":\"raw\",\"message\":\"!A%luD%dF%d\"}", 
 			socktcnt%1000,group,unit,level);
   }
   socktcnt++;
@@ -610,7 +622,7 @@ char * parse_sensor(char *tok, int cod)
 				socktcnt%1000,address,channel,atoi(strtok(NULL, " ,")) );
 			break;
 			
-			// 18dsb20
+			// ds18b20
 			default:		// We could parse, but assume those long DALLAS addresses at this moment
 				fprintf(stderr,"parse_sensor:: default onboard 18ds20\n");
 				channel = 0;
@@ -643,16 +655,27 @@ char * parse_sensor(char *tok, int cod)
 "{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"bmp085\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%d.%d\",\"airpressure\":\"%d\"}", 
 		socktcnt%1000,address,channel,temperature/10,temperature%10,airpressure);
 	break;
+
+	case 3: // Battery (using WT440 protocol or other)
+		tok = strtok(NULL, " ,"); address = atoi(tok);
+		tok = strtok(NULL, " ,"); channel  = atoi(tok);
+		tok = strtok(NULL, " ,"); temperature = atoi(tok);			// mis-use of temperature para (which is %% battery power * 10
+		tok = strtok(NULL, " ,"); humidity = atoi(tok);				// There is NO humidity, but maybe the Arduino sends it anyway (it is in msg format)
+		sprintf(snd_buf, 
+"{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"wt440\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"battery\":\"%d.%d\"}",
+		socktcnt%1000,address,channel,temperature/10,temperature%10);
+	break;
 	
-	case 3:	// Auriol
+	case 8:	// Auriol
 		tok = strtok(NULL, " ,"); address = atoi(tok);
 		tok = strtok(NULL, " ,"); channel  = atoi(tok);
 		tok = strtok(NULL, " ,"); temperature = atoi(tok);
-		tok = strtok(NULL, " ,"); humidity = atoi(tok);					// There is NO humidity, but maybe the Arduino sends it anyway (it is in msg format)
+		tok = strtok(NULL, " ,"); humidity = atoi(tok);				// There is NO humidity, maybe the Arduino sends it anyway (it is in msg format)
 		sprintf(snd_buf, 
 "{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"auriol\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%d.%d\"}", 
 		socktcnt%1000,address,channel,temperature/10,temperature%10);
 	break;
+
 	
 	default:
 		fprintf(stderr,"parse_sensor:: Codec %d not supported\n", cod);
@@ -767,6 +790,10 @@ int tty_init(char * portname)
 	fprintf(stderr,"tty_init:: Switch debug ON\n");
 	sprintf(arduinoBuf, "> 0 0 3 1 \n");
   	write (fd, arduinoBuf, strlen(arduinoBuf));
+	//usleep(1000000);
+	//sprintf(arduinoBuf, "> 1 1 0 100 1 10\n"); write (fd, arduinoBuf, strlen(arduinoBuf));
+	//usleep(2000000);
+	//sprintf(arduinoBuf, "> 1 1 0 100 1 0\n"); write (fd, arduinoBuf, strlen(arduinoBuf));
   }
   if (verbose) {
 	fprintf(stderr,"tty_init:: Request Codecs\n");
@@ -774,10 +801,7 @@ int tty_init(char * portname)
   	sprintf(arduinoBuf, "> 0 0 0 \n" );
 	write (fd, arduinoBuf, strlen(arduinoBuf));
   }
-  usleep(1000000);
-  sprintf(arduinoBuf, "> 1 1 0 100 1 10\n"); write (fd, arduinoBuf, strlen(arduinoBuf));
-  usleep(2000000);
-  sprintf(arduinoBuf, "> 1 1 0 100 1 0\n"); write (fd, arduinoBuf, strlen(arduinoBuf));
+
   fprintf(stderr,"tty_init:: Done\n");
   return(fd);
 }

@@ -6,8 +6,34 @@
 </head>
 
 <body>
-<h1>Arduino Node</h1>
-<p>Ever since the&nbsp;first Arduino Gateway, there was the idea to build a &quot;network&quot; of wireless nodes so that the Arduino could communicate on a higher level with the Raspberry master and its slaves and send sensor information etc. to the server host.</p>
+<h1>Arduino Node (draft)</h1>
+<p>Ever since the&nbsp;first Arduino Gateway, there was the idea to build a &quot;network&quot; of wireless nodes so that the Arduino could communicate on a higher level with the Raspberry master and its slaves and send sensor information etc. to the server host. I see this as a different type of device in LamPI, as it is not directly connected to a Raspberry Master of Slave, and also is not&nbsp;just a sensor with 433MHz transmitter. Instead we're talking about an intelligent &quot;node&quot; in a network. That network might be a well-known Wifi network as the Raspberries are connected to or might be a network of 433 (of 86) MHz devices, we expect that node to have some sort of software stack that will enable more or less reliable messaging&nbsp;with redundancy and error correction etc.</p>
+<p>So I have decided to start a different page that deals with such &quot;nodes&quot;. Please take into account that this page is documenting experiments only at the moment. There are not yet working versions of Arduino Node&nbsp;(I am getting the bill of material ready in most cases). The purpose of this page is to document my progress in finding te best node technology for LamPI.</p>
+<p>Many of my experiments fail at this moment since the standard Arduino is a 5V device and most of these transceivers are 3.3V or less. This means we have to use&nbsp;level converters or switch to 3.3V external power supplies. And power consumption might another reason why the Arduino alone cannot interface the IOT device.</p>
+<h2>Table of contents</h2>
+<ul>
+  <li>Wifi
+    <ul>
+      <li>ESP8266 Intelligent controller</li>
+    </ul>
+  </li>
+  <li>433MHz
+    <ul>
+      <li>SI4432</li>
+    </ul>
+  </li>
+  <li>2.4GHz
+    <ul>
+      <li>NRF24L01</li>
+    </ul>
+  </li>
+</ul>
+<h1>Wifi</h1>
+<h2>ESP 8266 Node</h2>
+<p>The ESP 8266 is a Wifi card but at the same time due to its powerful processor and memory capacity is a system on a chip as well. Now I'm not looking foward to having another programming environment for LamPI, but I found that the ESP can be connected to an Arduino (as slave) but there is also a programming environment on the Arduino IDE for direct programming of the ESP 8266 (and it is not even an Arduino).</p>
+<p>If I could make use of that programming environment it would be a low easier. <a href="ESP8266/esp8266.html">There is a separate page on ESP 8266 experience here</a>.</p>
+<p>&nbsp;</p>
+<h1>433MHz</h1>
 <p>The RadioHead library provides reliable, addressed but also unreliable communication over the air on a number of frequencies depending on the transceiver used. This means that we can use more or less the same code regardless of the underlying hardware transceiver technology used.</p>
 <p>So what would be the purposed of having such a network in the house</p>
 <ul>
@@ -16,12 +42,11 @@
 </ul>
 <p>Experimenting with several of these transceivers shown that it is not at all sure that we meet our objectives. The Arduino does not deliver too much power, which means that power-hungry transceiver modules will drain the Arduino and cause errors in in the packet communication.</p>
 <h2>RF22 / SI4432</h2>
-<p>The SI4432 is a very powerful transceiver on the 433MHz band. It has a range of about 1500 meters (outside or free line of sight), and therefore it does deliver much more power than&nbsp;the&nbsp; conventional sets of 433MHz transmitter and receiver that are on the market.</p>
+<p>The SI4432 is a very powerful transceiver on the 433MHz band. It has a range of about 1500 meters (outside ir free line of sight), and therefore in therory it does deliver much more power than&nbsp;the conventional sets of 433MHz transmitter and receiver that are on the market.</p>
+<p>There is a<a href="SI4432/SI4432.html"> dedicated page </a>on the SI4432 node. </p>
 <p>&nbsp;</p>
-<p>There is a dedicated page on the SI4432 node </p>
-<p>&nbsp;</p>
+<h1>2.4GHz</h1>
 <h2>NRF24L01</h2>
-<p>&nbsp;</p>
 <p>There is a <a href="NRF24L01/arduino_NRF24L01.html">separate page</a> on the NRF24L01 node.</p>
 </body>
 </html>
