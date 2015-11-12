@@ -85,17 +85,17 @@ process.argv.forEach(function (val, index, array) {
 		logger("Calling init",1);
 		// init, read config file and make new database
 		for (var i=0; i<loops.length; i++) clearInterval(loops[i]);		// Skip command and path
-		logger('Suspending '+loops.length+' timers');
+		logger('Suspending '+ loops.length +' timers',2);
 		config = readConfig();
 		//console.log("config: ",config);
 		createDbase(function (err, result) {
-			if (err) { logger("init:: ERROR: "+err ); return; }
+			if (err) { logger("init:: ERROR: "+err, 0 ); return; }
 			logger("init:: createDbase returned "+result,1);
 			Object.keys(config).forEach(function(key) {
-				logger("createDbase: "+key+", length: "+config[key].length);
+				logger("createDbase: "+key+", length: "+config[key].length, 1);
 			});
 			// nested, as we can start loading once the database is created
-			logger("init:: Starting loadDbase");
+			logger("init:: Starting loadDbase",0);
 			loadDbase( function (err, result) { 
 				if (err == null) logger("init:: loadDbase returned successful "+result,1);
 				var str = "";
@@ -172,10 +172,10 @@ app.all('/init', function (req, res, next) {
 	for (var i=0; i<loops.length; i++) clearInterval(loops[i]);
 	config = readConfig();						// Read the config file first
 	createDbase(function (err, result) {
-		if (err) { logger("init:: ERROR: "+err ); return; }
+		if (err) { logger("init:: ERROR: "+err, 0 ); return; }
 		logger("init:: createDbase returned "+result,1);
 		// nested, as we can start loading once the database is created
-		logger("init:: Starting loadDbase");
+		logger("init:: Starting loadDbase",1);
 		loadDbase( function (err, result) { 
 			if (err == null) logger("init:: loadDbase returned successful "+result,1);
 			str += printConfig();
@@ -255,7 +255,7 @@ function printConfig() {
 	var str="<!DOCTYPE html>";
 	Object.keys(config).forEach(function(key) {	
 		str += '<h1>'+key+'</h1>';
-		logger("printConfig: "+key+", length: "+config[key].length);
+		logger("printConfig: "+key+", length: "+config[key].length,2);
 		str += '<table style="max_width: 100%; border: 1px solid black; border-collapse: collapse;" class="config_table">';
 		str += '<tr class="config_line">';
 		switch(key) {
@@ -289,20 +289,21 @@ function printConfig() {
 				case "controllers":
 				case "rules":
 					var lupdate;
-					var sns="";
 					Object.keys(config[key][j]).forEach(function(item) {
 						switch(item) {
 						case 'lastUpdate': // Devices, Sensors
 							str += '<td style="border: 1px solid black;">&nbsp'+printTime(config[key][j][item])+'</td>';
 						break;
 						case 'sensor': // Part of Sensors, for each sensor with index and name sens
+							str += '<td style="border: 1px solid black;"><table>';
 							Object.keys(config[key][j]['sensor']).forEach(function(sens) {
-								lupdate = printTime(config[key][j]['sensor'][sens]['lastUpdate']);
-								sns += '<td style="border: 1px solid black;">';
-								sns += sens+": "+parseFloat(config[key][j]['sensor'][sens]['val']).toFixed(1);
-								sns += '</td>';
+								str += '<tr>';
+								str += '<td>'+printTime(config[key][j]['sensor'][sens]['lastUpdate'])+'</td>';
+								str += '<td>'+ sens +": "+parseFloat(config[key][j]['sensor'][sens]['val']).toFixed(1)+ '</td>';
 							});
-							str += '<td style="border: 1px solid black;">'+lupdate+'</td>'+sns;
+							
+							str += '</table></td>';
+							str += '<td style="border: 1px solid black;"></td>';
 						break;
 						case "seq": // Part of Scenes
 							var strips = config[key][j]['seq'].split(",");
@@ -407,7 +408,7 @@ function zwave_init (cb) {
 		var statusCode = response.statusCode;
 		if (statusCode === 404 || statusCode === 403) {
             // Send default image if error
-			logger("wave_init:: Page not found\n");
+			logger("wave_init:: ERROR: Page not found\n",0);
 			cb("No Page", null);
         }
 		var str = '';
@@ -470,7 +471,7 @@ var zwave_upd_cb = function(response) {
 					pe = pe_arr[i];				// Only when not using for in loop (en that uses 1 additional loop)
                 	pobj = pobj[pe_arr[pe]];
             };
-			if (pobj === undefined ) logger("pobj is null line 340, "+pe_arr.slice(-1),1);
+			if (pobj === undefined ) logger("ERROR: pobj is undefined line 474, "+pe_arr.slice(-1),0);
 			pobj[pe_arr.slice(-1)] = js[key];
 		});
 		logger("Successfully read the Z-Wave Data stucture, Read "+ Object.keys(js).length +" records",2);
@@ -504,7 +505,7 @@ function broadcast(message, sender, mask) {	// MMM
 				case "raw":
 					logger("Broadcast to Rawsocket: "+cl.name,2);
 					if (cl.write(message) != true) {
-						logger("broadcast:: raw socket error",1);
+						logger("broadcast:: ERROR raw socket error",0);
 						callback("broadcast raw error" , null)
 					}
 					else {
@@ -515,7 +516,7 @@ function broadcast(message, sender, mask) {	// MMM
 				case "ws":
 					cl.send(message, function ack(error) {
 						if (error) { 
-							logger("broadcast:: ws send error: "+error,1); 
+							logger("broadcast:: ERROR ws send error: "+error,0); 
 							callback(error, null) 
 						}
 						else {
@@ -525,7 +526,7 @@ function broadcast(message, sender, mask) {	// MMM
 					});
 				break;
 				default:
-					logger("broadcast:: unknown type: "+cl.type,2);
+					logger("broadcast:: WARNING unknown type: "+cl.type,2);
 					callback("broadcast:: Unknown type: "+cl.type, null);
 				break;
 		  		}//switch
@@ -536,7 +537,7 @@ function broadcast(message, sender, mask) {	// MMM
 	});// forEach
 	
 	async.series(funcs, function(err, results) {
-		if (err) logger("broadcast:: ERROR ERROR: "+err,1);
+		if (err) logger("broadcast:: ERROR ERROR: "+err,0);
 		else logger("broadcast:: finished, results: "+results,2);
 	});
 	return;
@@ -566,13 +567,13 @@ var server = net.createServer(function(socket) { //'connection' listener
 		logger("SOCKET:: socket data received: "+ data+", trusted: "+socket.trusted, 2);
 		//socket.write(200,{ 'Content-Type': 'text/html' });"
 		if (init==0) socketHandler(data,socket);
-		else logger("socket:: Discard incoming message",1);
+		else logger("socket:: WARNING: Discard incoming message",2);
 	});
 	socket.on('message', function(data) {
 		logger("SOCKET:: socket message received: "+ data,2);
 		//socket.write(200,{ 'Content-Type': 'text/html' });
 		if (init==0) socketHandler(data,socket);
-		else logger("socket:: Discard incoming message",1);
+		else logger("socket:: WARNING: Discard incoming message",2);
 	});
 	socket.on('upgrade', function(request, sock, head) {
 		logger("SOCKET:: socket upgrade received: "+ request,1);
@@ -586,7 +587,7 @@ var server = net.createServer(function(socket) { //'connection' listener
 		var ret = sock.write(JSON.stringify(data));
 	});
 	socket.on('error', function(e) {
-		logger("SOCKET:: Error: "+e,1);
+		logger("SOCKET:: Error: "+e,0);
 	});
 	socket.on('connect', function() {
 		logger("SOCKET:: socket Connection Established ",1);
@@ -627,7 +628,7 @@ wss.on('connection', function(ws) {
 	ws.on('message', function(message) {
 		if (debug >=2) console.log('WS rcv msg, trusted: '+ws.trusted+': %s', message);
 		if (init==0) socketHandler(message, ws);
-		else logger("websocket:: Discard incoming message",1);
+		else logger("websocket:: WARNING: Discard incoming message",2);
 	});
 	// ws.send('ping');
 	ws.on('close',function() {
@@ -653,7 +654,7 @@ userver.on("message", function (msg, rinfo) {
   rinfo.name = rinfo.address + ":" + rinfo.port;
   rinfo.type = "udp";
   if (init==0) { socketHandler(msg, rinfo); }
-  else { logger("udp:: Discard message",1); }
+  else { logger("udp:: WARNING: Discard incoming message",2); }
 });
 userver.on("listening", function () {
   var address = userver.address();
@@ -677,7 +678,7 @@ function connectDbase(cbk) {
 		}
 		else {
 			logger("ERROR:: Connecting to the MySQL Database, make sure database exists and permissions are OK",1);
-			logger("connectDbase:: err: "+err,1);
+			logger("connectDbase:: ERROR: "+err,0);
 			cbk("connectDbase error","null");
 		}
 	});
@@ -752,7 +753,6 @@ function deleteDb(table, obj, cbk) {
 // ----------------------------------------------------------------------------
 function delDevDb(table, obj, cbk) {
 	var query = connection.query('DELETE FROM '+table+' WHERE id=? and room=?', [ obj.id, obj.room ], function(err, result)  {
-		//logger("delDevDb:: query: "+query);
   		if (!err) {
   			if (debug >= 3) { console.log('deleteDb success:: result: \n', result); }
 			cbk(null,result);
@@ -802,7 +802,7 @@ function createDbase(cb) {
 							callback(err,'uers made, sizeof users is:  '+config['users'].length);
 						}
 						else {
-							logger("createDbase:: WARNING: There are already users in the user table");
+							logger("createDbase:: WARNING: There are already users in the user table",1);
 							callback(err,"existing users");
 						}
 					}
@@ -885,7 +885,7 @@ function createDbase(cb) {
   //
   // Now all tables are made, we can start filling the databases
   function (callback) { var r = [];
-	logger("createDb starting for devices, #devices: "+config['devices'].length);
+	logger("createDb starting for devices, #devices: "+config['devices'].length,1);
 	for (var i=0; i< config['devices'].length; i++) { 
 		insertDb("devices", config['devices'][i], function(err,result) { r.push("d"); }); }
 	callback(null, 'devices: '+r);
@@ -899,7 +899,7 @@ function createDbase(cb) {
 	callback(null, 'sensors: '+r);
   },
   function (callback) { var r = [];
-	logger("createDb starting for rooms, #rooms: "+config['rooms'].length);
+	logger("createDb starting for rooms, #rooms: "+config['rooms'].length,1);
 	for (var i=0; i< config['rooms'].length; i++) { 
 		insertDb("rooms", config['rooms'][i], function(cb) { r.push("r") }); }
 	callback(null, 'fill rooms'+config['rooms'].length);
@@ -948,7 +948,7 @@ function createDbase(cb) {
   ], // end of async part
   function (err, result) { 
   	if (err) { 
-		logger("createDbase:: ERROR: "+err); 
+		logger("createDbase:: ERROR: "+err,0); 
 		cb(err,result);
 	}
   // Now the databases are created, we can read the database.cfg file, JSON.parse
@@ -1030,19 +1030,19 @@ function loadDbase(db_callback) {
 	function(callback) {
 		queryDbase('SELECT * from rules',function(err, arg) {
 			if (arg === null) { 
-				logger("loadDbase:: select rules returns 0",1);
+				logger("loadDbase:: ERROR select rules returns 0",0);
 				callback("loadDbase rules error",null); 
 			} else {
 			  for (var i=0; i<arg.length; i++) { 
 				try { arg[i]['jrule'] = JSON.parse(arg[i]['jrule'] ); }
 				catch(e) {
-					logger("JSON error parsing jrule",1);
+					logger("JSON ERROR parsing jrule",0);
 					console.log(e);
 					callback("loadDbase jrule error",null); 
 				}
 				try { arg[i]['brule'] = JSON.parse(arg[i]['brule'] ); }
 				catch(e) {
-					logger("JSON error parsing brule",1);
+					logger("JSON ERROR parsing brule",0);
 					console.log(e);
 					callback("loadDbase brule error",null); 
 				}
@@ -1081,13 +1081,13 @@ function deviceSet (ldev, val) {
 	};
 	callSet = function(response) {
 		response.on('data', function (chunk) {		
-			logger("WARNING deviceSet received data: "+chunk, 2);
+			logger("WARNING deviceSet received data: "+chunk, 3);
 		});
 		response.on('end', function () {
 			logger("deviceSet has ended",2);
 		});
 		response.on('error', function () {
-			logger("deviceSet ERROR Updating dev: "+zdev+"", 1);
+			logger("deviceSet ERROR Updating dev: "+zdev+"", 0);
   		});
 	}
 	logger("deviceSet:: setting zdev: "+zdev+" to "+val,1);
@@ -1102,18 +1102,13 @@ function deviceSet (ldev, val) {
 			opt4set.path = '/ZWaveAPI/Run/devices['+zdev+'].instances[0].commandClasses[67].ThermostatSetPoint.Set(1,'+zval+')';
 		break;
 		default:
-			logger("deviceSet:: Unknown type "+type);
+			logger("deviceSet:: ERROR Unknown type "+type, 0);
 		break
 	}
-	// Update the admin
-	//lampi_admin[zdev]['val'] = val;								// Update the admin array asap
-
-	// Call the function
-	//http.request(opt4set, callSet).end();
 	var req = http.request(opt4set, callSet);
 		
 	req.on('error', function(e) {
-		logger("deviceSet:: ERROR making connection to zwave host, "+e.message,1);
+		logger("deviceSet:: ERROR making connection to zwave host, "+e.message,0);
 	})
 	
 	req.end();
@@ -1175,7 +1170,7 @@ function deviceGet(ldev,ltype) {
 				break;
 				case "thermostat":
 					if (devices[dev].instances[0].commandClasses[67] == undefined) {
-						logger("ERROR:: Thermostat device "+dev+" not defined");
+						logger("WARNING:: Thermostat device "+dev+" not defined",1);
 						return;
 					}
 					if (devices[dev].instances[0].commandClasses[67].data.interviewDone.value === false) {
@@ -1188,7 +1183,7 @@ function deviceGet(ldev,ltype) {
 					return;
 				break;
 				default:
-					logger("ERROR lampi type not supported: "+ltype);
+					logger("ERROR:: lampi type not supported: "+ltype,0);
 					return;
 				break;
 			}// switch
@@ -1471,7 +1466,7 @@ function allOff(room, socket) {
 			series.push( function(callback) { 				// Push the function code for later use
 				setTimeout( function(){ 
 					var msg = str.shift();
-					logger("allOff:: timeout str: "+msg); 
+					logger("allOff:: timeout str: "+msg,2); 
 					socketHandler(msg, socket);				// Better than boradcast only. Handle the database update too
 					callback(null, "yes"); 
 				}, 2000); 
@@ -1481,7 +1476,7 @@ function allOff(room, socket) {
 	}
 	// Now call the execution
 	async.series(series, function(err, results) {
-		if (err) logger("allOFF:: ERROR: "+err,1);
+		if (err) logger("allOFF:: ERROR: "+err,0);
 		else logger("allOff:: OKE finished, results: "+results,2);
 	});
 	return;
@@ -1543,7 +1538,7 @@ function consoleHandler(request, socket) {
 			var list = printConfig();
 		break;
 		default:
-			logger("consoleHandler:: Unknown request: "+request);
+			logger("consoleHandler:: Unknown request: "+request,0);
 			list = "Unknown request<br>";
 		break;
 	}
@@ -1920,8 +1915,8 @@ function graphHandler(buf,socket) {
 	switch(gperiod) {
 		case '1h': pstep=""; break;
 		case '1d': pstep=""; break;
-		case '1w': pstep=":step=3600"; break;		// One hour
-		case '1m': pstep=":step=8640"; break;		// 3 hours
+		case '1w': pstep=":step=3600"; break;		// One hour step
+		case '1m': pstep=":step=8640"; break;		// 3 hours step
 		case '1y': pstep=":step=21300"; break;
 		default: logger("graphHandler:: ERROR unknown period: "+gperiod,1);
 	}
@@ -2135,7 +2130,7 @@ function loginHandler(buf, socket) {
 					var dbs = { tcnt: tcnt++, type: "json", action: "load_database", cmd: "", response: config };
 					var ret = socket.send(JSON.stringify(dbs),function (error){
 						if (error !== undefined) { 
-							logger("loginHandler:: ERROR responding load database "+error,1);
+							logger("loginHandler:: ERROR responding load database "+error,0);
 							logger("loginHandler:: Socket: "+socket.name+", type: "+socket.type,1);
 						}
 					});
@@ -2168,7 +2163,7 @@ function loginHandler(buf, socket) {
 function sensorHandler(buf, socket) {
 	var index = addrSensor(buf.address,buf.channel);
 	if (index <0) { 
-		logger("sensorHandler:: ERROR unknown index for sensor: "+buf.address+":"+buf.channel,1);
+		logger("sensorHandler:: ERROR unknown index for sensor: "+buf.address+":"+buf.channel,0);
 		return;
 	} else {
 		logger("sensorHandler index: "+index+" name: "+config['sensors'][index]['name'], 2);
@@ -2200,13 +2195,13 @@ function sensorHandler(buf, socket) {
 		
 		Object.keys(config['sensors'][index]['sensor']).forEach(function(sensor) {								  
 			if ( buf.hasOwnProperty(sensor) ) {
-				logger("sensorHandler:: update: "+sensor+" to: "+buf[sensor]+", index: "+index+", from: "+sname+", name: "+name+", addr: "+buf.address+", chan: "+buf.channel,1);
+				logger("sensorHandler:: update: "+sensor+" to: "+buf[sensor]+", index: "+index+", from: "+sname+", name: "+name+", addr: "+buf.address+", chan: "+buf.channel,2);
 				config['sensors'][index]['sensor'][sensor]['val'] = buf[sensor];
 				config['sensors'][index]['sensor'][sensor]['lastUpdate'] = getTicks();
 			}
 			else {
 				// skip tcnt and other message details, only look for existing sensor keywords
-				logger("sensorHandler:: WARNING sensor: "+sensor+" not found, index: "+index+", from: "+sname+", name: "+name+", addr: "+buf.address+", chan: "+buf.channel,1);
+				logger("sensorHandler:: WARNING sensor: "+sensor+" not found, index: "+index+", from: "+sname+", name: "+name+", addr: "+buf.address+", chan: "+buf.channel,2);
 				//console.log(buf);
 			}
 			// Do not only update the value of the sensor just receive dbut the whole sensor record.
@@ -2245,11 +2240,11 @@ function sensorHandler(buf, socket) {
 // The db parameter contains full file name, based on name!!! of the sensor!
 // So you can shuffle a sensor in location as long as the name stays the same
 // --------------------------------------------------------------------------------
-function createSensorDb(db,index, buf, socket) {
+function createSensorDb(db, index, buf, socket) {
 //function createSensorDb(db,buf,socket) {
 	var str=[];
 	logger("createSensorDb:: ",1);
-	// If a field is present, we create part of the RRDtool definition
+	// If a sensor field is present, we create that part of the RRDtool definition
 	Object.keys(config['sensors'][index]['sensor']).forEach(function(sensor) {
 		switch(sensor) {
 			case 'temperature':

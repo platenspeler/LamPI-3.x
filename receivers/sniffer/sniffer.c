@@ -348,7 +348,7 @@ int check_n_write_socket(char *binary, char *chkbuf , int binary_count)
 
 /*
  *********************************************************************************
- * WT440H weather station sensor FUCTION
+ * WT440H weather station sensor FUNCTION
  *
  * Global Parameters Used: pulse_array, Binary_array, r_index, p_index;
  * p_length (as an argument)

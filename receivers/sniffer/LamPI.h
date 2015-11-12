@@ -51,7 +51,7 @@ extern "C"
 // Definitions for WT440H Weather station wireless sensors
 //
 #define WT440H_MIN_SHORT 700
-#define WT440H_MAX_SHORT 1250
+#define WT440H_MAX_SHORT 1300
 #define WT440H_MIN_LONG 1700
 #define WT440H_MAX_LONG 2300
 

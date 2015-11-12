@@ -134,7 +134,7 @@ Stop:  | |_________ .. _____| (T,40T)</code><br />
  float: | |___|  &nbsp; |_ (T,3T,3T,T) used in addresses. Coded as &quot;2&quot;<br />
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _<br />
 Sync:  | |___________ .. ___________| (T, 31T)</code></p>
-<p><code><br />
+<p><code>T = 300uSec<br />
 </code></p>
 <h4>bit code</h4>
 <p>Every message consists of 12 bits. The first 5 bits are address, the next&nbsp;5 bits contin the device coding and the last 2 bits contain the value&nbsp;(on or off). Actually, bit values is not quite the correct way of saying: Every &quot;bit&quot; can in fact have 3 values.</p>
@@ -315,7 +315,7 @@ And there are 8 bits for Unit: 140+260 or 260+140 uSecs<br />
 </table>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
-<h2>UPM/Esic</h2>
+<h2>UPM/Esic (WT440)</h2>
 <p>Supported devices:</p>
 <ul>
   <li>WT-440h</li>
@@ -327,7 +327,7 @@ And there are 8 bits for Unit: 140+260 or 260+140 uSecs<br />
 <ul>
   <li>House-code, to be set 1-15</li>
   <li>Channel, to be set 1-4</li>
-  <li>Reporting degrees in Fahrenheit or Celcius</li>
+  <li>Reporting degrees in Fahrenheit or Celcius (local display, not important for the receiver side)</li>
 </ul>
 <h4>timing</h4>
 <p> <code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _ <br />
@@ -371,7 +371,7 @@ And there are 8 bits for Unit: 140+260 or 260+140 uSecs<br />
   <tr>
     <td>xxxx</td>
     <td>4</td>
-    <td>unknown</td>
+    <td>unknown, SYNC?</td>
     <td>&nbsp;0x1100</td>
   </tr>
   <tr>
@@ -487,12 +487,6 @@ And there are 8 bits for Unit: 140+260 or 260+140 uSecs<br />
     <td>&nbsp;1 pulse HI, 18 pulses LO</td>
   </tr>
   <tr>
-    <td>&nbsp;</td>
-    <td>&nbsp;</td>
-    <td>&nbsp;</td>
-    <td>&nbsp;</td>
-  </tr>
-  <tr>
     <td>AAAAAAAA</td>
     <td>8</td>
     <td>Address ID bits</td>
@@ -538,9 +532,95 @@ And there are 8 bits for Unit: 140+260 or 260+140 uSecs<br />
 <p>It is not possible to set anytthing on the Auriol weather sensor itself. But its protocol is simple and reliable.</p>
 <p>Auriol is NOT supported in direct connected receivers, however it IS supported by the Arduino Gateway and the Arduino Repeater (but for the latter its protocol is converted to wt440 protocol).</p>
 <p>&nbsp;</p>
-<h2>LamPI specific</h2>
-<p>We might develop our own protocol that should enable sending and receiving all kind of messages between an Arduino and the Raspberry over 433 MHz transmission. Thinking about doing this, the protocol must be simple to understand and different from the other ones that we support by the Arduino Gateway.</p>
-<p>It is equally possible to use another carrier frequency such as 2.4 GHz for our communication, but that is dependent on the used transceiver  more than anything else.</p>
+<h2>LamPI own protocol</h2>
+<p>We might develop our own protocol that should enable sending and receiving all kind of messages between an Arduino and the Raspberry over 433 MHz transmission. Thinking about doing this, the protocol must be simple to understand and different from the other ones that we support by the Arduino Gateway. It is challenging to develop someting big, allowing several bytes to be sent to the remote side. However, for sensor messaging and clock setting etc. a long word is often enough.</p>
+<p>&nbsp;</p>
+<h4>timing</h4>
+<p> <code>&nbsp;&nbsp; &nbsp; &nbsp;  _<br />
+  Sync:  | |_________________|&nbsp; (T, 20T)<br />
+  &nbsp;&nbsp; &nbsp;&nbsp; _ &nbsp; &nbsp; _<br />
+  '0':   | |___| |___&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (T,3T,T,3T)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+___      &nbsp; ___<br />
+'1':   |&nbsp;&nbsp; |_|&nbsp;&nbsp; |_&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;	(3T,T,3T,T)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+_  &nbsp; ___<br />
+dim:   | |_|&nbsp;&nbsp; |___&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (T,T,3T,3T)<br />
+&nbsp;&nbsp; &nbsp; &nbsp; _<br />
+Stop:  | |_______ .. _____|&nbsp;&nbsp; (T,40T)</code></p>
+<p>T = 100uSec</p>
+<p>&nbsp;</p>
+<h4>bit code</h4>
+<table width="770" border="0">
+  <tr>
+    <th width="131" scope="col">0-7</th>
+    <th width="133" scope="col">8-15</th>
+    <th width="141" scope="col">16-23</th>
+    <th width="137" scope="col">24-31</th>
+    <th width="206" scope="col">32-40</th>
+  </tr>
+  <tr>
+    <td>&nbsp;S S S S A A A A</td>
+    <td>&nbsp;A A A A C C C C</td>
+    <td>&nbsp;U U U U U U V V </td>
+    <td>&nbsp;V V V V V V V V </td>
+    <td>&nbsp;V V V V V V P P </td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h4>legend</h4>
+<table width="962" border="1">
+  <tr>
+    <th width="208" scope="col">Bits</th>
+    <th width="33" scope="col">#B</th>
+    <th width="171" scope="col">Legend</th>
+    <th width="522" scope="col">Comment</th>
+  </tr>
+  <tr>
+    <td>SSSS</td>
+    <td>4</td>
+    <td>Sync</td>
+    <td>&nbsp;Special Sync bits, allow fast checking whether this is a lampi message 0x0011</td>
+  </tr>
+  <tr>
+    <td>AAAAAAAA</td>
+    <td>8</td>
+    <td>Address ID bits</td>
+    <td>256 different addresses possible</td>
+  </tr>
+  <tr>
+    <td>CCCC</td>
+    <td>4</td>
+    <td>Op Code bits</td>
+    <td>16 different commands possible</td>
+  </tr>
+  <tr>
+    <td>UUUUUU</td>
+    <td>6</td>
+    <td>Unit</td>
+    <td>64 devices per address</td>
+  </tr>
+  <tr>
+    <td>VVVV VVVV VVVV VVVV</td>
+    <td>12</td>
+    <td>Value</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>PP</td>
+    <td>2</td>
+    <td>Parity</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
 <p>&nbsp;</p>
 </body>
 </html>

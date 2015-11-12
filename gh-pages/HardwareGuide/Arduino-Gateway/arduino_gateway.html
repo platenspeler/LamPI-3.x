@@ -7,9 +7,21 @@
 
 <body>
 <h1>Arduino Gateway</h1>
-<p>As I explained elsewhere in the documentation, I decided to off-load the Raspberries with all transmitter/receiver work and use Arduin's for that purpose. Arduino's are relatively easy to progran, their additional cost is next to nothing and since they do not have the overhead of a Linux OS, their real-time behaviour out of the box is much better than that of a Raspberry.</p>
+<p>As I explained elsewhere in the documentation, I decided to off-load the Raspberries with all transmitter/receiver work and use Arduino's for that purpose. Arduino's are relatively easy to program, their additional cost is next to nothing and since they do not have the overhead of a Linux OS, their real-time behavior out of the box is much better than that of a Raspberry.</p>
+<p>So the Arduino Gateway is a device which is connected to the Raspberry master of slav nodes by USB. It will transmit 433MHZ commands to all devices known to the LamPI system, and receive 433MH device (=handset) messages and sensor messages and report back the values to the raspberry node.</p>
+<p>As the Arduino sensor nodes NEED (!!!) a Arduino Gateway device to decode their messages and send back values to the system, the Arduino Gateways is very important to the LamPI system and provides valuable insight in sensor measurements over time (trend graphs).</p>
+<p><a href="../../DeveloperGuide/ArchitectureGuide/architecture3.gif"><img src="../../DeveloperGuide/ArchitectureGuide/architecture3.gif" width="480" height="360" hspace="10" vspace="10" /></a></p>
+<p>The picture above shows how Arduino Gateways are connected to Rapsberry master and slave nodes&nbsp;over USB.</p>
 <h2>Nano Gateway</h2>
-<p>The first version(s) of the gateway were based on the Arduino Nano as the engine of the gateway. The Nano has 32KBytes of memory which is surprisingly much when we're looking at all the C-code necessary for libraries and program sketches.</p>
+<p>The first version(s) of the gateway were based on the Arduino Nano as the engine of the gateway. The Nano has 32KBytes of memory which is surprisingly much when we're looking at all the C-code necessary for libraries and program sketches. Maybe you would think that the Arduino Nano is not powerful enough or does not have enough memory to perform this function, however, for most household use the Arduino is more than capable to perform this function.</p>
+<p>Just a few wires are necessary to make the hardware of the Arduino Gateway work:</p>
+<ul>
+  <li>Connect a 433MHz transmitter to digital pin 8</li>
+  <li>Connect a 433MHz receiver to digital pin 2</li>
+  <li>Connect the Dallas oneWire bus to digital pin 7</li>
+  <li>Connect I2C bus to Analog&nbsp;pins SDA pin 4 and SCL pin 5. The I2C bus will interface the HTU21D, BMP180 devices</li>
+  <li>Power the Arduino through the USB interface</li>
+</ul>
 <p><a href="images/nano_gateway_1.jpg"><img src="images/nano_gateway_1.jpg" width="376" height="500" hspace="10" vspace="10" /></a></p>
 <p>I made three versions for use in our house: One for every floor that we need covered by sensors and/or devices. Below you see the second sensor.</p>
 <table width="47%" border="1">
@@ -28,7 +40,7 @@
     </blockquote></td>
   </tr>
 </table>
-<p>As you ca see in the picture above I found a nice enclosure box for the Arduino Gteway. I'm not sure I will use it though, as despite my efforts to get a good airflow in the box the temperature sensor reading is more than 3 degrees higher than tht of an environmental sensor that is not in a box. </p>
+<p>As you ca see in the picture above I found a nice enclosure box for the Arduino Gateway. I'm not sure I will use it though, as despite my efforts to get a good airflow in the box the temperature sensor reading is more than 3 degrees higher than that of an environmental sensor that is not in a box. </p>
 <p>&nbsp;</p>
 <table width="46%" border="1">
   <tr>
@@ -47,30 +59,46 @@
   </tr>
 </table>
 <p>&nbsp;</p>
-<p>Although the Nano proves to be sufficient for most cases, especially for mine, when having&nbsp;I2C and Dallas sensors as well the nano runs out of memory quickly.</p>
+<p>Although the Nano proves to be sufficient for most cases, especially for mine, when having&nbsp;I2C and Dallas sensors  the nano runs out of memory quickly.</p>
 <p>&nbsp;</p>
-<h2>Mega Gateway</h2>
-<p>In order to get more program memory than the Nano, I decided to buy a Mega. The mega has MUCH more memory and will allow implementation of almost all protocols without problems. That does not mean however that it is smart to enable all supported receivers at the same time: Not memory time to handle all protocols in an interrupt cycle would be a problem.</p>
+<h1>Mega Gateway</h1>
+<p>In order to get more program memory than the Nano, I decided to buy a Mega. The mega has MUCH more memory and will allow implementation and simultaneous running of almost all protocols without problems. That does not mean however that it is smart to enable all supported receivers at the same time: Not memory but time to handle all protocols in one (1) interrupt cycle would be a problem.</p>
+<p><a href="images/mega_1f.JPG"><img src="images/mega_1f.JPG" width="600" height="450" hspace="10" vspace="10" /></a></p>
 <p>So what can we do now with the Mega that we could not do before with the Arduino Nano? Good questions. As I said, I normally would not need&nbsp;the additional memory for the following reasons.</p>
 <ul>
-  <li>With conditional compilation (#ifdef) I would only enable the code that I would really use. Especially necessary to restrict the number of 433MHz receivers that the gateway would enable and listen for. In your (and my) house you will probably use only a subset of all supported receiver devices. Of course using dynamic setting on/off of these receivers is most sexy. However, making this decision at compile time makes MUCH more sense.</li>
+  <li>With conditional compilation (#if ) I would only enable the code that I would really use. Especially necessary to restrict the number of 433MHz receivers that the gateway would enable and listen for. In your (and my) house you will probably use only a subset of all supported receiver devices. Of course using dynamic setting on/off of these receivers is most sexy. However, making this decision at compile time makes MUCH more sense.</li>
   <li>Do not enable all sensors that are potentially supported on your Arduino Gateway. One sensor per gateway will in general be enough (I2C sensor HTU21d for example.) And do not use two sensors with different bus technology as that would require two different bus/stacks to be loaded.&nbsp;So if you need more sensors, do not enable Dallas sensors, but choose a few I2C sensors.<br />
     For example: Disabling Dallas sensors made memory usage drop from 28,881 bytes to 26,096 bytes. So 10% memory save by disabling not used sensors at compile time.<br />
   </li>
   <li>If&nbsp; possible, do not use sensors on your Arduino gateway at all but use separate Arduino Sensor device.</li>
 </ul>
 <p>OK, having said all those sensible things, I could imagine that you want the Arduino Mega because it would allow&nbsp;more error and diagnostic help messages, check for all kind of&nbsp;conditions and allow real-time configuration of enabled sensors and message receivers. Also you can use the Mega to implement better administration features, something that the Nano just does NOT have the memory support for.</p>
-<p>As said, for my own use I do not really need it, except when building stuff and not need to worry about memory usage in the first place. And also, I like to keep the version for the Mega a superset of the standard version, so all library functions and supported protocols should work on both versions, and only administartion and real-time information should be different.</p>
+<p>As said, for my own use I do not really need it, except when building stuff and not need to worry about memory usage in the first place. And also, I like to keep the version for the Mega a superset of the standard version, so all library functions and supported protocols should work on both versions, and only administration and real-time information should be different.</p>
 <p>&nbsp;</p>
-<h3>What mega</h3>
-<p>For the development version I bough the standard version of Ebay for around 7 Euro. however, I like the new Arduino 2560 Pro-Mini a lot and probably I will use that version for production version.</p>
+<h3>What mega to use</h3>
+<p>For the development version I bough the standard version of Ebay for around 7 Euro. however, I like the new Arduino 2560 Pro-Mini a lot and probably I will use that version for production version. This version is around $13.50 including (free) shipping, but worth every penny.</p>
 <p>&nbsp;</p>
-<h2>Message Format</h2>
-<p>The message format of messages exchanged between the Raspberry and the Arduino Gateway is defined <a href="gatewayMsgFormat.html">on the following page(s)</a>. Because the Arduino is very limited in memory, the messages exchanged are integer encoded and therefore rather simple.</p>
+<p><a href="images/mega_1b.JPG"><img src="images/mega_1b.JPG" width="600" height="450" hspace="10" vspace="10" /></a></p>
+<p>With a small board on top I made a sandwich construction. The board in the picture below will be placed on top of the Arduino (in the picture above).</p>
+<p><a href="images/mega_1e.JPG"><img src="images/mega_1e.JPG" width="600" height="450" hspace="10" vspace="10" /></a></p>
+<p>The &quot;big&quot; sensor on top with the CR2032 battery is the Real-Time Clock (RTC) and it is obviously so big because of its battery holder.</p>
+<h2>Mega Onboard Sensors</h2>
+<p>As shown in the pictures, the Meag has several on-board sensors which saves us battery&nbsp;energy, wireless pollution etc by having these sensors wired to the Arduino Gateway. The following sensors are found on my Arduino Mega Gateway:</p>
+<ul>
+  <li>DS3231 Real Time Clock (I2C sensor)</li>
+  <li>HTU21D Temperature/Humidity sensor (I2C)</li>
+  <li>3 sockets (3-pin) for DS18B20 temperature sensors (Dallas / OneWire bus sensors)</li>
+</ul>
+<p>&nbsp;</p>
+<h2>Gateway Message Format</h2>
+<p>The message format of messages exchanged between the Raspberry and the Arduino Gateway is defined <a href="gatewayMsgFormat.html">on the following page(s)</a>. Because the Arduino is very limited in memory, the messages exchanged are integer encoded and are therefore kept  simple.</p>
 <p>If there is any more descriptive messaging needed, we do it on the host side and can make an interface like the Serial Monitor to interface the Arduino especially for LamPI.</p>
+<p>&nbsp;</p>
 <h2>Testing performance</h2>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
+<p>I had planned to write a section on performance of the Arduino system compred to the wired solution used by LamPI before. I do not even like to do this anymore. The Raspberry is a powerful system and as such it can be programmed to perform (near) real-time tasks. However, the Arduino is a very cheap device and its performance is sufficient for home automation use and it does not have the overhead of a Linux operating system. In other words: it is fast and reliablt&nbsp;(and cheap).</p>
+<p>And after doing some less scientific tests on the Arduino environment I had to conclude that the Arduino makes less errors and recognized 433 incoming messages with better accuracy. So I do not want any other solution.</p>
+<p>On the Raspberry side the interface to the Arduino Gateway is implemented by the ~/exe/LamPI-arduino executable. Sources are in ~/receivers/arduino&nbsp;directory.</p>
+<h2>Links</h2>
 <p>&nbsp;</p>
 </body>
 </html>

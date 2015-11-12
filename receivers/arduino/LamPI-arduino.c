@@ -516,7 +516,7 @@ int parse_admin(char *tok, int cod)
 					// Sensors
 					case 16: fprintf (stderr,"Onboard \n"); break;
 						// This includes BMP085, HTU21D, DS18B20, BH1750FVI  wired sensors connected to the Arduino
-					case 17: fprintf (stderr,"WT440 \n"); break;
+					case 17: fprintf (stderr,"WT440h \n"); break;
 					case 18: fprintf (stderr,"Oregon \n"); break;
 					case 19: fprintf (stderr,"Auriol \n"); break;
 					case 20: fprintf (stderr,"Cresta \n"); break;
@@ -575,10 +575,12 @@ char * parse_sensor(char *tok, int cod)
 {
 	int address;					// Integer address
 	int channel;
+	
 	int temperature;				// Parameter 1, temperature most often
 	int humidity;					// Parameter 2, humidity or airpressure
 	int airpressure;
 	int altitude;
+	
 	float temp;
 	float humi;
 	char host[NI_MAXHOST];
@@ -634,7 +636,7 @@ char * parse_sensor(char *tok, int cod)
 		}
 	break;
 	
-	case 1:	// wt440h
+	case 1:	// wt440h temperature (and maybe humidity);
 		tok = strtok(NULL, " ,"); address = atoi(tok);
 		tok = strtok(NULL, " ,"); channel  = atoi(tok);
 		tok = strtok(NULL, " ,"); temperature = atoi(tok);
@@ -662,8 +664,16 @@ char * parse_sensor(char *tok, int cod)
 		tok = strtok(NULL, " ,"); temperature = atoi(tok);			// mis-use of temperature para (which is %% battery power * 10
 		tok = strtok(NULL, " ,"); humidity = atoi(tok);				// There is NO humidity, but maybe the Arduino sends it anyway (it is in msg format)
 		sprintf(snd_buf, 
-"{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"wt440\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"battery\":\"%d.%d\"}",
+"{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"wt440h\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"battery\":\"%d.%d\"}",
 		socktcnt%1000,address,channel,temperature/10,temperature%10);
+	break;
+	
+	case 4:	// PIR detection
+		tok = strtok(NULL, " ,"); address = atoi(tok);
+		tok = strtok(NULL, " ,"); channel  = atoi(tok);
+		sprintf(snd_buf, 
+"{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"wt440h\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"pir\":\"%d\"}",
+		socktcnt%1000,address,channel,atoi(strtok(NULL, " ,")));
 	break;
 	
 	case 8:	// Auriol
@@ -675,7 +685,6 @@ char * parse_sensor(char *tok, int cod)
 "{\"tcnt\":\"%d\",\"action\":\"sensor\",\"brand\":\"auriol\",\"type\":\"json\",\"address\":\"%d\",\"channel\":\"%d\",\"temperature\":\"%d.%d\"}", 
 		socktcnt%1000,address,channel,temperature/10,temperature%10);
 	break;
-
 	
 	default:
 		fprintf(stderr,"parse_sensor:: Codec %d not supported\n", cod);
@@ -777,11 +786,14 @@ int tty_init(char * portname)
 {
   int fd;
   char arduinoBuf[64];
+  if (verbose) {
+  	fprintf(stderr,"tty_init opening port: %s\n", portname);
+  }
   fd = open(portname, O_RDWR| O_NOCTTY | O_SYNC);
   if (fd < 0)
   {
         fprintf(stderr,"\nERROR %d opening %s: %s\n", errno, portname, strerror (errno));
-        exit(1);
+        return(-1);
   }
   set_interface_attribs (fd, B115200, 0);
   
@@ -790,10 +802,6 @@ int tty_init(char * portname)
 	fprintf(stderr,"tty_init:: Switch debug ON\n");
 	sprintf(arduinoBuf, "> 0 0 3 1 \n");
   	write (fd, arduinoBuf, strlen(arduinoBuf));
-	//usleep(1000000);
-	//sprintf(arduinoBuf, "> 1 1 0 100 1 10\n"); write (fd, arduinoBuf, strlen(arduinoBuf));
-	//usleep(2000000);
-	//sprintf(arduinoBuf, "> 1 1 0 100 1 0\n"); write (fd, arduinoBuf, strlen(arduinoBuf));
   }
   if (verbose) {
 	fprintf(stderr,"tty_init:: Request Codecs\n");
@@ -822,6 +830,7 @@ int main (int argc, char **argv)
 	char *hostname = "localhost";			// Default setting for our host == this host
 	char *port = PORT;						// default port, 5000
 	char *tty = "/dev/ttyUSB0";
+	char *tty2 = "/dev/ttyACM0";
 
     extern char *optarg;
     extern int optind, optopt;
@@ -875,14 +884,23 @@ int main (int argc, char **argv)
 		if (debug>0)	printf("-d\t; Debug option\n");
 		printf("-h %s\t; hostname used\n", hostname);
 		printf("-p %s\t; port used\n", port);
-		printf("\n");		 
+		printf("\n");
+		fflush(stdout);		 
 	}
 	
 	// ------------------ SOCKETS INIT ------------------------------
 	sockfd = socket_init(hostname, port);
 	
 	// ------------------- TTY INIT ----------------------------------
-	ttyfd = tty_init(tty);
+	ttyfd = tty_init(tty);								// Arduino Nano
+	if (ttyfd < 0) {
+		fprintf(stderr,"ERROR, unable to open tty %s\n", tty);
+		ttyfd = tty_init(tty2);									// Arduino Mega
+	}
+	if (ttyfd < 0) { 
+		fprintf(stderr,"ERROR, unable to open tty %s\n", tty2);
+		exit(1);
+	}
 	
 	// ------------------ STATISTICS INIT ------------------------------
 	if (sflg) {
@@ -984,7 +1002,15 @@ int main (int argc, char **argv)
 			close(sockfd);
 			sleep(10);
 			// re-init both connections
-			ttyfd = tty_init(tty);
+			ttyfd = tty_init(tty);								// Arduino Nano
+			if (ttyfd < 0) {
+				fprintf(stderr,"ERROR, unable to open tty %s\n", tty);
+				ttyfd = tty_init(tty2);									// Arduino Mega
+			}
+			if (ttyfd < 0) { 
+				fprintf(stderr,"ERROR, unable to open tty %s\n", tty2);
+				exit(1);
+			}
 			sockfd = socket_init(hostname, port);
 			reads = 0;
 		}

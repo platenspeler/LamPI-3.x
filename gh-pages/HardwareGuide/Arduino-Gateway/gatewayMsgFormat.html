@@ -11,7 +11,7 @@
 <h2>Intro</h2>
 <p>When using the Arduino as a gateway for 433MHz messages, the Raspberry will lose a lot of cpu/interrupt intensive workload which is taken over by the Arduino. The Raspberry will then send simple and short messages to the arduino <strong>over USB</strong>, for example to switch on the lights and the Arduino will message the Raspberry upon receiving sensor values or&nbsp;handset commands from 433 MHz devices.</p>
 <p>For more information about Raspberry and Arduino Gateway, <a href="../hardware_guide.html">visit the dedicated page</a> on the Hardware Guide.</p>
-<p>For more information on the 433 MHz messaging formats recognized by the Arduino receiver, visit the <a href="../../DeveloperGuide/433Transmitters/433messaging.html">433messaging</a> page</p>
+<p>For more information on the physical 433 MHz messaging protocols recognized by the Arduino receiver, visit the <a href="../../DeveloperGuide/433Transmitters/433messaging.html">433messaging</a> page.</p>
 <h2>Message format</h2>
 <p>Initially, we will focus on the klikaanklikuit commands as those are the devices I do have in my home. We like to include some other protocols as well, so that the direct connected devices to the Raspberry and those supported by the Arduino gateway become the same. </p>
 <p>This will mean in short that we like to include support for weather sensors etc.</p>
@@ -60,6 +60,24 @@
     <td>Values 0 and 1 are supported (2 and 3 optional)</td>
   </tr>
   <tr>
+    <td>Get software version</td>
+    <td>&nbsp;</td>
+    <td>&gt; {cnt} 0 4 </td>
+    <td>Response is given as a comment and message</td>
+  </tr>
+  <tr>
+    <td>Set time</td>
+    <td>*</td>
+    <td>&gt; {cnt} 0 5 {yy} {mm} {dd} {hh} {mm} {ss}</td>
+    <td>Set the new date and time (MEGA only)</td>
+  </tr>
+  <tr>
+    <td>Get Time</td>
+    <td>*</td>
+    <td>&gt; {cnt} 0 6 </td>
+    <td>Get the currnt Arduino time (MEGA)</td>
+  </tr>
+  <tr>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
@@ -74,21 +92,45 @@
   <tr>
     <td>Send to transmitter</td>
     <td>&nbsp;</td>
-    <td>&gt; {cnt} 1 {codec} {group}  {unit} {value}</td>
+    <td>&gt; {cnt} 1 {codec} {addr}  {unit} {value}</td>
     <td>First byte is &quot;send&quot; mode; second byte codec. Codec: 0 for Kaku, 1 for Action (see database.cfg for brands).<br />
-    &gt; 100 1 0 100 1 10 ; Sets device with group 100, unit 1 to 10</td>
+    &gt; 100 1 0 100 1 10 ; Sets device with address/group 100, unit 1 to 10</td>
   </tr>
   <tr>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>Send to Device</td>
+    <td>*</td>
+    <td>&gt; {cnt} 2 {codec} {Message to Sensor}</td>
+    <td>Not used (yet)</td>
   </tr>
   <tr>
     <td>&nbsp;</td>
     <td>*</td>
-    <td>&gt; {cnt} 2 {Message to Sensor}</td>
-    <td>Not used (yet)</td>
+    <td>&gt; {cnt} 2 {codec} {addr} {unit} {message}</td>
+    <td>Send to PIR Activate and timeout</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>Send to Sensor</td>
+    <td>&nbsp;</td>
+    <td>&gt; {cnt} 3 {codec} {addr} {unit} {message}</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
   </tr>
   <tr>
     <td>&nbsp;</td>
@@ -106,13 +148,13 @@
 <p>The first &quot;word&quot; is the message counter that should be in every message. The second gives the command for the Arduino, The next byte is a subcommand e.g. all admin commands or all transmitter commands etc. The rest of the string are bytes to support these subcommands. All words are separated by the space character &quot; &quot;, although in most cases comma &quot;,&quot; will work as well.</p>
 <p>&nbsp;</p>
 <h2>Initiated by the Arduino</h2>
-<p>Messages generated and sent by the arduino are short and simple and are either a reply (for command above) to a Raspberry request or are coming from 433MHz messages received over its antenna. </p>
+<p>Messages generated and sent by the arduino are short and simple and are either a reply (for command above) to a Raspberry request or are coming from 433MHz messages received over its antenna.</p>
 <table width="1126" height="115" border="1">
   <tr>
-    <th width="259" scope="col">Command</th>
-    <th width="19" scope="col">&nbsp;</th>
-    <th width="342" scope="col">Receive</th>
-    <th width="478" scope="col">Notes</th>
+    <th width="242" scope="col">Command</th>
+    <th width="16" scope="col">&nbsp;</th>
+    <th width="359" scope="col">Receive</th>
+    <th width="481" scope="col">Notes</th>
   </tr>
   <tr>
     <td>All other comments or messages coming from Arduino</td>
@@ -127,10 +169,16 @@
     <td>&nbsp;</td>
   </tr>
   <tr>
-    <td><strong>Reply to an admin message</strong></td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Reply to an admin message (0)</strong></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>Only applies to the Arduino connected to the Raspi Gateway</td>
   </tr>
   <tr>
     <td>&nbsp;</td>
@@ -154,13 +202,25 @@
     <td>&nbsp;</td>
     <td>&nbsp;</td>
     <td>&lt; {cnt} 0 3 {debug reply}</td>
-    <td>Dbug mode is toggled</td>
+    <td>Debug mode is toggled</td>
   </tr>
   <tr>
     <td>&nbsp;</td>
     <td>&nbsp;</td>
-    <td>&lt; {cnt} 0 4</td>
-    <td>Print the version number to the serial output</td>
+    <td>&lt; {cnt} 0 4 {Version}</td>
+    <td>Response to request for  the version number</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>*</td>
+    <td>&lt; {cnt} 0 5 {Time}</td>
+    <td>Give RTC time of Arduino</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>*</td>
+    <td>&lt; {cnt} 0 6 {Time}</td>
+    <td>Read RTC of Arduino</td>
   </tr>
   <tr>
     <td>&nbsp;</td>
@@ -169,9 +229,9 @@
     <td>&nbsp;</td>
   </tr>
   <tr>
-    <td><strong>Reply to device cmd of Raspi</strong></td>
+    <td><strong>Reply to device cmd of Raspi (1)</strong></td>
     <td>&nbsp;</td>
-    <td>&lt; {cnt} 1 {codec} {group} {unit} {value}</td>
+    <td>&lt; {cnt} 1 {codec} {addr} {unit} {value}</td>
     <td><p>This is a reply on a Raspberry message (optional: hardly used).</p></td>
   </tr>
   <tr>
@@ -187,9 +247,15 @@
     <td>&nbsp;</td>
   </tr>
   <tr>
-    <td><strong>Receive device  message</strong></td>
     <td>&nbsp;</td>
-    <td>&lt; {cnt} 2 {codec} {group} {unit} {value}</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Receive device  message (2)</strong></td>
+    <td>&nbsp;</td>
+    <td>&lt; {cnt} 2 {codec} {addr} {unit} {value}</td>
     <td>Value is &quot;off&quot;, &quot;on&quot; and 0-15 as a dim value</td>
   </tr>
   <tr>
@@ -205,16 +271,16 @@
       <p>Action message</p>
     </blockquote></td>
     <td>&nbsp;</td>
-    <td>&lt; {cnt} 2 1 31 2 1</td>
-    <td>action switch group 31, unit 2 is set on. <br />
-    Group is between 0 and 31, device is between 0 and 4 (5 bits, bit coded 1 when device active)</td>
+    <td>&lt; {cnt} 2 1 {addr} {unit} {val}<br />      &lt; {cnt} 2 1 31 2 1</td>
+    <td>action switch housecode 31, unit 2 is set on. <br />
+    The address is between 0 and 31, device is between 0 and 4 (5 bits, bit coded 1 when device active)</td>
   </tr>
   <tr>
     <td><blockquote>
       <p>Livolo message</p>
     </blockquote></td>
     <td>&nbsp;</td>
-    <td>&lt; {cnt} 2 5 23783 8 1</td>
+    <td>&lt; {cnt} 2 5 {addr} {unit} {val}<br />      &lt; {cnt} 2 5 23783 8 1</td>
     <td>Level not used but for compatibility with other codecs is always 1</td>
   </tr>
   <tr>
@@ -222,7 +288,7 @@
       <p>Quhwa doorbell</p>
     </blockquote></td>
     <td>&nbsp;</td>
-    <td>&lt; {cnt} 2 7 93756057&nbsp;85 1</td>
+    <td>&lt; {cnt} 2 7 {addr} {unit} {val}<br />      &lt; {cnt} 2 7 93756057&nbsp;85 1</td>
     <td>pressed</td>
   </tr>
   <tr>
@@ -232,9 +298,15 @@
     <td>&nbsp;</td>
   </tr>
   <tr>
-    <td><strong>Receive 433 Sensor message</strong></td>
     <td>&nbsp;</td>
-    <td>&lt; {cnt} 3 {codec} {address} {channel} {temperature} {humidity}</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td><strong>Receive 433 Sensor message (3)</strong></td>
+    <td>&nbsp;</td>
+    <td>&lt; {cnt} 3 {codec} {address} {channel} {parameter1} {parameter2}</td>
     <td>wt440h (UPM/Esic) is one codec 1 but there are more</td>
   </tr>
   <tr>
@@ -242,32 +314,60 @@
       <p>onboard HTU21d Sensor</p>
     </blockquote></td>
     <td>&nbsp;</td>
-    <td>&lt; {cnt} 3 0 40 0 26.5 50.1</td>
+    <td>&lt; {cnt} 3 0 {sensor addr} {unit} {temp} {humi}<br />      &lt; {cnt} 3 0 40 0 26.5 50.1</td>
     <td>Arduino on-board I2C sensor message. The code 40 tells us it is a HTU21 SHT21 device on the I2C bus. All on-board sensors have code 0</td>
   </tr>
   <tr>
-    <td><blockquote>
-      <p>WT440h normal:</p>
-    </blockquote></td>
     <td>&nbsp;</td>
-    <td>&lt; {cnt} 3 1 1 0 8984 85</td>
-    <td>Receive UPM weather message temp (20.1 Celcius encoded) and humi (85%) for address 1 and channel 0</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
   </tr>
   <tr>
     <td><blockquote>
-      <p>WT440 in BMP180 mode:</p>
+      <p>WT440h standard (temperature, humidity)</p>
     </blockquote></td>
     <td>&nbsp;</td>
-    <td>&lt; {cnt} 3 2 1 0 8984 85</td>
-    <td>Almost same message as above, but instead of humidity show airpressure value as 85 + 930 = 1015 Hpa</td>
+    <td>&lt; {cnt} 3 1 {address} {unit} {temp} {humi}<br />      
+    &lt; {cnt} 3 1 1 0 8984 85</td>
+    <td>Receive UPM weather message temperature (20.1 Celcius encoded) and humi (85%) for address 1 and channel unit 0.<br />
+      This is the only message type  supported by the real WT440h device.<br />
+      This message format is also used for HTU21D sensors reporting.<br /></td>
+  </tr>
+  <tr>
+    <td><blockquote>
+      <p>WT440 as BMP085 (temperature, airpressure)</p>
+    </blockquote></td>
+    <td>&nbsp;</td>
+    <td>&lt; {cnt} 3 2 {address} {unit} {temp} {airpressure}<br />      
+    &lt; {cnt} 3 2 1 0 8984 85</td>
+    <td>Almost same message as above, but instead of humidity show airpressure value as 85 + 930 = 1015 Hpa. <br />
+    I use the WT440 protocol with some extra modifications to transmit values of my own (BMP085) sensors.</td>
   </tr>
   <tr>
     <td><blockquote>
       <p>WT440 battery</p>
+      <p>(battery condition&nbsp;%)</p>
     </blockquote></td>
     <td>&nbsp;</td>
-    <td>&lt; {cnt} 3 3 1 0 885</td>
-    <td>Battery percentage is 88.5%</td>
+    <td>&lt; {cnt} 3 3 {address} {unit} {batt%} {nu}<br />      
+    &lt; {cnt} 3 3 1 0 885 0</td>
+    <td>Battery percentage is 88.5%. Used for betterySensor devices.</td>
+  </tr>
+  <tr>
+    <td><blockquote>
+      <p>WT440 PIR </p>
+    </blockquote></td>
+    <td>&nbsp;</td>
+    <td>&lt; {cnt} 3 4 {addr} {unit} {val} {nu}<br />
+    &lt; {cnt} 3 4 9 1 1 0</td>
+    <td>PIR alarm on device 9 channel 1. </td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>*</td>
+    <td>&lt; {cnt} 3 5 </td>
+    <td>(reserved)</td>
   </tr>
   <tr>
     <td>&nbsp;</td>
@@ -280,7 +380,8 @@
       <p>Auriol example:</p>
     </blockquote></td>
     <td>&nbsp;</td>
-    <td>&lt; 111 3 8 138 0 237 0 ! Auriol Cs: 0, N1: 1000, N2: 100<br /></td>
+    <td>&lt; {cnt} 3 8 {addr} {temp} {humi}<br />      
+    &lt; 111 3 8 138 0 237 0 ! Auriol Cs: 0, N1: 1000, N2: 100<br /></td>
     <td>Receive Auriol weather for device id 138, message temp is 23.7 Celcius encoded and humi 0% (not supported). Optionally when debug is active&nbsp;(!), it will provide the N1 and N2 parameters (N1 1000 tells us the battery is still OK).<br />
     <br />
     When Statistics is compiled, it will show timing info after the &quot;!&quot; as well.</td>
@@ -291,13 +392,28 @@
     <td>&nbsp;</td>
     <td>&nbsp;</td>
   </tr>
+  <tr>
+    <td><blockquote>
+      <p>LamPI protocol</p>
+    </blockquote></td>
+    <td>*</td>
+    <td>&lt; {cnt} 3 10 {addr} {unit} {parameter} {value}</td>
+    <td>(reserved)</td>
+  </tr>
 </table>
+<ul>
+  <li>addr: Address of a Sensor or Device</li>
+  <li>unit: Channel or Unit identifying several sensors with same address</li>
+  <li>nu: Not Used</li>
+  <li>temp: Temperature value in Celcius</li>
+  <li>humi: Humidity value in %</li>
+  <li>air: Airpressure value reported</li>
+</ul>
 <p>As you can see, the message coming in from the Arduino of a device is the same as the message that is sent by the Raspberry to get the Arduino to send a command to a KlikAanKlikAuit device.</p>
 <h3>Todo</h3>
 <p>1. We will need some sort of admin mesages to be received from the Arduino as well. For Gateways we coul use the standard admin (=0) commands initiated from the Raspberry, but for Arduino Sensor or other devices i might be better if once in a while the Arduino would check itself and send warnings is certain critical conditions occur or will occur in the future.</p>
 <p>Examples are: </p>
 <ul>
-  <li>Battery/Power is insufficient</li>
   <li>Memory usage is high</li>
 </ul>
 <p>2. Also it would be good if we can actively set parameters in Arduino devices that do have a receiver connected and use it to change the internal state of some variables and parameters. Examples:</p>
@@ -326,9 +442,10 @@
 <ul>
   <li>0: Reserved for on-board sensors of the connected Arduino (such as the HTU21D temperature and humidity sensor). The sensor is identified by its address on the I2C bus. The Raspberry where the Arduino Gateway is connected too will at the moment accept only ONE (1)&nbsp;Arduino Gateway.
     <ul>
-      <li>40: The addres of HTU21D tempterature/huidity sensors</li>
+      <li>40: The addres of HTU21D temperature/humidity sensors</li>
       <li>77: BMP085 or BMP180 temperature/airpressure sensors</li>
       <li>23: BH1750 luminescense sensors (or 5C)</li>
+      <li>...: DS3231 RealTime Clock</li>
       <li>28-xxxxxxxxxxxx: ds18b20 temperature sensors<br />
         <br />
       </li>
@@ -336,7 +453,8 @@
   </li>
   <li>1: wt440h (&lt;); UPM (or Esic) weather sensor message. Range of reception not so good. The address is 1 to 15, and the Channel is 0-3</li>
   <li>2: Special wt440h message (mis-) used to&nbsp;transmit temperature and <strong>airpressure</strong> of a BMP085 device</li>
-  <li>3: Auriol messages. </li>
+  <li>3: Special WT440 message for battery status reporting</li>
+  <li>8: Auriol messages, termperature only</li>
 </ul>
 <h3>Blinds, Curtains, Motors</h3>
 <p>Not supprted and tested yet </p>

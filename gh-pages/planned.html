@@ -43,13 +43,12 @@
   <li>Need to (re)implement the backup restore function of the configuration in &quot;config&quot;</li>
   <li>Need to separate activate_xxxxx functions from the handlers in LamPI-xx.yy.js &nbsp;that are now embedded in those functions. </li>
   <li>The LamPI-node.js process assumes that we have a zwave host (and devices). This leads to  calling of the ZWAVE host in zwave_init. If ZWAVE gateway&nbsp;is not used, we must make this code user selectable. </li>
-  <li>LamPI-receiver is not very good in reading ALL 433MHz messages.</li>
   <li>The scale-xxxxx sccs templates should work on screens with different resolutions. However, need to have dynamic changes between sccs look-and-feel sets once the screen gets too narrow and we know we need to switch to a mobile phone screen.</li>
   <li>Sortable (shuffling rows in room or scene view) works OK as far as GUI is concerned, but the sync to mySql on te LamPI-node.js daemon does not. Sortable is not 100% reliable.</li>
   <li>Sortable does not work for jqmobile yet, only for normal browser. Not sure if sorting rows makes sense for mobiles</li>
   <li>If possible we shoud merge jqmobile and jqueryUI so that all handling of screen buttons etc is uniform between the 2. Since mobile devices get a larger market share by the day, LamPI may shift to primary support for jqmobile in the future. jQuery-ui-1.11.2 is NOT yet mergeable....</li>
   <li>Adding new handsets at this moment still requires manual editing of the database.cfg file. I like to add more options to the OPTIONS screen for setup of new switch types and handset types, so that adding such switches and handsets at runtime is a lot easier.</li>
-  <li>Z-Wave alarms and sensors should be integrated into LamPI. May use database.cfg file for that</li>
+  <li>Z-Wave alarms and sensors should be further integrated into LamPI. May use database.cfg file for that</li>
   <li>Username and Password combinations should be stored in the MySQL database securely (=enrypted)</li>
 </ul>
 <p>July 12 2015</p>

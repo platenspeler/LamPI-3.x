@@ -1,0 +1,38 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Arduino PIR</title>
+</head>
+
+<body>
+<h1>Arduino PIR Sensor</h1>
+<p>One of the sensors I did not build yet is the PIR sensor: Waiting for a movement in a room send out an alarm to the master. I found a good sensor. However, it seems word best at 5V-20Vdc power supply. This is a pity, as it potenetially means we'll have to use more batteries or batteries with a higher voltage level to make the sensor work reliably. We have to look at this closer.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<h2><span id="PHeader_lbl">Sensor Hardware Description</span></h2>
+<ul>
+  <li><span id="PHeader_lbl"><strong>It is great for microcontrollers such as arduino or funduino and many more including the rasberry pi! </strong></span></li>
+  <li><span id="PHeader_lbl"><strong>It is a HC--SR501 Sensor Module </strong></span></li>
+  <li><span id="PHeader_lbl"><strong>With an operating voltage of 5v to 20v</strong></span></li>
+  <li><span id="PHeader_lbl"><strong>Operating  voltage. It has a high value of 3.3 volts and a low of 0 (it is either  on or off). It's delay time can be adjusted from 5 to 200seconds as well  as the sensing range from 3meter to 7meters. The entire sensor with the  board is 32mm by 24mm (standard pir motion sensor). The sensor either  gives off a 3.3volt high value when motion is detected and then resumes  or continues to give off a 0 voltage when no motion is detected. If you  use an arduino or other micro controllers you can use the 3.3 volt out  to power the sensor or use the 5volt power pin (vcc) to power the  sensor. Eitther one will work.</strong></span></li>
+  <li><span id="PHeader_lbl"><strong>Working voltage range: DC 4.5-20V</strong></span></li>
+  <li><span id="PHeader_lbl"><strong>Static current: &lt;50uA</strong></span></li>
+  <li><span id="PHeader_lbl"><strong>High level output: 3.3 V / low 0V</strong></span></li>
+  <li><span id="PHeader_lbl"><strong>Trigger mode: L unrepeatable trigger /H repeated trigger (Default Repeating trigger)</strong></span></li>
+  <li><span id="PHeader_lbl"><strong>Delay time: 0.5-200S (adjustable) can be produced range 0.1 seconds - a few minutes</strong></span></li>
+  <li><span id="PHeader_lbl"><strong>Blocking time: 2.5S (the default) can be produced range 0.1 seconds, tens of seconds</strong></span></li>
+  <li><span id="PHeader_lbl"><strong>Size: 32mm*25mm circuit board</strong></span></li>
+  <li><span id="PHeader_lbl"><strong>Induction angle: &lt;100 degree cone angle</strong></span></li>
+  <li><span id="PHeader_lbl"><strong>Working temperature: -15-+70 degrees</strong></span></li>
+  <li><span id="PHeader_lbl"><strong>Induction of lens size: diameter: 23mm (default)</strong></span></li>
+</ul>
+<h2>&nbsp;</h2>
+<h2>Sensor Hardware Setting</h2>
+<p>There are two wheels on the sensor&nbsp;that can be used to set the sensor sensitivity and the timeout value. For the timeout I use the leftmost value, which sets the value to around 5 seconds,</p>
+<p>&nbsp;</p>
+<h2>Sensor Software</h2>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+</body>
+</html>
