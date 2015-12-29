@@ -202,15 +202,14 @@ int send2device(int ttyfd, int dev, char *gaddr, char *uaddr, char *val)
 	
 	if (strcmp(val,"on")==0)  
 		// on is translated to code 1 (switches only)
-		sprintf(arduinoBuf,"> %d 1 %d %s %s 1\n", socktcnt, dev, gaddr, uaddr);
-	else if (strcmp(val,"off") ==0 )
-		// off means value 0
+		sprintf(arduinoBuf,"> %d 1 %d %s %s on\n", socktcnt, dev, gaddr, uaddr);
+	else if (strcmp(val,"off") ==0 )			// off means value 0
 		sprintf(arduinoBuf,"> %d 1 %d %s %s 0\n", socktcnt, dev, gaddr, uaddr);
 	else if (strcmp(val,"0") == 0) 
 		sprintf(arduinoBuf,"> %d 1 %d %s %s 0\n", socktcnt, dev, gaddr ,uaddr);
 	// values of 1-15
 	else {
-		int ivalue= (int) ( (atoi(val)-1)/2 );
+		int ivalue= (int) ( atoi(val)/2 );
 		sprintf(arduinoBuf,"> %d 1 %d %s %s %d\n", socktcnt, dev, gaddr, uaddr, ivalue);
 	}
 	if (debug >= 1) {
@@ -555,14 +554,21 @@ char * parse_remote(char *tok, int cod)
   // XXX Trick: if there is no integer function atoi() returns 0
   if (level > 0) {
 	if (verbose) printf("parse_remote:: Address: %lu, Unit: %d, Level: %d\n", group, unit, level);
-	sprintf(snd_buf, "{\"tcnt\":\"%d\",\"action\":\"handset\",\"type\":\"raw\",\"message\":\"!A%luD%dFdP%d\"}", 
-			socktcnt%1000,group,unit,level);
+	sprintf(snd_buf,
+	 	"{\"tcnt\":\"%d\",\"action\":\"handset\",\"type\":\"raw\",\"message\":\"!A%luD%dFdP%d\"}", 
+		socktcnt%1000,group,unit,level);
   }
   else {
-  	if (strncmp(tok,"on",2) == 0) { level = 1; };		// third char will be "\r"
+  	if (strncmp(tok,"off",2) == 0) { 
+		level = 0; 
+	};
+  	if (strncmp(tok,"on",2) == 0) { 
+		level = 1; 
+	};		// third char will be "\r"
 	if (verbose) printf("parse_remote:: Address: %lu, Unit: %d, Level: %d\n",group,unit,level);
-		sprintf(snd_buf, "{\"tcnt\":\"%d\",\"action\":\"handset\",\"type\":\"raw\",\"message\":\"!A%luD%dF%d\"}", 
-			socktcnt%1000,group,unit,level);
+	sprintf(snd_buf, 
+		 "{\"tcnt\":\"%d\",\"action\":\"handset\",\"type\":\"raw\",\"message\":\"!A%luD%dF%d\"}", 
+		socktcnt%1000,group,unit,level);
   }
   socktcnt++;
   return(snd_buf);

@@ -9,6 +9,12 @@
 <h1>Planned Functions</h1>
 <p>Of course I'm always thinking about new functions, as long as I do not have to put the current system up-side-down too much. After all, I do have other day-time work to do and it has to make sense for me to spend additional time. Therefore, you are welcome to ask for new functions, but if it will cost me days to implement them and I will not benefit from them in any way I will probably give priority to other changes. Anyway, don not be surprise if I'm working on at least three different items at a time (after all this is hobby remember ..)</p>
 <p>The (x) in front of a line idicates it's piority on my list</p>
+<p><strong>IoT/LoRa</strong></p>
+<ul>
+  <li>(1) I like to take the Home Automation and sensor monitoring to the next level by integrating with a LoRa network.<br>
+    Outside the scope of LamPI, but as there is none in Apeldoorn I need to arrange a LoRa infrastructure first.
+  </li>
+</ul>
 <h3>Gui</h3>
 <ul>
   <li><strong>(beta)</strong> Implementation of an alternative GUI style comparable with&nbsp;the metro interface of Windows 8.x</li>
@@ -29,6 +35,7 @@
 </ul>
 <h3>Sensor/Transmitter/Reeiver Hardware</h3>
 <ul>
+  <li>(1) make the ESP8266 gateway zombie proof (100% reconnect reliability when WiFi network fails or host fails). Eliminate watchdog resets or make them manageable.</li>
   <li>The Arduino luminescense sensor code lacks a test to see whether it is present</li>
   <li>Add PIR sensor to list</li>
   <li>dd real-time clock support</li>
@@ -39,7 +46,7 @@
 <h1><a name="KnownIssues"></a>Known Issues, Bugs etc.</h1>
 <p>Both architectual and GUI related</p>
 <ul>
-  <li>The technology used for grid (gridster) does not dynamically follow screen resizing etc. Hav to add this by hand, or choose different grid technology</li>
+  <li>The technology used for grid (gridster) does not dynamically follow screen resizing etc. Have to add this by hand, or choose different grid technology</li>
   <li>Need to (re)implement the backup restore function of the configuration in &quot;config&quot;</li>
   <li>Need to separate activate_xxxxx functions from the handlers in LamPI-xx.yy.js &nbsp;that are now embedded in those functions. </li>
   <li>The LamPI-node.js process assumes that we have a zwave host (and devices). This leads to  calling of the ZWAVE host in zwave_init. If ZWAVE gateway&nbsp;is not used, we must make this code user selectable. </li>
@@ -51,6 +58,6 @@
   <li>Z-Wave alarms and sensors should be further integrated into LamPI. May use database.cfg file for that</li>
   <li>Username and Password combinations should be stored in the MySQL database securely (=enrypted)</li>
 </ul>
-<p>July 12 2015</p>
+<p>Nov 30, 2015</p>
 </body>
 </html>

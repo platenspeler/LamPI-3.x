@@ -120,9 +120,23 @@ install_lampi()
 	# with the new directory as in $HOMEDIR/www
 	#
 	echo "editing sites-available"
-	sudo sed "s|/var/www|${HOMEDIR}/www|g" /etc/apache2/sites-available/default > /tmp/effe
-	sudo mv /etc/apache2/sites-available/default /etc/apache2/sites-available/default.org
-	sudo mv /tmp/effe /etc/apache2/sites-available/default
+	sudo sed "s|/var/www/html|${HOMEDIR}/www|g" /etc/apache2/sites-available/000-default.conf > /tmp/effe
+	sudo mv /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/000-default.conf.org
+	sudo mv /tmp/effe /etc/apache2/sites-available/000-default.conf
+    
+    # ----------------------------------------------------------------
+	# Set the apache base directory, replace the standard /var/www directory
+	# with the new directory as in $HOMEDIR/www
+	#
+	echo "apache2.conf"
+    sudo sed "s|/var/www/|$HOMEDIR/www|g" /etc/apache2/apache2.conf /tmp/effe
+	sudo mv /etc/apache2/apache2.conf /etc/apache2/apache2.conf.org
+    sudo mv /tmp/effe /etc/apache2/apache2.conf
+    sudo chown root /etc/apache2/apache2.conf
+    sudo chgrp root /etc/apache2/apache2.conf
+    rm /tmp/effe*
+    
+    
 	sudo /etc/init.d/apache2 restart
 
 	# -------------------------------------------------------------
@@ -444,6 +458,9 @@ install_node()
     sudo dpkg -i node_latest_armhf.deb
 # Check installation
 	node -v
+#install npm so we can install more packages
+    sudo apt-get install npm
+    
 # Install add-on packages (Node Package Manager)
     npm install --save express
     # socket.io is not used but ws instead

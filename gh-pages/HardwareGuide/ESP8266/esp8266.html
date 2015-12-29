@@ -1,0 +1,324 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>SI4432</title>
+</head>
+
+<body>
+ <h1>ESP8266 IoT</h1>
+<p>A new variant of the sensor and gateway node is the IOT sensor which is based on a Wifi node such as the ESP8266. This means ta the sensor does not use the 433MHz or 868MHz frequency band to transmit sensor values but uses the 2.4GHz Wifi band and a proper IP connection to send (temperature) values.</p>
+<p>This opens new possibilities: It may be possible to combine certain functions of the Raspberry and the Arduino for the LamPI environment. For example, If the ESP would be able work wih 433MHz receivers and transmitters it would be possible to receive messages coming from the LamPI daemon and send back received sensor readings to the daemon.</p>
+<p>But first, let's start with the simple stuff, the family tree :-)</p>
+<h1>The ESP8266 famility</h1>
+ <p>There are several types of ESP 8266 boards available. They differ in the amount of memory and IO channels/pins available to the user. </p>
+ <h2>ESP01</h2>
+ <p>I started with the ESP-01 version which is the simplest and cheapest board. It has only 2 IO ports. It's pin out is difficult, it has 2.54 mm pin spacing but two rows of 4 pins close to eah other make use of breadboards impossible without doing a little soldering (making a different connection). </p>
+ <p>&nbsp;</p>
+ <p><img src="images/esp-01.jpg" width="600" height="415" /></p>
+ <p>&nbsp;</p>
+ <p>&nbsp;</p>
+ <h4>Specifications</h4>
+ <p>On Ebay its specifications are as follows:</p>
+<pre>SDIO 2.0, SPI, UART<br /> 32-pin QFN package<br /> Integrated RF switch, balun, 24dBm PA, DCXO, and PMU<br /> Integrated RISC processor, on-chip memory and external memory interfaces<br /> Integrated MAC/baseband processors<br /> Quality of Service management<br /> I2S interface for high fidelity audio applications<br /> On-chip low-dropout linear regulators for all internal supplies<br /> Proprietary spurious-free clock generation architecture<br /> Integrated WEP, TKIP, AES, and WAPI engines<br /> Supports APSD for optimal VoIP applications<br /> Patented spurious noise cancellation algorithm for integration in SOC applications<br /> Supports Bluetooth co-existence interface<br /> Self-calibrated RF to ensure optimal performance under all operating conditions<br /> Zero factory tuning<br /> No external RF components<br /> <br /> Specifications:<br /> 802.11 b/g/n<br /> Wi-Fi Direct (P2P), soft-AP<br /> Integrated TCP/IP protocol stack<br /> Integrated TR switch, balun, LNA, power amplifier and matching network<br /> Integrated PLLs, regulators, DCXO and power management units<br /> +19.5dBm output power in 802.11b mode<br /> Power down leakage current of &lt;10uA<br /> Integrated low power 32-bit CPU could be used as application processor<br /> SDIO 1.1/2.0, SPI, UART<br /> STBC, 1×1 MIMO, 2×1 MIMO<br /> A-MPDU &amp; A-MSDU aggregation &amp; 0.4ms guard interval<br /> Wake up and transmit packets in &lt; 2ms<br /> Voltage: 1.8-3.8V<br /> Standby power consumption of &lt; 1.0mW (DTIM3)<br /> Dimension:25 x 15 mm<br /> Net weight:2 g<br /> Package weight:12 g</pre>
+ <h4>Pin-Out</h4>
+ <table width="59%" border="1">
+   <tr>
+     <th scope="col">ESP01</th>
+     <th scope="col">&nbsp;</th>
+     <th scope="col">Arduino FTDI</th>
+   </tr>
+   <tr>
+     <td>Vcc</td>
+     <td><p>Red</p></td>
+     <td>3.3V</td>
+   </tr>
+   <tr>
+     <td>GND</td>
+     <td>Black</td>
+     <td>GND</td>
+   </tr>
+   <tr>
+     <td>UTXD</td>
+     <td>White</td>
+     <td>Rx</td>
+   </tr>
+   <tr>
+     <td>URXD</td>
+     <td>Yellow</td>
+     <td>Tx</td>
+   </tr>
+   <tr>
+     <td>GPIO0</td>
+     <td>Green</td>
+     <td>&nbsp;</td>
+   </tr>
+   <tr>
+     <td>CH PD</td>
+     <td>Orange</td>
+     <td>Chip ,</td>
+   </tr>
+   <tr>
+     <td>RST</td>
+     <td>Brown</td>
+     <td>Reset</td>
+   </tr>
+   <tr>
+     <td>GPIO1</td>
+     <td>nc</td>
+     <td>&nbsp;</td>
+   </tr>
+</table>
+<p>Because the ESP01 has only 2 GPIO pins available (GPIO0 and GPIO1), it's use is in general limited to a simple sensor node. The Dallas (OnWire) sensor DS18B20 would be a good candidate to use this little node for temperature measurements.</p>
+<p><a href="images/esp01_b.JPG"><img src="images/esp01_b.JPG" width="600" height="450" hspace="10" vspace="10" /></a></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>However, it's connector with 2 rows of 4 pins makes it difficult to connect this ESP01 device on a breadboard without building some sort of adapter board. And sources on the internet tell use we need 2 microswitches and a voltage regulator to use tis device reliably (and a FTDI adapter). </p>
+<p><a href="images/esp01_c.JPG"><img src="images/esp01_c.JPG" width="600" height="450" hspace="10" vspace="10" /></a></p>
+<p></p>
+<h2>ESP 12</h2>
+<p>Because the ESP01 is so difficult to use on a breadboard I bought its elder brother the ESP12E. Although this device is a surface mounted device which requires all (if not more) of my soldering skills; once soldered on a separate board it should be easy to use.</p>
+ <p><img src="images/esp-12e.jpg" width="226" height="223" /><a href="images/esp-12e-b.jpg"><img src="images/esp-12e-b.jpg" width="256" height="256" hspace="10" vspace="10" /></a></p>
+ <p>As you can see, the main difference is that the ESP12 has much more possibilities to connect I/O as it has more free GPIO pins. This is what we want (as the pricedifference is low).</p>
+ <p>I had hoped that this board would make the ESP12 easy to work with, but I keep having trouble with the Serial connections, and after uploading the firmware the device will not always boot correctly and the Serial connection is difficult to deal with. It may be hardware related, but for the few Euro's I do not plan to spend too much time on finding the root cause of my problems. I first like to have a working environment so that at least I know that it works and have a prototype environment. After that, debugging is much easier as we have a working environment to compare with.</p>
+ <p><a href="images/esp12e_c.JPG"><img src="images/esp12e_c.JPG" width="467" height="375" hspace="10" vspace="10" /></a></p>
+<p>So, as this boards did not work reliably on my PC I have opted for a third option to start with. But what would then the most simple way to start with the ESP8266?</p>
+<h2>nodeMCU1.0 (ESP12E based)</h2>
+ <p>This small board (and new ones are even smaller) can be connected to the computer with a micro USB cable and can be programmed without an extra FTDI interfaces or other additional hardware. I must say, getting these boards to work: powering, reset, upload sketches and monitor execution is a piece of cake compared to the bare chips...</p>
+<p>I have to see if I can make these boards energy efficient so they can be powered by battery, which would make this sensor solution even more versatile. However, even without battery operation it is a good solution for sensors that are remote to our house.</p>
+ <p><img src="images/nodeMCU1.0-a.jpg" width="600" height="450" hspace="10" vspace="10" /></p>
+<p>As we plan to use the Arduino IDE to program the devices, we need to know the correct pin numbering in order to make sure we can talk with sensors. Below you find the pinout for the NodeMCU board (nice picture thanks to Arduining.com, click on picture to enlarge). So it tells us that&nbsp;if we wish to use GPIO2 for the OneWire bus that we need to use the fifth physical pin (D4) on the board.</p>
+ <p><a href="images/nodeMCU1.0-b.jpg"><img src="images/nodeMCU1.0-b.jpg" width="600" height="500" hspace="10" vspace="10" /></a></p>
+ <p>I built an ESP sensor sketch so it is easy to setup and manage. And as there are een smaller versions available of the same nodeMCU 1.0 board&nbsp;for only $4.00 from Aliexpress.com i see no immediate reason to work with the ESP01 bare device at the moment.</p>
+<p>&nbsp;</p>
+ <h1>Getting Started</h1>
+ <h2>Hardware</h2>
+ <p>As said above, I think the safest and easiest way to stat with the ESP boards is by buying a ready-to-go nodeMCU 1.0 board on Ebay.com or Aliexpress.com. Connect that board with a micro USB cable (same as for phones) to your computer and start installing the IDE.</p>
+ <p>There are many people that have no problem whatsoever with PC's, but I found that my iMac and Ubuntu Linux machine provide the best and most reliable results here (and yes I do have a High-End I7 laptop at home, but it gives me problems).</p>
+ <h2>Software</h2>
+<ul>
+   <li>Install the regular IDE for Arduino. Make sure you install version 1.6.5 for the IDE as that version works with the ESP devices</li>
+   <li>Install the matching ESP add-on libraries by starting the IDE,&nbsp;opening preferences and adding this link to the Additional Board Manager URL's: <code>http://arduino.esp8266.com/stable/package_esp8266com_index.json</code></li>
+   <li>Goto Boards selector, open the Boardmanager, and select ESP8266 support from the list and install it</li>
+</ul>
+<p>You're all set to start the ESP IDE. </p>
+<p>&nbsp;</p>
+<h1>IDE Considerations</h1>
+<p>Unfortunately, when you use the&nbsp;environment for both Arduino and ESP development there are a few things that you have to change and some others you have to be aware of:</p>
+<h3>Size of variables</h3>
+<p>The size of variables is different between the Arduino environment and the ESP8266 environment. The ESP is a 64-bit machine and therefore uses a larger word-size. This is particularly interesting with integer variables if they are used in drivers or interrupt routines. Bit operations assuming the size of variables might fail if those variables are twice as long. So, for example modify the standard BMP085 library&nbsp;(if you include my LamPI environment it's been done already) and change as follows:
+</p>
+<ul>
+  <ul>
+    <li>int -&gt; int16_t</li>
+    <li>unsigned int -&gt; uint16_t</li>
+    <li>long -&gt; int32_t</li>
+    <li>unsigned long -&gt; uint32_t</li>
+  </ul>
+</ul>
+<h3>Pin Numbering</h3>
+<p>The numbering and identification of GPIO pins is different between the two machine architectures:<br />
+</p>
+<table width="61%" border="1">
+  <tr>
+    <th width="13%" scope="col">GPIO</th>
+    <th width="8%" scope="col">PIN</th>
+    <th width="79%" scope="col">Function</th>
+  </tr>
+  <tr>
+    <td>GPIO0</td>
+    <td>D3</td>
+    <td>433 Receiver</td>
+  </tr>
+  <tr>
+    <td height="24">GPIO1</td>
+    <td>TX</td>
+    <td>&nbsp;-- nc</td>
+  </tr>
+  <tr>
+    <td>GPIO2</td>
+    <td>D4</td>
+    <td><p>&nbsp;-- nc (Usable for interrupts as well)</p></td>
+  </tr>
+  <tr>
+    <td>GPIO3</td>
+    <td>RX</td>
+    <td>&nbsp;-- nc</td>
+  </tr>
+  <tr>
+    <td>GPIO4</td>
+    <td>D2</td>
+    <td>SDA I2C</td>
+  </tr>
+  <tr>
+    <td>GPIO5</td>
+    <td>D1</td>
+    <td>SCL I2C</td>
+  </tr>
+  <tr>
+    <td>GPIO6</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>GPIO7</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>GPIO8</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>GPIO9</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>GPIO10</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>GPIO11</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>GPIO12</td>
+    <td>D6</td>
+    <td>ONE WIRE</td>
+  </tr>
+  <tr>
+    <td>GPIO13</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>GPIO14</td>
+    <td>D5</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>GPIO15</td>
+    <td>D8</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>GPIO16</td>
+    <td>D0</td>
+    <td>433Transmitter</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>0</td>
+    <td>&nbsp;</td>
+    <td>SDA I2C on ESP01</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>&nbsp;</td>
+    <td>SCL I2C on ESP01</td>
+  </tr>
+</table>
+<p>The above pin mappings are used on the nodeMCU1.0 board and also works on the Wemos D1-mini board.</p>
+<h3>Interrupts</h3>
+<p>The LamPI gateway sketch makes use of the interrupt system. The pin to interrupt system of the ESP is different from that of the standard Arduino system. In order to have the standard bahaviour of ArduinoGateway and ESP-Getaway be the same, we have to use GPIO0 for interrupt 0. </p>
+<p>Remember that for standard Adruino, interrupt 0 is mapped upon pin D2. For the ESP8266 all interrupts pins are the same pins as the GPIO. This means for example that&nbsp;when using the InterruptChain libray we must either choose a&nbsp;pin for our receiver with a number lower than 6 or we have to make modifications to the library...</p>
+<table width="60%" border="1">
+  <tr>
+    <th scope="col">GPIO</th>
+    <th scope="col">Pin</th>
+    <th scope="col">Interrupt</th>
+    <th scope="col">Description</th>
+  </tr>
+  <tr>
+    <td>0</td>
+    <td>D3</td>
+    <td>0</td>
+    <td>GPIO0 is mapped in interrupt 0</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>D4</td>
+    <td>2</td>
+    <td>GPIO2 is mapped in interrupt 2</td>
+  </tr>
+  <tr>
+    <td>etc</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h3>Clashing Libraries</h3>
+<p>As the IDE seems to be taking the standard libraries first and then the ESP specific libraries, we have a problem. In some cases you can make definitions that are dependent on the hardware architecture, but you do not always want to open all standard libraries and make changes. And should we make changes we have to be careful tha the libraries will still wok for the standard Arduino boards.</p>
+<p>After all, when upgrading later to a new version of the IDE when it becomes available you would have to redo all those modifications to the new environment which is a cumbersome task (should you remember all changes you made)</p>
+<ol>
+  <li>OneWire: Change the OneWire.h and .cpp files and rename them to OneWireESP.h<br />
+  C:\Users\maarten\AppData\Roaming\Arduino15\packages\esp8266\hardware\esp8266\1.6.5-947-g39819f0\libraries\OneWire.<br />
+  And in your ESP sketches make sure you include the OneWireESP.h file
+  <br />
+  <br />
+  </li>
+  <li>The Real-Time Clock uses some same definitions as the time.h library.The compiler allows this and it does not seem&nbsp;to hurt but it is annoying.</li>
+</ol>
+<p>And yes, I know that I added a conditional&nbsp;definition to one of the libraries in order to make it work ( think it was time.h) but cannot remember anymore.&nbsp;Embarassing ... but I'll document it later if I see it again.</p>
+<p>&nbsp;</p>
+<h1>Programming Best Practices</h1>
+<p>Although we cannot see it when programming the IDE, the ESP8266 board is running far more (and complex) code in the background while executing our sketches. Therefore there are several things to keep in mind:</p>
+<ol>
+  <li>The&nbsp;handling of the TCP and Wifi stack requires that our code in the loop() section does not spend too much time&nbsp;without allowing the background processing of&nbsp;other system processes. There are several ways to make time for these processes:  
+    <ol>
+      <li>End the loop() as soon as possible. At the end of each loop() iteration&nbsp;the system will make time to execute background processes and allow several Wifi adminisrtration processes to finish and clean up.</li>
+      <li>If some sechtions take longer: insert delay(25) statements in your code. These statements will allow the system more time to do its administrations. Btw: If we don't do this there is a big chance that the watchdog process will kick in&nbsp;(exceptions)</li>
+      <li>Make sure that the tcp timeout parameters is set to soemthing around 250 mS instead of the normal timeout of 1 second. A smaller value of timeout will make our code semo asynchronous.<br />
+        <br />
+      </li>
+    </ol>
+  </li>
+  <li>Not all casting allowed by the system will be successful<br />
+    <br />
+  </li>
+  <li>The printf/fprintf/sprintf statement does not have a way to print float numbers. So intead cast the integer part to an integer variable and the fraction as well and print both of them to the buffer (with a decimal &quot;.&quot; in between).<br />
+    <br />
+  </li>
+  <li>delay() statements work (and are sometimes effective) in the main loop() flow but do NOT work in  interrupt handling reoutines. As a result: We must make sure that&nbsp;we spend as little time as possible in the interrupt routines. Calling Wifi send routines does NOT work and results in exceptions and witchdog resets. The solution is to make a queue of messages to send to the daemon. This queue is filled in the various interrupt handler routines and is read from in the main loop().<br />
+    See WifiQueue library for the solution that works for LamPI.
+  </li>
+</ol>
+<p>&nbsp;</p>
+<h1>NodeMCU Sensor</h1>
+<p>This was my first project with the ESP8266 (nodemcu 1.0) and it is not difficult. I may be lucky, but with the changes made as described above it was easy to build an ESP-based sensor node that work reliably. However, its use is rather limited: It does not offer any specific benefits over an Arduino based and battery powered node except for its&nbsp;capabilities to work anywhere we have a Wifi connection available.</p>
+<p>In the default setup, the sensor will report its values over z websocket connection. The LamPI-node.js files has been changed in order to service these requests and as a result the sensors can be put on any place on earth as long as we have a reliable Wifi connection (So we need to know an SSID/password combination that works).<br />
+</p>
+<p><a href="ESP-Sensor/esp-sensor.html">Read further on the ESP Sensor project</a><br />
+</p>
+<h1>NodeMCU Gateway</h1>
+<p>This is serious stuff: For a long time I thought it was nearly impossible to get this to work reliably, but in the end the project was successful. I started this project thinking that if we could combine the functions of a Raspberry slave with an Arduino Mega gateway node we would have a cheap replacement for a 40 + 10 euro setup.</p>
+<p>However, on the Arduino we spent far too much time in interrupt handlers and we spend too much time in the main loop() as well. The ESP8266 is not forgiving if we do so. When spending more than 50ms in a routine the watchdog will reset the chip. So in our new ESP8266 setup we need to make sure that we either end the loop() within 40 ms or so, or add delay() statements in the loop if we do. And we must make sure to end interrupt service routines as soon as possible without calling any Wifi functions in these routines.</p>
+<p><a href="ESP-Gateway/esp-gateway.html">Read here further about the ESP Gateway project</a></p>
+<h1>Battery Operation</h1>
+<p>Of course these devices can be battery operated. After all, similar stuff is in every mobile phone. However,  those mobile phones are charged avery day or every other day, and that is not exactly what your are looking for&nbsp;when operating a sensor on a battery. The specifications tell us that the power usage is less than 1mA when stand-by, which is OK but not terrific. About 100uA would be far better for a battery powered device and would make the batteries last for a year or so.</p>
+<p>And experiene shows that making a connection to the network and to the host in some cases can take a lot of time (for yet unknown reasons). And making these connection require most power. So if a node should wake up every minute o so and spends 15-30 seconds looking for the network or the host, battery operation will not work.</p>
+ <h1>Links</h1>
+ <ul>
+   <li>http://esp8266.com/wiki/doku.php?id=nodemcu</li>
+   <li>https://github.com/themadinventor/esptool</li>
+   <li><a href="http://www.esp8266.com/wiki/doku.php?id=esp8266_gpio_pin_allocations">ESP8266 pin allocations (esp8266.com)</a></li>
+ </ul>
+<p>&nbsp;</p>
+</body>
+</html>

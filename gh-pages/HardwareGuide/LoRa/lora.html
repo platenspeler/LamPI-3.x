@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>SI4432</title>
+</head>
+
+<body>
+ <h1>LoRa IOT</h1>
+ <p>(Version Dec 2016, just a draft)</p>
+<p>Internet of Things (IoT) is hot today. There are multiple uses for Internet of Things sensors, most of them we did not even think of today.&nbsp;Researchers estimate that by the year 2020 there will be 25&nbsp;B &quot;Things&quot;&nbsp;connected to the network. At this moment (dec. 2015) per 100 people in the Netherlands there are 25 or so&nbsp;IoT-like devices connected. So we can expect a huge ramp-up over the next years of this technology.</p>
+<p>IoT comes in flavors: It is possible to build IoT sensors and devices based on well-known technology such as (1) home automation technology based on open/public band 433MHz devices for example or (2) use WiFi in your home or business to have the IoT connect to the rest of the internet. And of course it is possible to use (3) a mobile network as carrier for your IoT (and M2M) implementations.</p>
+<p>However, The first technology is often limited by range of the transmitters and receivers as these are vulnerable to interference.&nbsp;On the other hand, they are potentially energy efficient which makes them suitable for battery use for a longer period of time (2 years or so)</p>
+<p>Also Wifi based IoT has the advantage of more range as we have Wifi in most homes and businesses today, but it also suffers from some drawbacks:</p>
+<ul>
+  <li>Wifi is not very energy efficient so battery-operated sensors and devices are difficult</li>
+  <li>IoT devices cannot be moved from one location to the other so easily as they &quot;connected&quot; themselves to WiFi access points with their own SSID and passwords.</li>
+  <li>It has more speed than necessary (which is not really a drawback).</li>
+</ul>
+<p>Important for a successful and quick roll-out of IoT is the availability of enough &quot;gateways&quot;</p>
+<table width="70%" border="1">
+  <tr>
+    <th width="38%" scope="col">&nbsp;</th>
+    <th width="18%" scope="col">433</th>
+    <th width="22%" scope="col">WiFi</th>
+    <th width="22%" scope="col">Mobile</th>
+  </tr>
+  <tr>
+    <th scope="row">Price</th>
+    <td>Low</td>
+    <td>Low</td>
+    <td>High</td>
+  </tr>
+  <tr>
+    <th scope="row">Range</th>
+    <td>Short</td>
+    <td>Home/Office</td>
+    <td>Long</td>
+  </tr>
+  <tr>
+    <th height="28" scope="row">Trans. Speed</th>
+    <td>Low</td>
+    <td>High</td>
+    <td>Medium</td>
+  </tr>
+  <tr>
+    <th scope="row">Message Size</th>
+    <td>Small</td>
+    <td>Very large</td>
+    <td>Large</td>
+  </tr>
+  <tr>
+    <th scope="row">&nbsp;</th>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <th scope="row">Battery</th>
+    <td>Long Life</td>
+    <td>Medium</td>
+    <td>Short</td>
+  </tr>
+  <tr>
+    <th scope="row">Security</th>
+    <td>None</td>
+    <td>Good</td>
+    <td>OK</td>
+  </tr>
+  <tr>
+    <th scope="row">&nbsp;</th>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <th scope="row">&nbsp;</th>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <th scope="row">&nbsp;</th>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<h1>So what is LoRa</h1>
+<p>LoRa is a new standard for long range (LoRa) communication. LoRa could be viewed as a mix of type 1 and type 3 communication: It makes use of public band transmissions (in NL on 868MHz) but with a far better protocol which is much better shielded against outside interference. And it makes use of some sort of public network as well with gateways that handle 20,000 connections covering a range of 5Km or more.</p>
+<p>But as &quot;Things&quot; do not need a bandwidth of several MBytes/s and do not transmit most of the time so we do not need the 3G or 4G networks. In fact, these would be far too expensive. therefore a separate network is installed for IoT that offers less bandwidth, long range, less power and enough security.</p>
+<p>IoT messages are assumed to be short and transmission would take place once every minute or so. So LoRa sensors would be able to work on batteries for an extended period of time.</p>
+<p>read more: http://thethingsnetwork.org/</p>
+<p>The Dutch KPN started with loRa in November 2015 in the cities Rotterdam and the Hague. In other cities in the Netherlands the thingsnetwork has started free initiatives in cities like Amsterdam.</p>
+<p>There are 3 main parts involved in a LoRa (or most IoT) network:</p>
+<ul>
+  <li>The&nbsp;&quot;Things&quot;</li>
+  <li>The Network infrastructure to connect and exchange messages between Things and Applications</li>
+  <li>The Application, gathering data from &quot;Things&quot; and converting this to Information</li>
+</ul>
+<h1>LoRa Things</h1>
+<p>The LoRa chips are available from Semtech only (and licensed partners suh as HopeRF). Their price is typically in the range of $ 5-10. With a simple microcontroller such as the Arduino or Raspberry it is possible to collect readings rom attached sensors or other devices and send their value to the gateway (or receive messages back from the LoRa Gateway).<br />
+</p>
+<p>Assuming that the network has enough coverage, the application of Things is limited by our imagination only.<br />
+</p>
+<h1>LoRa Gateway</h1>
+<p>If you're not living in or close to one of the cities where thethingsnetwork or KPN LoRa is already installed, you need&nbsp;to buy your own gateway in order to start with the IoT.</p>
+<h3>Buy a starterskit </h3>
+<ul>
+  <li>KPN has one for those that want to start with LoRa.</li>
+</ul>
+<h3>Buy it yourself</h3>
+<ul>
+  <li><a href="http://www.link-labs.com/product/lora-enabled-m2m-gateways/?gclid=CjwKEAiAtf6zBRDS0oCLrL37gFUSJACr2JYbIq7t8UlFk2-cilFcFEeIPwRl_dGt-22H24jmWkjp7RoC-v3w_wcB">www.link-labs.com gateway</a></li>
+</ul>
+<h3>Build it yourself (DIY)</h3>
+<ul>
+  <li>http://ava.upuaut.net/store/index.php?route=product/product&amp;product_id=140</li>
+  <li></li>
+</ul>
+<p>&nbsp;</p>
+<h1>LoRa Applications</h1>
+<p>Once the network is installed, Applications are the most important part of the IoT network: What do we want to do with all the data of these &quot;Things&quot;. This question is more important to businesses than to private persons that use the IoT for DIY Home Automation projects. But still, it is good to question your goals before randomly connect lots of &quot;Things&quot; in your environment.</p>
+<p>According to KPN and others there are several applications that could be considered &quot;Strategic&quot;:</p>
+<ul>
+  <li>Smart cities (Smart Buildings, Home Automation-like)</li>
+  <li>Healthcare monitoring</li>
+  <li>Transportation and logistics</li>
+</ul>
+<p>&nbsp;</p>
+<h1>Plan</h1>
+<p>As we do not have coverage of LoRa in our city, first step would be to install a gateway so we can use the network. It will also greatly help in getting more people and business in the neighbourhood to connect to the IoT network and share their &quot;Things&quot;.</p>
+<h1>Links</h1>
+ <ul>
+   <li>http://esp8266.com/wiki/doku.php?id=nodemcu</li>
+   <li>https://github.com/themadinventor/esptool</li>
+   <li><a href="http://www.esp8266.com/wiki/doku.php?id=esp8266_gpio_pin_allocations">ESP8266 pin allocations (esp8266.com)</a></li>
+ </ul>
+<p>&nbsp;</p>
+</body>
+</html>

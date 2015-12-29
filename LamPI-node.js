@@ -208,13 +208,6 @@ app.all('/load', function (req, res, next) {
   //next(); // pass control to the next handler
 });
 
-//  ROUTE to sensors
-app.all('/sensors', function (req, res, next) {
-  console.log('Accessing the sensors section ...');
-  res.send('sensors');
-  //next(); // pass control to the next handler
-});
-
 //  ROUTE to config
 app.all('/config', function (req, res, next) {
   console.log('Printing configuration ...');
@@ -222,8 +215,29 @@ app.all('/config', function (req, res, next) {
   //next(); // pass control to the next handler
 });
 
+// Route to sensor message received through the NEST interface
+app.get('/sensor', function (req, res, next) {
+  if (init) return;									// During init NO routing of sensor values
+  var inbuf = req.query;
+  var outbuf = {
+	  action: 'sensor',
+	  tcnt: inbuf.tcnt,
+	  brand: inbuf.brand,
+	  type: 'json',
+	  address: inbuf.address,
+	  channel:  inbuf.channel,
+	  temperature: inbuf.temperature
+  };
+  var buf = JSON.stringify(outbuf);
+  logger("Sensor routing:: "+buf);
+  socketHandler(buf, null);
+  res.send(JSON.stringify(buf));
+  next(); // pass control to the next handler
+});
+				
 //  ROUTE to alarm
 app.use('/alarm', alarmRouter);
+
 
 
 // --------------------------------------------------------------------------------
@@ -315,14 +329,14 @@ function printConfig() {
 								str += "<td>, time: "+strips[k+1]+"</td>";
 								var r = /\d+/;
 								var room = strips[k].match(r);
-								if (strips[k].indexOf('Fa') != -1) {					// XXX Room must exist
+								if (strips[k].indexOf('Fa') != -1) {					// Room must exist
 									if (idRoom(room) >= 0)
 										str += "<td>, Room "+config['rooms'][idRoom(room)]['name']+" All Off"+"</td>";
 									continue;
 								}
 								var s = strips[k].indexOf('D');
 								var uaddr = strips[k].substr(s+1,2).match(r);
-								var ind = findDevice(room, uaddr); // XXX
+								var ind = findDevice(room, uaddr); 
 								if (ind >= 0) 
 									str += '<td>, '+config['devices'][ind]['name']+'</td>';
 								else str += '<td style="border: 1px solid black;">, CHECK THE DEVICE, MAY NOT EXTIST</td>';
@@ -343,7 +357,7 @@ function printConfig() {
 								str += "<td>, time: "+strips[k+1]+"</td>";
 								var r = /\d+/;
 								var room = strips[k].match(r);
-								if (strips[k].indexOf('Fa') != -1) {					// XXX Room must exist
+								if (strips[k].indexOf('Fa') != -1) {					// Room must exist
 									if (idRoom(room) >= 0)
 										str += "<td>, Room "+config['rooms'][idRoom(room)]['name']+" All Off"+"</td>";
 									continue;
@@ -418,7 +432,7 @@ function zwave_init (cb) {
 		});
 		response.on('end', function () {
     		if (debug>=3) console.log(str);
-			// Gebruik try here XXXXX
+			// Gebruik try here so we catch errors in JSON
 			try {
 				zroot = JSON.parse(str);
 			} catch(e){
@@ -440,8 +454,45 @@ function zwave_init (cb) {
 	req.end();
 }
 
+// Reset the Zwave API
+function zwave_reset (cb) {
+	var zwave_reset_options = {
+		host: par.zHost,
+		path: '/ZWaveAPI/Run/SerialAPISoftReset(1)',				// Reset the Zway API
+		port: '8083',
+		method: 'GET',
+		headers: { 'Content-Type': 'application/json' }
+	};
+	// Get ALL data from the Zwave controller and put in zroot!
+	var zwave_reset_cb = function(response) {
+		var statusCode = response.statusCode;
+		if (statusCode === 404 || statusCode === 403) {
+            // Send default image if error
+			logger("wave_reset:: ERROR: Page not found\n",0);
+			cb("No Page", null);
+        }
+		var str = '';
+		//another chunk of data has been recieved, so append it to `str`
+  		response.on('data', function (chunk) {
+    		str += chunk;
+		});
+		response.on('end', function () {
+			logger("Successfully reset Z-Wave API, #devices: ",1);
+			cb(null,"zwave_reset done");
+  		});
+	}
+	
+	var req = http.request(zwave_reset_options, zwave_reset_cb);
+	
+	req.on('error', function(e) {
+		logger("zwave_reset:: ERROR opening connection to zwave host, "+e.message,1);
+		cb("zwave no connection",null);
+	})
+	req.end();
+}
 
-// For GETting data changed from a certain moment
+//
+// Zwave-update
 var zwave_upd_options = {
 	host: par.zHost,
 	path: '/ZWaveAPI/Data/'+(Math.floor(Date.now()/1000) - alarm_interval),
@@ -587,10 +638,13 @@ var server = net.createServer(function(socket) { //'connection' listener
 		var ret = sock.write(JSON.stringify(data));
 	});
 	socket.on('error', function(e) {
+		clients.splice(clients.indexOf(socket), 1);	// XXX Maybe subscribe to on close event.
+		socket.destroy();							// XXX
 		logger("SOCKET:: Error: "+e,0);
 	});
 	socket.on('connect', function() {
 		logger("SOCKET:: socket Connection Established ",1);
+		
 	});
 });
 
@@ -870,7 +924,7 @@ function createDbase(cb) {
   },
   function (callback) {
 	queryDbase('DROP TABLE IF EXISTS sensors',function(err, ret) { 
-		queryDbase('CREATE TABLE sensors(id INT, descr CHAR(128), name CHAR(20), room CHAR(12), location CHAR(20), brand CHAR(20), address CHAR(20), channel CHAR(8), type CHAR(32), sensor CHAR(255) )',function(err,ret) {
+		queryDbase('CREATE TABLE sensors(id INT, descr CHAR(128), name CHAR(20), room CHAR(12), location CHAR(20), brand CHAR(20), address CHAR(20), channel CHAR(8), type CHAR(32), sensor TEXT(512) )',function(err,ret) {
 			callback(null,'sensors made');
 		});
 	});
@@ -1269,7 +1323,7 @@ function deviceGet(ldev,ltype) {
   		// (i.e. doesn't send any response or it took to long). You don't know what happend.
   		// It will emit 'error' message as well (with ECONNRESET code).
   			logger("deviceGet:: TIMEOUT");
-  			response.abort();						// XXX This may be just too much
+  			response.abort();						// This may be just too much
 		});
 		response.setTimeout(5000);
 	}
@@ -1386,7 +1440,7 @@ function findScene (name) {
 // --------------------------------------------------------------------------------
 // ROOM helper functions
 // --------------------------------------------------------------------------------
-function idRoom (id) {
+function idRoom(id) {
 	var i;
 	for (i=0; i < config['rooms'].length; i++) {
 		if (config['rooms'][i]['id'] == id ) {
@@ -1399,7 +1453,7 @@ function idRoom (id) {
 // --------------------------------------------------------------------------------
 // SENSOR helper functions
 // --------------------------------------------------------------------------------
-function addrSensor (address, channel) {
+function addrSensor(address, channel) {
 	logger("addrSensor:: address: "+address+", channel: "+channel,2);
 	if (config['sensors'] == undefined) return -1;
 	var i;
@@ -1450,7 +1504,11 @@ function allOff(room, socket) {
 	var series =[];
 	var str=[];
 	for (var i=0; i<config['devices'].length; i++) {
-		if ((config['devices'][i]['room'] == room) && (config['devices'][i]['type'] != "thermostat")) {
+		// All off not valid for Thermostat and pushbutton devices
+		if ((config['devices'][i]['room'] == room) 
+			&& (config['devices'][i]['type'] != "thermostat") 
+			&& (config['devices'][i]['type'] != "push")) 
+		{
 			var brandi = config['devices'][i]['brand'];
 			var data = {
 				tcnt: ""+tcnt++ ,
@@ -1467,7 +1525,7 @@ function allOff(room, socket) {
 				setTimeout( function(){ 
 					var msg = str.shift();
 					logger("allOff:: timeout str: "+msg,2); 
-					socketHandler(msg, socket);				// Better than boradcast only. Handle the database update too
+					socketHandler(msg, socket);				// Better than broadcast only. Handle the database update too
 					callback(null, "yes"); 
 				}, 2000); 
 			});
@@ -1513,6 +1571,18 @@ function consoleHandler(request, socket) {
 		break;
 		case "zlogs":
 			// TBD
+		break;
+		case "elogs":								// ESP Log Files listing
+			logger("consoleHandler:: Incoming DEBUG: ",1);
+		break;
+		case "zway-reset":
+			zwave_reset(function(err,result) {
+			  if (err) {
+				logger("consoleHandler:: ERROR unable to run zwave_reset, "+err,1);
+				return;
+			  }
+			  logger("consoleHandler:: zwave_reset: "+result,1); 
+			}); 
 		break;
 		case "sunrisesunset":
 			var times = SunCalc.getTimes(new Date(), 51.5, -0.1);
@@ -1767,6 +1837,14 @@ function dbaseHandler(cmd, args, socket) {
 }
 
 // --------------------------------------------------------------------------------
+// DEBUG Handler
+// --------------------------------------------------------------------------------
+function debugHandler(cmd, args, socket) {
+	logger("debugHandler:: "+socket.name+" <"+cmd+"> "+args,1);
+}
+
+
+// --------------------------------------------------------------------------------
 // ENERGY Handler RRDTOOL based
 // Buf is an object with a standard set of fields
 // --------------------------------------------------------------------------------
@@ -1835,7 +1913,7 @@ function energyHandler(buf, socket) {
 		}
 	});
 	
-	logger("energyHandler:: action: "+ buf.action+", brand: "+buf.brand+", name: "+name,1);
+	logger("energyHandler:: action: "+ buf.action+", brand: "+buf.brand+", name: "+name,2);
 	
 	// One time creation action
 	if (!fs.existsSync(db)) {
@@ -1960,7 +2038,11 @@ function graphHandler(buf,socket) {
 // --------------------------------------------------------------------------------
 function guiHandler(buf, socket) {
 	logger("guiHandler:: buf: "+buf,1);
-	var index = gaddrDevice(buf.gaddr, uaddr);		// which gaddr matches the received gaddr in config['devices'] array
+	var index = gaddrDevice(buf.gaddr, buf.uaddr);		// which gaddr matches the received gaddr in config['devices'] array
+	if (index==-1) {
+		logger("guiHandler:: ERROR unknown device with address: "+buf.gaddr+":"+buf.uaddr,1);
+		return(null);
+	}
 	if (config['devices'][index]['gaddr'] == "868" ) deviceSet(index, buf.val);	// zwave only 
 	// Have to make a good data.ics value (cannot assume that a json message has a good ics)
 	var ics = "!R"+config['devices'][index]['room']+"D"+config['devices'][index]['uaddr']+"F";
@@ -2176,10 +2258,10 @@ function sensorHandler(buf, socket) {
 	
 		
 	// Now update the rrdtool database. If necessary create it.
-	// XXX Other and new sensors come here!
+	// Other and new sensors come here!
 	if (!fs.existsSync(db)) {
 		logger("sensorHandler:: rrdtool db "+db+" does not exist ... creating",1);
-		// XXX We may have to create the sensor database based on the config structure!
+		// We may have to create the sensor database based on the config structure!
 		// 	so fields that are not updated every time but belong to the sensor will be included in creation.
 		//  e.g. battery settings
 		//createSensorDb(db, buf, socket);
@@ -2189,7 +2271,7 @@ function sensorHandler(buf, socket) {
 		var str=[]; 
 	// Save all values coming in the config array and update lastUpdated
 	// We can also forEach in [ 'temperature', 'humidity' ] etc
-	// which is less univesal but faster...
+	// which is less universal but faster...
 	//Object.keys(buf).forEach(function(sensor) {
 	//if ( config['sensors'][index]['sensor'].hasOwnProperty(sensor)) {
 		
@@ -2202,23 +2284,11 @@ function sensorHandler(buf, socket) {
 			else {
 				// skip tcnt and other message details, only look for existing sensor keywords
 				logger("sensorHandler:: WARNING sensor: "+sensor+" not found, index: "+index+", from: "+sname+", name: "+name+", addr: "+buf.address+", chan: "+buf.channel,2);
-				//console.log(buf);
 			}
-			// Do not only update the value of the sensor just receive dbut the whole sensor record.
+			// Do not only update the value of the sensor just received but the whole sensor record.
 			// So if parts of the sensor were not updated, use the config object to find all (other) fields and values
 			str += ":"+Number(config['sensors'][index]['sensor'][sensor]['val']);
 		});
-
-		// If a key does not exits, use empty value and print NO colon
-		//str += ((buf['temperature'] !== undefined)	? ":"+Number(buf['temperature']) : "");
-		//str += ((buf['humidity'] !== undefined)		? ":"+Number(buf['humidity']) : "");
-		//str += ((buf['airpressure'] !== undefined)	? ":"+Number(buf['airpressure']) : "");
-		//str += ((buf['altitude'] !== undefined)		? ":"+Number(buf['altitude']) : "");
-		//str += ((buf['windspeed'] !== undefined)	? ":"+Number(buf['windspeed']) : "");
-		//str += ((buf['winddirection'] !== undefined) ? ":"+Number(buf['winddirection']) : "");
-		//str += ((buf['rainfall'] !== undefined)		? ":"+Number(buf['rainfall']) : "");
-		//str += ((buf['luminescense'] !== undefined)	? ":"+Number(buf['luminescense']) : "");
-		//str += ((buf['battery'] !== undefined)		? ":"+Number(buf['battery']) : "");
 	
 		var execStr = "rrdtool update "+db+" N"+str;
 		logger("sensorHandler:: execStr: "+execStr,2);
@@ -2274,6 +2344,12 @@ function createSensorDb(db, index, buf, socket) {
 			case 'battery':
 				str += "DS:battery:GAUGE:600:0:110 ";
 			break;
+			case 'motion':
+				str += "DS:motion:GAUGE:600:0:2 ";
+			break;
+			case 'alarm':
+				str += "DS:alarm:GAUGE:600:0:2 ";
+			break;
 		}
 	})
 	
@@ -2320,7 +2396,7 @@ function sceneHandler(buf, socket) {
 
 // -------------------------------------------------------------------------------
 // SETTING HANDLER
-// XXX Needs more work
+// 
 // -------------------------------------------------------------------------------
 function settingHandler(buf, socket) {
 	switch (buf.cmd) {
@@ -2338,7 +2414,7 @@ function settingHandler(buf, socket) {
 			var response = {};
 			logger("settingHandler:: list_config database name selected", 1);
 			response = { tcnt: tcnt++, type: "raw", action: "list_config", cmd: "", list: list };
-			logger("socketHandler:: Sending "+response.action+" message to socket: "+ socket.name);
+			logger("ettingHandler:: Sending "+response.action+" message to socket: "+ socket.name);
 
 			var ret = socket.send(JSON.stringify(response),function (error){
 				if (error !== undefined) { 
@@ -2394,6 +2470,9 @@ function socketHandler(data,socket) {
 		case 'dbase':							// cmd can be: delete_device, etc etc
 			dbaseHandler(buf.cmd, buf.message, socket);
 		break;
+		case 'debug':							// cmd can be: delete_device, etc etc
+			debugHandler(buf.cmd, buf.message, socket);
+		break;
 		case 'energy':							// cmd can be: energy
 			energyHandler(buf, socket);			// Do something: such as store in RRD etc
 		break;
@@ -2406,7 +2485,7 @@ function socketHandler(data,socket) {
 		break;
 		case 'handset':
 			if (buf.type == "raw")  icsHandler(buf, socket);			// This should work for handsets too!
-			if (buf.type == "json") guiHandler(buf, socket);			// XXX Not tested yet
+			if (buf.type == "json") guiHandler(buf, socket);			// XXX Not fully tested yet
 		break;
 		case 'login':
 			logger("socketHandler:: login message received");
@@ -2704,7 +2783,8 @@ function main(err,results) {
 	}
 	logger("Starting Static Webserver");
 	// NOTE: All pathnames are relative to the Node Installation directory
-	app.use(serveStatic(__dirname + '/www')); app.listen(webPort);
+	app.use(serveStatic(__dirname + '/www')); 
+	app.listen(webPort);
 }
 
 // --------------------------------------------------------------------------------
@@ -2824,9 +2904,10 @@ function timer_loop() {
 
 // --------------------------------------------------------------------------------
 // ZWAVE LOGGING LOOP
-// 1. Display log value of Z-Wave devices based on complete init
-// 2. We update values in the Z-Wav and LamPI environment and update database
+// 1. Display log value of Z-Wave sensor devices based on complete init
+// 2. We update values in the Z-Wave and LamPI environment and update database
 // 3. We broadcast values of sensors to connected gui clients
+// NOTE: Only Zwave sensors, no other ZWave devices...
 function zwave_loop() {
   logger("Starting zwave_loop");
   var i=0;
@@ -2857,7 +2938,7 @@ function zwave_loop() {
 			logger("key: " + key,1);
 			var index = addrSensor(key,0);
 			if (index == -1) {
-				logger("WARNING:: Zwave device NOT found in config: "+key+" ignored!",0);
+				logger("WARNING:: Zwave device "+key+":0 NOT found in config, ignored!",0);
 				return;
 			}
 			var classes = devices[key].instances[0].commandClasses;
@@ -2924,7 +3005,7 @@ function zwave_loop() {
 							buf.humidity = val;
 						}
 						logger("zwave_loop:: starting sensor handler for device: "+key,2);
-						sensorHandler( buf )
+						sensorHandler(buf)
 					break;
 					case '67':									// Thermostat
 						if (classes[cl].data.interviewDone.value == false) {
@@ -2978,7 +3059,7 @@ function zwave_loop() {
 function poll_loop() {
   logger("Starting poll_loop");
   var id = setInterval ( function() {
-	logger("-----------       POLL      ------------",1);
+	logger("-----------       POLL      ------------",2);
 	connection.query('SELECT * from devices', function(err, rows, fields) {
 		if (err) { 
 			logger("poll_loop:: ERROR reading devices, "+err,1);
@@ -3041,7 +3122,7 @@ function alarm_loop()
 	  req.end();
 	  // XXX Alarm sensors are still too static, need global configuration in database.cfg
 	  // maybe make an alarm type "ALARM" in sensors
-	  // Although we use broadcast, as websockets are tcp based delivery is rliable
+	  // Although we use broadcast, as websockets are tcp based delivery is reliable
 	  var alarm1 = devices[9].instances[0].commandClasses[48].data[1].level.value;
 	  if (alarm1 === true) {
 		console.log("Fibaro ALARM");
